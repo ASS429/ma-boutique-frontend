@@ -55,6 +55,10 @@
     }
     /* Simple table responsive */
     .table-sm td, .table-sm th { padding: 0.5rem; }
+
+.chart-container {
+    height: 250px;
+}
 </style>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50">
@@ -197,10 +201,11 @@
       <!-- Graphiques -->
       <div class="bg-white rounded-3xl p-6 shadow-lg">
         <h3 class="text-lg font-bold mb-4">📊 Graphiques</h3>
-        <canvas id="chartVentesByDay" class="mb-4" style="height:200px"></canvas>
-        <canvas id="chartTopProduits" class="mb-4" style="height:200px"></canvas>
-        <canvas id="chartPaiements" style="height:200px"></canvas>
-      </div>
+        
+<div class="chart-container"><canvas id="chartVentesByDay"></canvas></div>
+<div class="chart-container"><canvas id="chartTopProduits"></canvas></div>
+<div class="chart-container"><canvas id="chartPaiements"></canvas></div>
+</div>
 
     </div>
   </div>
@@ -365,6 +370,7 @@ async function syncFromServer(){
       updateStats(); afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire();
       // after successful sync, try to flush outbox
       if(navigator.onLine) processOutboxAll();
+      afficherRapports();
       console.log('Sync from server done');
     }
   }catch(err){ console.log('Sync failed, offline or server down', err); }
