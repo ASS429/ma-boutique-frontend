@@ -507,7 +507,55 @@ function afficherCategories(){ var ctn = document.getElementById('listeCategorie
 function supprimerCategorie(id){ var produitsCategorie = appData.produits.filter(function(p){ return p.categorie === id; }); if(produitsCategorie.length){ alert('❌ Impossible: catégorie contient des produits'); return; } if(confirm('❓ Supprimer catégorie ?')){ appData.categories = appData.categories.filter(function(c){ return c.id !== id; }); afficherCategories(); saveAppDataLocal(); fetch(API_BASE + '/api/categories/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Catégorie supprimée'); } }
 
 // ---------- Rapports & charts ----------
-function afficherRapports(){ var recettesJour = document.getElementById('recettesJour'); if(recettesJour) recettesJour.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var recettesSemaine = document.getElementById('recettesSemaine'); if(recettesSemaine) recettesSemaine.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var containerPaiements = document.getElementById('rapportsPaiements'); if(containerPaiements) containerPaiements.innerHTML = ''; var methodesNoms = {especes:{nom:'Espèces', emoji:'💵', couleur:'green'}, wave:{nom:'Wave', emoji:'📱', couleur:'blue'}, orange:{nom:'Orange Money', emoji:'📞', couleur:'orange'}}; Object.keys(appData.stats.paiements || {}).forEach(function(m){ var montant = appData.stats.paiements[m] || 0; var info = methodesNoms[m] || {nom:m, emoji:'', couleur:'gray'}; var div = document.createElement('div'); div.className = 'bg-' + info.couleur + '-50 rounded-2xl p-3 flex justify-between items-center'; div.innerHTML = '<div class="flex items-center gap-3"><span class="text-2xl">' + (info.emoji||'') + '</span><span class="font-bold">' + info.nom + '</span></div><span class="font-bold">' + montant.toLocaleString() + ' F</span>'; if(containerPaiements) containerPaiements.appendChild(div); }); var cPop = document.getElementById('produitsPopulaires'); if(cPop) cPop.innerHTML=''; var populaires = appData.produits.filter(function(p){ return p.vendu > 0; }).sort(function(a,b){ return b.vendu - a.vendu; }).slice(0,5); if(!populaires.length && cPop) cPop.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune vente</div>'; else populaires.forEach(function(p){ var d = document.createElement('div'); d.className='flex justify-between items-center bg-gray-50 rounded-lg p-3'; d.innerHTML = '<div class="font-bold">' + p.nom + '</div><div class="text-blue-600 font-bold">' + p.vendu + ' vendus</div>'; if(cPop) cPop.appendChild(d); }); updateCharts(); }
+
+async function afficherRapports() {
+    // Graphique ventes par jour
+    try {
+        const ventesResp = await fetch(API_BASE + '/stats/ventes-par-jour');
+        const ventes = await ventesResp.json();
+
+        const ctxVentes = document.getElementById('ventes-chart').getContext('2d');
+        if (!ventes || ventes.length === 0) {
+            ctxVentes.canvas.parentNode.innerHTML = '<p>Aucune donnée de ventes</p>';
+        } else {
+            new Chart(ctxVentes, {
+                type: 'line',
+                data: {
+                    labels: ventes.map(v => v.date),
+                    datasets: [{
+                        label: 'Montant total',
+                        data: ventes.map(v => v.total_montant),
+                        borderColor: 'blue'
+                    }]
+                }
+            });
+        }
+
+        // Graphique répartition paiements
+        const payResp = await fetch(API_BASE + '/stats/paiements');
+        const paiements = await payResp.json();
+
+        const ctxPaiements = document.getElementById('paiements-chart').getContext('2d');
+        if (!paiements || paiements.length === 0) {
+            ctxPaiements.canvas.parentNode.innerHTML = '<p>Aucune donnée de paiements</p>';
+        } else {
+            new Chart(ctxPaiements, {
+                type: 'pie',
+                data: {
+                    labels: paiements.map(p => p.payment_method),
+                    datasets: [{
+                        label: 'Montant total',
+                        data: paiements.map(p => p.total_montant),
+                        backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56']
+                    }]
+                }
+            });
+        }
+
+    } catch (err) {
+        console.error('Erreur lors du chargement des rapports', err);
+    }
+}
 
 function updateCharts(){ var ventes = appData.ventes || []; var byDay = {}; ventes.forEach(function(v){ var d = (new Date(v.date)).toISOString().slice(0,10); byDay[d] = (byDay[d]||0) + (v.total||0); }); var labels = Object.keys(byDay).sort(); var data = labels.map(function(l){ return byDay[l]; }); if(chartVentesByDay) chartVentesByDay.destroy(); var ctx1 = document.getElementById('chartVentesByDay'); if(ctx1) { chartVentesByDay = new Chart(ctx1.getContext('2d'), { type:'line', data:{ labels: labels, datasets:[{ label:'Total ventes par jour', data: data, borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,0.15)', fill:true }]}, options:{ responsive:true, maintainAspectRatio:false } }); }
   var productsSorted = (appData.produits||[]).slice().sort(function(a,b){ return (b.vendu||0) - (a.vendu||0); }).slice(0,8); var labels2 = productsSorted.map(function(p){ return p.nom; }); var data2 = productsSorted.map(function(p){ return p.vendu||0; }); if(chartTopProduits) chartTopProduits.destroy(); var ctx2 = document.getElementById('chartTopProduits'); if(ctx2) { chartTopProduits = new Chart(ctx2.getContext('2d'), { type:'bar', data:{ labels: labels2, datasets:[{ label:'Quantités vendues', data: data2, backgroundColor:'rgba(16,185,129,0.8)'}]}, options:{ responsive:true, maintainAspectRatio:false } }); }
