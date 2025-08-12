@@ -443,7 +443,7 @@ function verifierStockFaible(){
 // ---------- Vente / Panier ----------
 function afficherCategoriesVente(){ const ctn=document.getElementById('categoriesVente'); if(!ctn) return; ctn.innerHTML=''; appData.categories.forEach(function(cat){ const produitsCategorie = appData.produits.filter(function(p){ return p.categorie===cat.id && p.stock>0; }); if(!produitsCategorie.length) return; const d=document.createElement('div'); d.className = 'big-button ' + (cat.couleur || '') + ' text-white p-4 rounded-2xl text-center cursor-pointer shadow-lg'; d.addEventListener('click', function(){ afficherProduitsCategorie(cat.id); }); d.innerHTML = '<div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="font-bold">' + cat.nom + '</div><div class="text-sm opacity-90">' + produitsCategorie.length + ' produits</div>'; ctn.appendChild(d); }); }
 
-function afficherProduitsCategorie(categorieId){ const produits = appData.produits.filter(function(p){ return p.categorie===categorieId && p.stock>0; }); const container=document.getElementById('categoriesVente'); if(!container) return; container.innerHTML = '<div class="col-span-2 mb-4"><button class="text-blue-600 font-bold">← Retour</button></div>';
+function afficherProduitsCategorie(categorieId){ const produits = appData.produits.filter(function(p){ return p.categorie===categorieId && p.stock>0; }); const container=document.getElementById('categoriesVente'); if(!container) return; container.innerHTML = '';const retourBtn = document.createElement('button');retourBtn.textContent = '← Retour';retourBtn.className = 'col-span-2 mb-4 text-blue-600 font-bold';retourBtn.addEventListener('click', afficherCategoriesVente);container.appendChild(retourBtn);
   produits.forEach(function(produit){ const div=document.createElement('div'); div.className='bg-white border-2 border-gray-200 p-4 rounded-2xl text-center cursor-pointer hover:border-blue-400 transition-all'; div.addEventListener('click', function(){ ajouterAuPanier(produit); }); div.innerHTML = '<div class="font-bold text-lg mb-1">' + produit.nom + '</div><div class="text-2xl font-bold text-green-600 mb-1">' + (produit.prix||0).toLocaleString() + ' F</div><div class="text-sm text-gray-600">Stock: ' + (produit.stock||0) + '</div>'; container.appendChild(div); }); }
 
 function ajouterAuPanier(produit){ if(!appData) return; const exist = appData.panier.find(function(i){ return i.id===produit.id; }); if(exist){ if(exist.quantite < produit.stock) exist.quantite++; else { alert('❌ Stock insuffisant!'); return; } } else appData.panier.push(Object.assign({}, produit, {quantite:1})); afficherPanier(); saveAppDataLocal(); }
@@ -577,67 +577,7 @@ document.addEventListener('DOMContentLoaded', async function(){ loadAppDataLocal
 if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('/pwa/sw.js').then(function(reg){ console.log('SW registered', reg); }).catch(function(err){ console.warn('SW failed', err); }); }); }
 </script>
 
-<h2>Produits</h2>
-<ul id="products-list"></ul>
 
-<h2>Catégories</h2>
-<ul id="categories-list"></ul>
-
-<h2>Ventes</h2>
-<ul id="sales-list"></ul>
-
-<h2>Tontines</h2>
-<ul id="tontines-list"></ul>
-
-<script>
-const API_BASE = "https://ma-boutique-backend-3.onrender.com";
-
-function renderList(elementId, items, formatFn) {
-  const list = document.getElementById(elementId);
-  list.innerHTML = "";
-  items.forEach(item => {
-    const li = document.createElement("li");
-    li.textContent = formatFn(item);
-    list.appendChild(li);
-  });
-}
-
-// Produits
-fetch(API_BASE + "/products")
-  .then(res => res.json())
-  .then(data => {
-    console.log("Produits:", data);
-    renderList("products-list", data, p => `${p.name} - ${p.price} FCFA`);
-  })
-  .catch(err => console.error(err));
-
-// Catégories
-fetch(API_BASE + "/categories")
-  .then(res => res.json())
-  .then(data => {
-    console.log("Catégories:", data);
-    renderList("categories-list", data, c => `${c.name}`);
-  })
-  .catch(err => console.error(err));
-
-// Ventes
-fetch(API_BASE + "/sales")
-  .then(res => res.json())
-  .then(data => {
-    console.log("Ventes:", data);
-    renderList("sales-list", data, s => `Produit ${s.product_id} - Qté: ${s.quantity}`);
-  })
-  .catch(err => console.error(err));
-
-// Tontines
-fetch(API_BASE + "/tontines")
-  .then(res => res.json())
-  .then(data => {
-    console.log("Tontines:", data);
-    renderList("tontines-list", data, t => `${t.name} - Montant: ${t.amount}`);
-  })
-  .catch(err => console.error(err));
-</script>
 
 </body>
 </html>
