@@ -25,6 +25,12 @@
 <script>
 const API_BASE = "https://ma-boutique-backend-3.onrender.com"; // URL backend Render
 
+  document.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('authToken')) {
+    window.location.href = 'index.html';
+  }
+});
+
 document.getElementById('registerBtn').addEventListener('click', async () => {
   const username = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
