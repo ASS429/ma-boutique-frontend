@@ -472,6 +472,58 @@ async function postSaleServer(sale){
   }catch(e){ console.warn('Network error posting sale', e); return null; }
 }
 
+    function showSection(section) {
+  // Masquer toutes les sections
+  document.querySelectorAll('.app-section').forEach(el => {
+    el.classList.add('hidden');
+  });
+
+  // Afficher la section demandée si elle existe
+  const target = document.getElementById(section + 'Section');
+  if (target) {
+    target.classList.remove('hidden');
+  } else {
+    console.warn(`Section "${section}" introuvable dans le DOM`);
+    return;
+  }
+
+  // Gestion bouton retour
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    backBtn.style.display = (section === 'menu') ? 'none' : 'block';
+  }
+
+  // Sauvegarder la section actuelle
+  currentSection = section;
+
+  // Exécuter les fonctions spécifiques selon la section
+  switch (section) {
+    case 'vente':
+      afficherCategoriesVente();
+      afficherPanier();
+      break;
+    case 'stock':
+      afficherProduits();
+      afficherFiltresCategories();
+      break;
+    case 'categories':
+      afficherCategories();
+      break;
+    case 'rapports':
+      afficherRapports();
+      break;
+    case 'inventaire':
+      afficherInventaire();
+      break;
+    case 'menu':
+      updateStats();
+      verifierStockFaible();
+      break;
+  }
+
+  console.log(`✅ Section affichée : ${section}`);
+}
+
 
 
 // 🔹 AJOUT GESTION VENTES — Fonction pour afficher ventes
