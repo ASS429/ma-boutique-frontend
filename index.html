@@ -352,61 +352,131 @@ async function processOutboxAll(){ let did=false; try{ while(true){ const r = aw
 setInterval(()=>{ if(navigator.onLine) processOutboxAll(); }, 30*1000); // try every 30s if online
 window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox'); processOutboxAll(); });
 
-// ---------- Sync with server (read + write) ----------
-async function syncFromServer(){
-  try{
+// ---------- Sync with server (read only) ----------
+async function syncFromServer() {
+  try {
     const [resCat, resProd, resStats] = await Promise.all([
       fetch(API_BASE + '/categories'),
       fetch(API_BASE + '/products'),
-      fetch(API_BASE + '/stats/ventes-par-jour')
+      fetch(API_BASE + '/stats/ventes-par-jour') // exemple, selon ce que tu veux afficher
     ]);
-    if(resCat.ok && resProd.ok){
+
+    // Récupération catégories
+    if (resCat.ok) {
       const cats = await resCat.json();
+      appData.categories = cats.map(c => ({
+        id: c.id,
+        name: c.name // ✅ correspond à ta table
+      }));
+    } else {
+      console.warn('Erreur récupération catégories', await resCat.text());
+    }
+
+    // Récupération produits
+    if (resProd.ok) {
       const prods = await resProd.json();
-      prods.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
-      appData.categories = cats;
-      appData.produits = prods;
-      if (resStats.ok) {
-  const statsArray = await resStats.json();
-  if (Array.isArray(statsArray)) {
-    const today = new Date().toISOString().slice(0, 10);
-    const todayStats = statsArray.find(item => item.date === today);
-    appData.stats.chiffreAffaires = todayStats ? todayStats.total_montant : 0;
+      appData.produits = prods.map(p => ({
+        id: p.id,
+        name: p.name,
+        category_id: p.category_id,
+        scent: p.scent,
+        price: p.price,
+        stock: p.stock
+      }));
+    } else {
+      console.warn('Erreur récupération produits', await resProd.text());
+    }
+
+    // Récupération stats
+    if (resStats.ok) {
+      const stats = await resStats.json();
+      appData.stats = stats; // tu peux formater selon tes besoins
+    } else {
+      console.warn('Erreur récupération stats', await resStats.text());
+    }
+
+    // Sauvegarde en local
+    saveAppDataLocal();
+
+    // Mise à jour affichage
+    updateStats();
+    afficherCategoriesVente();
+    afficherProduits();
+    afficherCategories();
+    afficherRapports();
+    afficherInventaire();
+
+    console.log('✅ Sync from server done');
+  } catch (err) {
+    console.log('❌ Sync failed, offline or server down', err);
   }
 }
-      saveAppDataLocal();
-      updateStats(); afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire();
-      // after successful sync, try to flush outbox
-      if(navigator.onLine) processOutboxAll();
-      afficherRapports();
-      console.log('Sync from server done');
+
+async function postProductServer(product) {
+  try {
+    const res = await fetch(API_BASE + '/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product) // { name, category_id, scent, price, stock }
+    });
+
+    if (!res.ok) {
+      const errorMsg = await res.text();
+      console.warn('Add product failed', errorMsg);
+      return null;
     }
-  }catch(err){ console.log('Sync failed, offline or server down', err); }
+
+    return await res.json();
+  } catch (e) {
+    console.warn('Network error adding product', e);
+    return null;
+  }
 }
 
-async function postProductServer(product){
-  try{
-    const res = await fetch(API_BASE + '/products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(product)});
-    if(res.ok){ const p = await res.json(); return p; }
-    else { console.warn('Add product failed', await res.text()); return null; }
-  }catch(e){ console.warn('Network error adding product', e); return null; }
+
+async function postCategoryServer(category) {
+  try {
+    const res = await fetch(API_BASE + '/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(category) // category = { name: "..." }
+    });
+
+    if (!res.ok) {
+      const errorMsg = await res.text();
+      console.warn('Add category failed', errorMsg);
+      return null;
+    }
+
+    return await res.json();
+  } catch (e) {
+    console.warn('Network error adding category', e);
+    return null;
+  }
 }
 
-async function postCategoryServer(category){
-  try{
-    const res = await fetch(API_BASE + '/categories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(category)});
-    if(res.ok){ return await res.json(); }
-    else { console.warn('Add category failed', await res.text()); return null; }
-  }catch(e){ console.warn('Network error adding category', e); return null; }
+
+async function postSaleServer(sale) {
+  try {
+    const res = await fetch(API_BASE + '/sales', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sale) // { product_id, quantity, payment_method }
+    });
+
+    if (!res.ok) {
+      const errorMsg = await res.text();
+      console.warn('Sale post failed', errorMsg);
+      return null;
+    }
+
+    return await res.json();
+  } catch (e) {
+    console.warn('Network error posting sale', e);
+    return null;
+  }
 }
 
-async function postSaleServer(sale){
-  try{
-    const res = await fetch(API_BASE + '/sales', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sale)});
-    if(res.ok){ return await res.json(); }
-    else { console.warn('Sale post failed', await res.text()); return null; }
-  }catch(e){ console.warn('Network error posting sale', e); return null; }
-}
 
 // ---------- Navigation & UI helpers (structure kept) ----------
 let currentSection = 'menu';
@@ -472,28 +542,97 @@ function afficherPanier(){ const c=document.getElementById('panierItems'); const
 
 function modifierQuantitePanier(id, delta){ if(!appData) return; const item = appData.panier.find(function(i){ return i.id===id; }); const produit = appData.produits.find(function(p){ return p.id===id; }); if(item){ item.quantite += delta; if(item.quantite <= 0) appData.panier = appData.panier.filter(function(i){ return i.id !== id; }); else if(produit && item.quantite > produit.stock){ item.quantite = produit.stock; alert('❌ Stock insuffisant!'); } afficherPanier(); saveAppDataLocal(); } }
 
-async function finaliserVente(methodePaiement){ if(!appData) return; if(!appData.panier.length){ alert('❌ Le panier est vide!'); return; } var totalVente = 0; var itemsPayload = appData.panier.map(function(item){ return { id: item.id, quantite: item.quantite, prix: item.prix }; }); appData.panier.forEach(function(item){ var produit = appData.produits.find(function(p){ return p.id===item.id; }); if(produit){ produit.stock = (produit.stock||0) - item.quantite; produit.vendu = (produit.vendu||0) + item.quantite; totalVente += (item.prix||0) * item.quantite; } }); appData.ventes.push({ date: new Date().toISOString(), items: itemsPayload, total: totalVente, paiement: methodePaiement }); appData.stats.ventesJour = (appData.stats.ventesJour||0) + 1; appData.stats.chiffreAffaires = (appData.stats.chiffreAffaires||0) + totalVente; appData.stats.paiements[methodePaiement] = (appData.stats.paiements[methodePaiement]||0) + totalVente; appData.panier = []; afficherPanier(); updateStats(); verifierStockFaible(); saveAppDataLocal(); hideModal();
+async function finaliserVente(){
+  const product_id = parseInt(document.getElementById('produitVente').value);
+  const quantity = parseInt(document.getElementById('quantiteVente').value);
+  const payment_method = document.getElementById('paiementVente').value;
 
-  // try to send to server; if fail enqueue for retry
-  const serverRes = await postSaleServer({ items: itemsPayload, total: totalVente, paiement: methodePaiement });
-  if(serverRes && serverRes.id){ alert('✅ Vente envoyée au serveur. Total: ' + totalVente.toLocaleString() + ' F'); syncFromServer(); }
-  else { enqueueOutbox({ type:'sale', payload:{ items: itemsPayload, total: totalVente, paiement: methodePaiement }, tries:0, id: Date.now() }); alert('✅ Vente enregistrée localement et mise en file d\'envoi. Total: ' + totalVente.toLocaleString() + ' F'); }
+  if (!product_id || isNaN(quantity) || quantity <= 0) {
+    alert('❌ Sélectionnez un produit et une quantité valide.');
+    return;
+  }
+
+  const vente = {
+    product_id: product_id,
+    quantity: quantity,
+    payment_method: payment_method
+  };
+
+  const created = await postSaleServer(vente);
+  if (created) {
+    alert('✅ Vente enregistrée (serveur).');
+    syncFromServer();
+  } else {
+    alert('❌ Erreur lors de l\'enregistrement de la vente.');
+  }
 }
+
 
 // ---------- Produits / catégories gestion (avec POST) ----------
 function remplirSelectCategories(){ const select = document.getElementById('categorieProduit'); if(!select) return; select.innerHTML = '<option value="">Choisir catégorie</option>'; appData.categories.forEach(function(categ){ var opt = document.createElement('option'); opt.value = categ.id; opt.textContent = (categ.emoji ? categ.emoji + ' ' : '') + categ.nom; select.appendChild(opt); }); }
 
-async function ajouterProduit(){ if(!appData) return; const nom = (document.getElementById('nomProduit')||{}).value; const categorie = parseInt((document.getElementById('categorieProduit')||{}).value); const prix = parseInt((document.getElementById('prixProduit')||{}).value); const prixAchat = parseInt((document.getElementById('prixAchatProduit')||{}).value) || 0; const stock = parseInt((document.getElementById('stockProduit')||{}).value); const description = (document.getElementById('descriptionProduit')||{}).value;
-  if(nom && categorie && (prix>=0) && (stock>=0)){
-    const newProdLocal = { id: Date.now(), nom: nom, categorie: categorie, prix: prix, prixAchat: prixAchat, stock: stock, vendu:0, description: description||'' };
-    appData.produits.push(newProdLocal);
-    if(currentSection==='stock') afficherProduits(); updateStats(); saveAppDataLocal(); hideModal();
-    const created = await postProductServer({ nom: nom, categorie: categorie, prix: prix, prixAchat: prixAchat, stock: stock, description: description });
-    if(created){ const idx = appData.produits.findIndex(function(p){ return p.id === newProdLocal.id; }); if(idx>=0) appData.produits[idx] = Object.assign({}, created, { prixAchat: created.prix_achat || created.prixAchat || 0 }); saveAppDataLocal(); alert('✅ Produit ajouté (serveur).'); syncFromServer(); }
-    else { enqueueOutbox({ type:'product', payload:{ nom: nom, categorie: categorie, prix: prix, prixAchat: prixAchat, stock: stock, description: description }, tries:0, id:Date.now() }); alert('✅ Produit ajouté localement (offline) et mis en file d\'envoi.'); }
-  } else alert('❌ Remplissez tous les champs obligatoires!'); }
+async function ajouterProduit(){
+  const name = document.getElementById('nomProduit').value;
+  const category_id = parseInt(document.getElementById('categorieProduit').value);
+  const scent = document.getElementById('parfumProduit').value;
+  const price = parseFloat(document.getElementById('prixProduit').value);
+  const stock = parseInt(document.getElementById('stockProduit').value);
 
-async function ajouterCategorie(){ if(!appData) return; const nom = (document.getElementById('nomCategorie')||{}).value; const emoji = (document.getElementById('emojiCategorie')||{}).value || '🏷️'; if(nom){ const newCatLocal = { id: Date.now(), nom: nom, emoji: emoji, couleur: 'category-habits' }; appData.categories.push(newCatLocal); if(currentSection==='categories') afficherCategories(); hideModal(); saveAppDataLocal(); const created = await postCategoryServer({ nom: nom, emoji: emoji }); if(created){ const idx = appData.categories.findIndex(function(c){ return c.id === newCatLocal.id; }); if(idx>=0) appData.categories[idx] = created; saveAppDataLocal(); syncFromServer(); alert('✅ Catégorie ajoutée (serveur).'); } else { enqueueOutbox({ type:'category', payload:{ nom: nom, emoji: emoji }, tries:0, id:Date.now() }); alert('✅ Catégorie ajoutée localement et mise en file d\'envoi.'); } } else alert('❌ Saisir un nom'); }
+  if (!name || !category_id || isNaN(price) || isNaN(stock)) {
+    alert('❌ Remplissez tous les champs correctement.');
+    return;
+  }
+
+  const produit = {
+    name: name,
+    category_id: category_id,
+    scent: scent,
+    price: price,
+    stock: stock
+  };
+
+  const created = await postProductServer(produit);
+  if (created) {
+    appData.produits.push(created);
+    saveAppDataLocal();
+    afficherProduits();
+    alert('✅ Produit ajouté (serveur).');
+  } else {
+    alert('❌ Erreur lors de l\'ajout du produit.');
+  }
+}
+
+
+async function ajouterCategorie(){
+  if (!appData) return;
+
+  const name = (document.getElementById('nomCategorie') || {}).value;
+  const emoji = (document.getElementById('emojiCategorie') || {}).value || '🏷️';
+
+  if (name) {
+    const newCatLocal = { id: Date.now(), name: name, emoji: emoji, couleur: 'category-habits' };
+    appData.categories.push(newCatLocal);
+
+    if (currentSection === 'categories') afficherCategories();
+    hideModal();
+    saveAppDataLocal();
+
+    const created = await postCategoryServer({ name: name }); // ✅ envoie "name"
+    if (created) {
+      const idx = appData.categories.findIndex(c => c.id === newCatLocal.id);
+      if (idx >= 0) appData.categories[idx] = created;
+      saveAppDataLocal();
+      syncFromServer();
+      alert('✅ Catégorie ajoutée (serveur).');
+    } else {
+      enqueueOutbox({ type: 'category', payload: { name: name }, tries: 0, id: Date.now() });
+      alert('✅ Catégorie ajoutée localement et mise en file d\'envoi.');
+    }
+  } else {
+    alert('❌ Saisir un nom');
+  }
+}
+
 
 function afficherFiltresCategories(){ const container = document.getElementById('filtreCategories'); if(!container) return; container.innerHTML = ''; var btnAll = document.createElement('button'); btnAll.className = 'filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; btnAll.textContent = 'Tous'; btnAll.addEventListener('click', function(){ filtrerProduits('tous'); }); container.appendChild(btnAll);
   appData.categories.forEach(function(c){ var button = document.createElement('button'); button.className = 'filtre-btn bg-gray-200 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; button.textContent = (c.emoji?c.emoji+' ':'') + c.nom; button.addEventListener('click', function(){ filtrerProduits(c.id); }); container.appendChild(button); }); }
