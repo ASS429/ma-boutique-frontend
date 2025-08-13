@@ -1,21 +1,30 @@
-<!DOCTYPE html>
+<!DOCTYPE html>  
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ma Boutique </title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Optionnel: <meta name="api-base" content="https://mon-backend.example.com"> -->
-  <link rel="manifest" href="/pwa/manifest.json">
-  <meta name="theme-color" content="#6D28D9">
-  <link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-  <style>
-    .app-container { max-width: 900px; width: 100%; margin: 0 auto; box-shadow: 0 0 30px rgba(0,0,0,0.2); border-radius: 25px; overflow: hidden; background: white; min-height: 100vh; }
-    .big-button { transition: all 0.25s ease; transform: scale(1); }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ma Boutique - Gestion Complète</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="manifest" href="/pwa/manifest.json">
+<meta name="theme-color" content="#6D28D9">
+<link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+    .app-container {
+        max-width: 100%; width: 100%; max-width: 900px;
+        margin: 0 auto;
+        box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        border-radius: 25px;
+        overflow: hidden;
+        background: white;
+        min-height: 100vh;
+    }
+    .big-button {
+        transition: all 0.25s ease;
+        transform: scale(1);
+    }
     .big-button:hover { transform: scale(1.03); }
     .slide-in { animation: slideIn 0.35s ease-out; }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0;} to { transform: translateX(0); opacity: 1;} }
@@ -27,528 +36,561 @@
     .category-cosmetiques { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
     .category-chaussures { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
     .category-accessoires { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-    @media (max-width: 600px) { .big-button { font-size: 1.05rem; padding: 1rem; } .app-container { border-radius: 8px; min-height: 100vh; } header, .bg-gradient-to-r { border-radius: 0; } .text-2xl { font-size: 1.25rem; } .text-6xl { font-size: 2.2rem; } }
-    @media (min-width: 601px) { .app-container { border-radius: 15px; } }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+        .big-button { font-size: 1.05rem; padding: 1rem; }
+        .app-container { border-radius: 8px; min-height: 100vh; }
+        header, .bg-gradient-to-r { border-radius: 0; }
+        .text-2xl { font-size: 1.25rem; }
+        .text-6xl { font-size: 2.2rem; }
+    }
+
+    @media (min-width: 601px) {
+        .app-container { border-radius: 15px; }
+    }
+    /* Simple table responsive */
     .table-sm td, .table-sm th { padding: 0.5rem; }
-    .chart-container { height: 250px; }
-  </style>
 
-  <script>
-    // ---------- AUTH UNIFIÉE ----------
-    const AUTH_KEY = 'authToken';
-    document.addEventListener('DOMContentLoaded', () => {
-      const token = localStorage.getItem(AUTH_KEY);
-      if (!token) { window.location.href = 'login.html'; return; }
-      initApp();
-    });
+.chart-container {
+    height: 250px;
+}
+</style>
 
-    // Helper pour requêtes API avec Bearer token
-    async function apiFetch(url, options = {}) {
-      const token = localStorage.getItem(AUTH_KEY);
-      if (!options.headers) options.headers = {};
-      options.headers['Authorization'] = `Bearer ${token}`;
-      if (!options.method || ['POST','PUT','PATCH'].includes(options.method.toUpperCase())) {
-        options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/json';
-      }
-      return fetch(url, options);
-    }
+    <script>
+        // Vérification de l'authentification
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = "login.html";
+            }
+        });
 
-    function logout() {
-      localStorage.removeItem(AUTH_KEY);
-      window.location.href = 'login.html';
-    }
-  </script>
+        // Fonction utilitaire pour effectuer des requêtes avec le token
+        async function apiFetch(url, options = {}) {
+            const token = localStorage.getItem('authToken');
+            if (!options.headers) options.headers = {};
+            options.headers['Authorization'] = `Bearer ${token}`;
+            return fetch(url, options);
+        }
+
+        // Déconnexion
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = "login.html";
+        }
+    </script>
+
 </head>
-
 <body class="bg-gradient-to-br from-purple-50 to-pink-50">
-  <div class="app-container">
-    <!-- En-tête -->
-    <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
-      <div class="flex items-center justify-between">
-        <button class="text-3xl" id="backBtn" onclick="showSection('menu')" style="display: none;">←</button>
-        <div class="text-center flex-1">
-          <h1 class="text-2xl font-bold">🏪 Ma Boutique</h1>
-          <div class="text-sm opacity-90">Ventes aujourd'hui: <span class="pulse" id="ventesToday">0</span></div>
+
+<script>
+// 🔹 AJOUT AUTH — Vérification si connecté
+if (!localStorage.getItem('authToken')) {
+  window.location.href = 'login.html';
+}
+</script>
+
+<div class="app-container">
+ <!-- En-tête -->
+  <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
+    <div class="flex items-center justify-between">
+      <button class="text-3xl" id="backBtn" onclick="showSection('menu')" style="display: none;">←</button>
+      <div class="text-center flex-1">
+        <h1 class="text-2xl font-bold">🏪 Ma Boutique</h1>
+        <div class="text-sm opacity-90">Ventes aujourd'hui: <span class="pulse" id="ventesToday">0</span></div>
+      </div>
+      <div class="text-3xl pulse">💰</div>
+    </div>
+  </div>
+
+  <!-- Menu Principal -->
+  <div class="p-6 space-y-6" id="menuSection">
+
+    <!-- Résumé du jour -->
+    <div class="bg-white rounded-3xl p-6 shadow-lg">
+      <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <span class="text-2xl mr-2">📊</span> Aujourd'hui
+      </h3>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="text-center bg-green-50 rounded-2xl p-4">
+          <div class="text-2xl font-bold text-green-600" id="chiffreAffaires">0 F</div>
+          <div class="text-xs text-green-700">Argent reçu</div>
         </div>
-        <div class="text-3xl pulse">💰</div>
+        <div class="text-center bg-blue-50 rounded-2xl p-4">
+          <div class="text-2xl font-bold text-blue-600" id="articlesVendus">0</div>
+          <div class="text-xs text-blue-700">Articles vendus</div>
+        </div>
+        <div class="text-center bg-orange-50 rounded-2xl p-4">
+          <div class="text-2xl font-bold text-orange-600" id="stockTotal">0</div>
+          <div class="text-xs text-orange-700">En stock</div>
+        </div>
       </div>
     </div>
 
-    <!-- Menu Principal -->
-    <div class="p-6 space-y-6" id="menuSection">
-      <!-- Résumé du jour -->
+    <!-- Actions principales (ajouté Inventaire à côté de Rapports) -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <button class="big-button bg-gradient-to-br from-green-400 to-green-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('vente')">
+        <div class="text-6xl mb-3">💳</div>
+        <div class="font-bold text-xl">VENDRE</div>
+        <div class="text-sm opacity-90">Vendre un article</div>
+      </button>
+
+      <button class="big-button bg-gradient-to-br from-blue-400 to-blue-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('stock')">
+        <div class="text-6xl mb-3">📦</div>
+        <div class="font-bold text-xl">STOCK</div>
+        <div class="text-sm opacity-90">Gérer produits</div>
+      </button>
+
+      <button class="big-button bg-gradient-to-br from-purple-400 to-purple-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('categories')">
+        <div class="text-6xl mb-3">🏷️</div>
+        <div class="font-bold text-xl">CATÉGORIES</div>
+        <div class="text-sm opacity-90">Organiser</div>
+      </button>
+
+      <button class="big-button bg-gradient-to-br from-orange-400 to-orange-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('rapports')">
+        <div class="text-6xl mb-3">📈</div>
+        <div class="font-bold text-xl">CHIFFRES</div>
+        <div class="text-sm opacity-90">Voir gains</div>
+      </button>
+
+      <button class="big-button bg-gradient-to-br from-teal-400 to-teal-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('inventaire')">
+        <div class="text-6xl mb-3">📋</div>
+        <div class="font-bold text-xl">INVENTAIRE</div>
+        <div class="text-sm opacity-90">Voir bénéfices</div>
+      </button>
+    </div>
+
+    <!-- Alertes stock faible -->
+    <div class="bg-gradient-to-r from-red-100 to-orange-100 rounded-3xl p-6 shadow-lg" id="alertesStock" style="display: none;">
+      <h3 class="text-lg font-bold mb-4 flex items-center text-red-700"><span class="text-2xl mr-2">⚠️</span> Presque fini</h3>
+      <div class="space-y-2" id="produitsStockFaible"></div>
+    </div>
+  </div>
+
+  <!-- Section Vente -->
+  <div class="hidden slide-in p-6" id="venteSection">
+    <h2 class="text-2xl font-bold mb-6 text-center">💳 Vendre</h2>
+
+    <!-- Panier -->
+    <div class="bg-white rounded-3xl p-6 shadow-lg mb-6">
+      <h3 class="text-lg font-bold mb-4 flex items-center"><span class="text-2xl mr-2">🛒</span> Panier</h3>
+      <div class="space-y-3 mb-4 min-h-[100px]" id="panierItems">
+        <div class="text-gray-500 text-center py-8"><div class="text-4xl mb-2">🛒</div><div>Panier vide</div></div>
+      </div>
+      <div class="border-t pt-4">
+        <div class="flex justify-between items-center text-2xl font-bold mb-4"><span>TOTAL:</span><span class="text-green-600" id="totalPanier">0 F</span></div>
+        <button class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg" onclick="showModal('paiement')">💰 ENCAISSER</button>
+      </div>
+    </div>
+
+    <!-- Sélection par catégorie -->
+    <div class="space-y-4">
+      <h3 class="text-lg font-bold">Choisir produits</h3>
+      <div class="grid grid-cols-2 gap-3" id="categoriesVente"></div>
+    </div>
+  </div>
+
+  <!-- Section Stock -->
+  <div class="hidden slide-in p-6" id="stockSection">
+    <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">📦 Mon Stock</h2><button class="bg-blue-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutProduit')">+ AJOUTER</button></div>
+    <div class="flex gap-2 mb-6 overflow-x-auto pb-2" id="filtreCategories"><button class="filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap" onclick="filtrerProduits('tous')">Tous</button></div>
+    <div class="space-y-4" id="listeProduits"></div>
+  </div>
+
+  <!-- Section Catégories -->
+  <div class="hidden slide-in p-6" id="categoriesSection">
+    <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">🏷️ Catégories</h2><button class="bg-purple-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutCategorie')">+ AJOUTER</button></div>
+    <input type="text" id="searchCategorie" placeholder="🔍 Rechercher une catégorie..." class="w-full p-2 border rounded mb-4">
+    <div class="space-y-4" id="listeCategories"></div>
+  </div>
+
+  <!-- Section Rapports (CHIFFRES) -->
+  <div class="hidden slide-in p-6" id="rapportsSection">
+    <h2 class="text-2xl font-bold mb-6 text-center">📈 Chiffres</h2>
+    <div class="space-y-6">
       <div class="bg-white rounded-3xl p-6 shadow-lg">
-        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-          <span class="text-2xl mr-2">📊</span> Aujourd'hui
-        </h3>
-        <div class="grid grid-cols-3 gap-4">
-          <div class="text-center bg-green-50 rounded-2xl p-4">
-            <div class="text-2xl font-bold text-green-600" id="chiffreAffaires">0 F</div>
-            <div class="text-xs text-green-700">Argent reçu</div>
-          </div>
-          <div class="text-center bg-blue-50 rounded-2xl p-4">
-            <div class="text-2xl font-bold text-blue-600" id="articlesVendus">0</div>
-            <div class="text-xs text-blue-700">Articles vendus</div>
-          </div>
-          <div class="text-center bg-orange-50 rounded-2xl p-4">
-            <div class="text-2xl font-bold text-orange-600" id="stockTotal">0</div>
-            <div class="text-xs text-orange-700">En stock</div>
-          </div>
+        <h3 class="text-lg font-bold mb-4">💰 Résumé</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-green-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-green-600" id="recettesJour">0 F</div><div class="text-sm text-green-700">Aujourd'hui</div></div>
+          <div class="bg-blue-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-blue-600" id="recettesSemaine">0 F</div><div class="text-sm text-blue-700">Cette semaine</div></div>
         </div>
       </div>
 
-      <!-- Actions principales -->
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <button class="big-button bg-gradient-to-br from-green-400 to-green-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('vente')">
-          <div class="text-6xl mb-3">💳</div>
-          <div class="font-bold text-xl">VENDRE</div>
-          <div class="text-sm opacity-90">Vendre un article</div>
-        </button>
-
-        <button class="big-button bg-gradient-to-br from-blue-400 to-blue-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('stock')">
-          <div class="text-6xl mb-3">📦</div>
-          <div class="font-bold text-xl">STOCK</div>
-          <div class="text-sm opacity-90">Gérer produits</div>
-        </button>
-
-        <button class="big-button bg-gradient-to-br from-purple-400 to-purple-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('categories')">
-          <div class="text-6xl mb-3">🏷️</div>
-          <div class="font-bold text-xl">CATÉGORIES</div>
-          <div class="text-sm opacity-90">Organiser</div>
-        </button>
-
-        <button class="big-button bg-gradient-to-br from-orange-400 to-orange-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('rapports')">
-          <div class="text-6xl mb-3">📈</div>
-          <div class="font-bold text-xl">CHIFFRES</div>
-          <div class="text-sm opacity-90">Voir gains</div>
-        </button>
-
-        <button class="big-button bg-gradient-to-br from-teal-400 to-teal-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('inventaire')">
-          <div class="text-6xl mb-3">📋</div>
-          <div class="font-bold text-xl">INVENTAIRE</div>
-          <div class="text-sm opacity-90">Voir bénéfices</div>
-        </button>
+      <div class="bg-white rounded-3xl p-6 shadow-lg">
+        <h3 class="text-lg font-bold mb-4">💳 Paiements</h3>
+        <div class="space-y-3" id="rapportsPaiements"></div>
       </div>
 
-      <!-- Alertes stock faible -->
-      <div class="bg-gradient-to-r from-red-100 to-orange-100 rounded-3xl p-6 shadow-lg" id="alertesStock" style="display: none;">
-        <h3 class="text-lg font-bold mb-4 flex items-center text-red-700"><span class="text-2xl mr-2">⚠️</span> Presque fini</h3>
-        <div class="space-y-2" id="produitsStockFaible"></div>
+      <div class="bg-white rounded-3xl p-6 shadow-lg">
+        <h3 class="text-lg font-bold mb-4">🔥 Produits Populaires</h3>
+        <div class="space-y-3" id="produitsPopulaires"></div>
       </div>
+
+      <!-- Graphiques -->
+      <div class="bg-white rounded-3xl p-6 shadow-lg">
+        <h3 class="text-lg font-bold mb-4">📊 Graphiques</h3>
+        
+<div class="chart-container"><canvas id="chartVentesByDay"></canvas></div>
+<div class="chart-container"><canvas id="chartTopProduits"></canvas></div>
+<div class="chart-container"><canvas id="chartPaiements"></canvas></div>
+</div>
+
     </div>
+  </div>
 
-    <!-- Section Vente -->
-    <div class="hidden slide-in p-6" id="venteSection">
-      <h2 class="text-2xl font-bold mb-6 text-center">💳 Vendre</h2>
-      <div class="bg-white rounded-3xl p-6 shadow-lg mb-6">
-        <h3 class="text-lg font-bold mb-4 flex items-center"><span class="text-2xl mr-2">🛒</span> Panier</h3>
-        <div class="space-y-3 mb-4 min-h-[100px]" id="panierItems">
-          <div class="text-gray-500 text-center py-8"><div class="text-4xl mb-2">🛒</div><div>Panier vide</div></div>
-        </div>
-        <div class="border-t pt-4">
-          <div class="flex justify-between items-center text-2xl font-bold mb-4"><span>TOTAL:</span><span class="text-green-600" id="totalPanier">0 F</span></div>
-          <button class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg" onclick="showModal('paiement')">💰 ENCAISSER</button>
-        </div>
-      </div>
-      <div class="space-y-4">
-        <h3 class="text-lg font-bold">Choisir produits</h3>
-        <div class="grid grid-cols-2 gap-3" id="categoriesVente"></div>
-      </div>
-    </div>
-
-    <!-- Section Stock -->
-    <div class="hidden slide-in p-6" id="stockSection">
-      <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">📦 Mon Stock</h2><button class="bg-blue-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutProduit')">+ AJOUTER</button></div>
-      <div class="flex gap-2 mb-6 overflow-x-auto pb-2" id="filtreCategories"><button class="filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap" onclick="filtrerProduits('tous')">Tous</button></div>
-      <div class="space-y-4" id="listeProduits"></div>
-    </div>
-
-    <!-- Section Catégories -->
-    <div class="hidden slide-in p-6" id="categoriesSection">
-      <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">🏷️ Catégories</h2><button class="bg-purple-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutCategorie')">+ AJOUTER</button></div>
-      <input type="text" id="searchCategorie" placeholder="🔍 Rechercher une catégorie..." class="w-full p-2 border rounded mb-4">
-      <div class="space-y-4" id="listeCategories"></div>
-    </div>
-
-    <!-- Section Rapports (CHIFFRES) -->
-    <div class="hidden slide-in p-6" id="rapportsSection">
-      <h2 class="text-2xl font-bold mb-6 text-center">📈 Chiffres</h2>
-      <div class="space-y-6">
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">💰 Résumé</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-green-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-green-600" id="recettesJour">0 F</div><div class="text-sm text-green-700">Aujourd'hui</div></div>
-            <div class="bg-blue-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-blue-600" id="recettesSemaine">0 F</div><div class="text-sm text-blue-700">Cette semaine</div></div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">💳 Paiements</h3>
-          <div class="space-y-3" id="rapportsPaiements"></div>
-        </div>
-
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">🔥 Produits Populaires</h3>
-          <div class="space-y-3" id="produitsPopulaires"></div>
-        </div>
-
-        <!-- Graphiques -->
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">📊 Graphiques</h3>
-          <div class="chart-container"><canvas id="chartVentesByDay"></canvas></div>
-          <div class="chart-container"><canvas id="chartTopProduits"></canvas></div>
-          <div class="chart-container"><canvas id="chartPaiements"></canvas></div>
-        </div>
-
-        <!-- 🔹 Ventes récentes (déplacé ICI, dans Rapports) -->
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">🧾 Ventes récentes</h3>
-          <div id="listeVentes" class="space-y-3 text-sm"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section Inventaire -->
-    <div class="hidden slide-in p-6" id="inventaireSection">
-      <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
-      <input type="text" id="searchInventaire" placeholder="🔍 Rechercher un produit..." class="w-full p-2 border rounded mb-4">
-      <div class="bg-white rounded-3xl p-4 shadow-lg">
-        <table class="w-full table-sm">
-          <thead class="bg-gray-100"><tr><th class="p-2 border">Produit</th><th class="p-2 border">Achat</th><th class="p-2 border">Vente</th><th class="p-2 border">En stock</th><th class="p-2 border">Vendues</th><th class="p-2 border">Bénéfice réalisé</th></tr></thead>
-          <tbody id="inventaireListe"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Modales -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" id="modalOverlay">
-      <!-- Modal Ajout Produit -->
-      <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutProduit">
-        <h3 class="text-2xl font-bold mb-6 text-center">📦 Nouveau Produit</h3>
-        <div class="space-y-4">
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomProduit" placeholder="Nom du produit" type="text"/>
-          <select class="w-full p-4 border-2 rounded-2xl text-lg" id="categorieProduit"><option value="">Choisir catégorie</option></select>
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="prixAchatProduit" placeholder="Prix achat (F CFA)" type="number"/>
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="prixProduit" placeholder="Prix vente (F CFA)" type="number"/>
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="stockProduit" placeholder="Quantité en stock" type="number"/>
-          <textarea class="w-full p-4 border-2 rounded-2xl text-lg h-20" id="descriptionProduit" placeholder="Description (optionnel)"></textarea>
-          <div class="flex gap-3">
-            <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
-            <button class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterProduit()">Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Ajout Catégorie -->
-      <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutCategorie">
-        <h3 class="text-2xl font-bold mb-6 text-center">🏷️ Nouvelle Catégorie</h3>
-        <div class="space-y-4">
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomCategorie" placeholder="Nom de la catégorie" type="text"/>
-          <div class="grid grid-cols-4 gap-3">
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👕')" type="button">👕</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💄')" type="button">💄</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👠')" type="button">👠</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💍')" type="button">💍</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🎒')" type="button">🎒</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👜')" type="button">👜</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🧴')" type="button">🧴</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('✨')" type="button">✨</button>
-          </div>
-          <input id="emojiCategorie" type="hidden" value="🏷️"/>
-          <div class="flex gap-3">
-            <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
-            <button class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterCategorie()">Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Méthodes de Paiement -->
-      <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalPaiement">
-        <h3 class="text-2xl font-bold mb-6 text-center">💳 Choisir Paiement</h3>
-        <div class="space-y-4">
-          <button class="w-full bg-green-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('especes')"><span class="text-2xl">💵</span> Espèces</button>
-          <button class="w-full bg-blue-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('wave')"><span class="text-2xl">📱</span> Wave</button>
-          <button class="w-full bg-orange-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('orange')"><span class="text-2xl">📞</span> Orange Money</button>
-          <button class="w-full bg-gray-300 text-gray-700 p-4 rounded-2xl text-lg font-bold" onclick="hideModal()">Annuler</button>
-        </div>
+      <!-- 🔹 AJOUT GESTION VENTES -->
+      <div class="bg-white rounded-3xl p-6 shadow-lg">
+        <h3 class="text-lg font-bold mb-4">🧾 Ventes récentes</h3>
+        <div id="listeVentes" class="space-y-3 text-sm"></div>
       </div>
     </div>
   </div>
 
-  <script>
-    // ---------- CONFIG & DATA ----------
-    const metaApi = document.querySelector('meta[name="api-base"]');
-    const API_BASE = metaApi ? metaApi.content : '';
+ <!-- Section Inventaire -->
+  <div class="hidden slide-in p-6" id="inventaireSection">
+    <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
+    <input type="text" id="searchInventaire" placeholder="🔍 Rechercher un produit..." class="w-full p-2 border rounded mb-4">
+    <div class="bg-white rounded-3xl p-4 shadow-lg">
+      <table class="w-full table-sm">
+        <thead class="bg-gray-100"><tr><th class="p-2 border">Produit</th><th class="p-2 border">Achat</th><th class="p-2 border">Vente</th><th class="p-2 border">En stock</th><th class="p-2 border">Vendues</th><th class="p-2 border">Bénéfice réalisé</th></tr></thead>
+        <tbody id="inventaireListe"></tbody>
+      </table>
+    </div>
+  </div>
 
-    const defaultData = {
-      categories: [
-        {id: 1, nom: "Habits", emoji: "👕", couleur: "category-habits"},
-        {id: 2, nom: "Cosmétiques", emoji: "💄", couleur: "category-cosmetiques"},
-        {id: 3, nom: "Chaussures", emoji: "👠", couleur: "category-chaussures"},
-        {id: 4, nom: "Accessoires", emoji: "💍", couleur: "category-accessoires"}
-      ],
-      produits: [],
-      ventes: [],
-      panier: [],
-      stats: { ventesJour: 0, chiffreAffaires: 0, paiements: {especes: 0, wave: 0, orange: 0} }
-    };
+  <!-- Modales -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" id="modalOverlay">
 
-    let appData = null;
-    let chartVentesByDay = null, chartTopProduits = null, chartPaiements = null;
+    <!-- Modal Ajout Produit -->
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutProduit">
+      <h3 class="text-2xl font-bold mb-6 text-center">📦 Nouveau Produit</h3>
+      <div class="space-y-4">
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomProduit" placeholder="Nom du produit" type="text"/>
+        <select class="w-full p-4 border-2 rounded-2xl text-lg" id="categorieProduit"><option value="">Choisir catégorie</option></select>
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="prixAchatProduit" placeholder="Prix achat (F CFA)" type="number"/>
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="prixProduit" placeholder="Prix vente (F CFA)" type="number"/>
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="stockProduit" placeholder="Quantité en stock" type="number"/>
+        <textarea class="w-full p-4 border-2 rounded-2xl text-lg h-20" id="descriptionProduit" placeholder="Description (optionnel)"></textarea>
+        <div class="flex gap-3">
+          <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
+          <button class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterProduit()">Ajouter</button>
+        </div>
+      </div>
+    </div>
 
-    // ---------- localStorage helpers ----------
-    function loadAppDataLocal(){
-      const raw = localStorage.getItem('boutique_appData');
-      if(raw){
-        try{ appData = JSON.parse(raw); }
-        catch(e){ appData = JSON.parse(JSON.stringify(defaultData)); }
-      } else appData = JSON.parse(JSON.stringify(defaultData));
-      appData.produits.forEach(p=>{ if(typeof p.prixAchat === 'undefined') p.prixAchat = p.prix_achat || 0; });
-      if(!localStorage.getItem('boutique_outbox')) localStorage.setItem('boutique_outbox', JSON.stringify([]));
+    <!-- Modal Ajout Catégorie -->
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutCategorie">
+      <h3 class="text-2xl font-bold mb-6 text-center">🏷️ Nouvelle Catégorie</h3>
+      <div class="space-y-4">
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomCategorie" placeholder="Nom de la catégorie" type="text"/>
+        <div class="grid grid-cols-4 gap-3">
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👕')" type="button">👕</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💄')" type="button">💄</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👠')" type="button">👠</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💍')" type="button">💍</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🎒')" type="button">🎒</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👜')" type="button">👜</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🧴')" type="button">🧴</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('✨')" type="button">✨</button>
+        </div>
+        <input id="emojiCategorie" type="hidden" value="🏷️"/>
+        <div class="flex gap-3">
+          <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
+          <button class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterCategorie()">Ajouter</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Méthodes de Paiement -->
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalPaiement">
+      <h3 class="text-2xl font-bold mb-6 text-center">💳 Choisir Paiement</h3>
+      <div class="space-y-4">
+        <button class="w-full bg-green-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('especes')"><span class="text-2xl">💵</span> Espèces</button>
+        <button class="w-full bg-blue-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('wave')"><span class="text-2xl">📱</span> Wave</button>
+        <button class="w-full bg-orange-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('orange')"><span class="text-2xl">📞</span> Orange Money</button>
+        <button class="w-full bg-gray-300 text-gray-700 p-4 rounded-2xl text-lg font-bold" onclick="hideModal()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---------- CONFIG & DATA ----------
+// API_BASE can be set to full URL when deployed. To auto-detect hosted API, set a meta tag in the hosting HTML head like:
+// <meta name="api-base" content="https://mon-backend.example.com">
+const metaApi = document.querySelector('meta[name="api-base"]');
+const API_BASE = metaApi 
+  ? metaApi.content 
+  : (location.hostname === 'localhost' || location.hostname === '127.0.0.1') 
+    ? 'http://localhost:5000'  // ton backend local
+    : 'https://ma-boutique-backend-3.onrender.com'; // backend en ligne
+
+
+const defaultData = {
+  categories: [
+    {id: 1, nom: "Habits", emoji: "👕", couleur: "category-habits"},
+    {id: 2, nom: "Cosmétiques", emoji: "💄", couleur: "category-cosmetiques"},
+    {id: 3, nom: "Chaussures", emoji: "👠", couleur: "category-chaussures"},
+    {id: 4, nom: "Accessoires", emoji: "💍", couleur: "category-accessoires"}
+  ],
+  produits: [], // start empty to prefer server data after first sync
+  ventes: [],
+  panier: [],
+  stats: { ventesJour: 0, chiffreAffaires: 0, paiements: {especes: 0, wave: 0, orange: 0} }
+};
+
+let appData = null;
+let chartVentesByDay = null, chartTopProduits = null, chartPaiements = null;
+
+// ---------- localStorage helpers ----------
+function loadAppDataLocal(){
+  const raw = localStorage.getItem('boutique_appData');
+  if(raw){
+    try{ appData = JSON.parse(raw); }
+    catch(e){ appData = JSON.parse(JSON.stringify(defaultData)); }
+  } else appData = JSON.parse(JSON.stringify(defaultData));
+  appData.produits.forEach(p=>{ if(typeof p.prixAchat === 'undefined') p.prixAchat = p.prix_achat || 0; });
+  if(!localStorage.getItem('boutique_outbox')) localStorage.setItem('boutique_outbox', JSON.stringify([]));
+}
+function saveAppDataLocal(){ localStorage.setItem('boutique_appData', JSON.stringify(appData)); }
+
+// ---------- Outbox / Background retry ----------
+function enqueueOutbox(item){
+  const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]'); 
+  q.push(item); 
+  localStorage.setItem('boutique_outbox', JSON.stringify(q));
+}
+
+async function processOutboxOne(){
+  const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]');
+  if(!q.length) return null;
+  const item = q[0];
+  try{
+    let res=null;
+    if(item.type==='sale') res = await postSaleServer(item.payload);
+    else if(item.type==='product') res = await postProductServer(item.payload);
+    else if(item.type==='category') res = await postCategoryServer(item.payload);
+
+    if(res){
+      q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q)); saveAppDataLocal();
+      return {ok:true, item};
+    } else {
+      item.tries = (item.tries||0) + 1;
+      if(item.tries > 10){
+        console.warn('Dropping outbox item after many tries', item);
+        q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q));
+        return {ok:false};
+      }
+      q[0] = item; localStorage.setItem('boutique_outbox', JSON.stringify(q));
+      return {ok:false};
     }
-    function saveAppDataLocal(){ localStorage.setItem('boutique_appData', JSON.stringify(appData)); }
+  }catch(err){ console.warn('Outbox process error', err); return {ok:false}; }
+}
 
-    // ---------- Outbox ----------
-    function enqueueOutbox(item){
-      const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]');
-      q.push(item);
-      localStorage.setItem('boutique_outbox', JSON.stringify(q));
-    }
+async function processOutboxAll(){ 
+  let did=false; 
+  try{ 
+    while(true){ 
+      const r = await processOutboxOne(); 
+      if(!r) break; 
+      if(r.ok) did=true; else break; 
+    } 
+  }catch(e){ console.warn(e); } 
+  return did; 
+}
 
-    async function processOutboxOne(){
-      const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]');
-      if(!q.length) return null;
-      const item = q[0];
-      try{
-        let res=null;
-        if(item.type==='sale') res = await postSaleServer(item.payload);
-        else if(item.type==='product') res = await postProductServer(item.payload);
-        else if(item.type==='category') res = await postCategoryServer(item.payload);
-
-        if(res){
-          q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q)); saveAppDataLocal();
-          return {ok:true, item};
-        } else {
-          item.tries = (item.tries||0) + 1;
-          if(item.tries > 10){
-            console.warn('Dropping outbox item after many tries', item);
-            q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q));
-            return {ok:false};
-          }
-          q[0] = item; localStorage.setItem('boutique_outbox', JSON.stringify(q));
-          return {ok:false};
-        }
-      }catch(err){ console.warn('Outbox process error', err); return {ok:false}; }
-    }
-
-    async function processOutboxAll(){
-      let did=false;
-      try{
-        while(true){
-          const r = await processOutboxOne();
-          if(!r) break;
-          if(r.ok) did=true; else break;
-        }
-      }catch(e){ console.warn(e); }
-      return did;
-    }
-
-    setInterval(()=>{ if(navigator.onLine) processOutboxAll(); }, 30*1000);
-    window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox'); processOutboxAll(); });
+setInterval(()=>{ if(navigator.onLine) processOutboxAll(); }, 30*1000);
+window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox'); processOutboxAll(); });
 
     async function safeJson(res) {
-      try { return await res.json(); }
-      catch (e) {
-        const rawText = await res.text();
-        console.error("❌ Erreur parsing JSON:", e);
-        console.warn("--- Réponse brute du serveur ---\n" + rawText + "\n--------------------------------");
-        return null;
+  try {
+    return await res.json();
+  } catch (e) {
+    const rawText = await res.text();
+    console.error("❌ Erreur parsing JSON:", e);
+    console.warn("--- Réponse brute du serveur ---\n" + rawText + "\n--------------------------------");
+    return null;
+  }
+}
+// ---------- Sync with server ----------
+async function syncFromServer(){
+  try{
+    const [resCat, resProd, resStats] = await Promise.all([
+      fetch(`${API_BASE}/categories`),
+      fetch(`${API_BASE}/products`),
+      fetch(`${API_BASE}/stats/summary`)
+    ]);
+    if(resCat.ok && resProd.ok){
+      const cats = await safeJson(resCat);
+      const prods = await safeJson(resProd);
+      prods?.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
+      appData.categories = cats || [];
+      appData.produits = prods || [];
+      if(resStats.ok){ 
+        const s = await safeJson(resStats); 
+        if(s?.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires; 
       }
+      saveAppDataLocal();
+      updateStats(); afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire();
+      if(navigator.onLine) processOutboxAll();
+      afficherRapports();
+      console.log('Sync from server done');
     }
+  }catch(err){ console.log('Sync failed, offline or server down', err); }
+}
 
-    // ---------- Sync with server ----------
-    async function syncFromServer(){
-      try{
-        const [resCat, resProd, resStats] = await Promise.all([
-          apiFetch(`${API_BASE}/categories`),
-          apiFetch(`${API_BASE}/products`),
-          apiFetch(`${API_BASE}/stats/summary`)
-        ]);
-        if(resCat.ok && resProd.ok){
-          const cats = await safeJson(resCat);
-          const prods = await safeJson(resProd);
-          prods?.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
-          appData.categories = cats || [];
-          appData.produits = prods || [];
-          if(resStats.ok){
-            const s = await safeJson(resStats);
-            if(s?.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires;
-          }
-          saveAppDataLocal();
-          updateStats();
-          afficherCategoriesVente();
-          afficherProduits();
-          afficherCategories();
-          afficherRapports();
-          afficherInventaire();
-          if(navigator.onLine) processOutboxAll();
-          console.log('Sync from server done');
-        }
-      }catch(err){ console.log('Sync failed, offline or server down', err); }
-    }
+async function postProductServer(product){
+  try{
+    const res = await fetch(`${API_BASE}/products`, { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body: JSON.stringify(product)
+    });
+    if(res.ok){ return await safeJson(res); }
+    else { console.warn('Add product failed', await res.text()); return null; }
+  }catch(e){ console.warn('Network error adding product', e); return null; }
+}
 
-    async function postProductServer(product){
-      try{
-        const res = await apiFetch(`${API_BASE}/products`, {
-          method:'POST',
-          body: JSON.stringify(product)
-        });
-        if(res.ok){ return await safeJson(res); }
-        else { console.warn('Add product failed', await res.text()); return null; }
-      }catch(e){ console.warn('Network error adding product', e); return null; }
-    }
+async function postCategoryServer(category){
+  try{
+    const res = await fetch(`${API_BASE}/categories`, { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body: JSON.stringify(category)
+    });
+    if(res.ok){ return await safeJson(res); }
+    else { console.warn('Add category failed', await res.text()); return null; }
+  }catch(e){ console.warn('Network error adding category', e); return null; }
+}
 
-    async function postCategoryServer(category){
-      try{
-        const res = await apiFetch(`${API_BASE}/categories`, {
-          method:'POST',
-          body: JSON.stringify(category)
-        });
-        if(res.ok){ return await safeJson(res); }
-        else { console.warn('Add category failed', await res.text()); return null; }
-      }catch(e){ console.warn('Network error adding category', e); return null; }
-    }
+async function postSaleServer(sale){
+  try{
+    const res = await fetch(`${API_BASE}/sales`, { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body: JSON.stringify(sale)
+    });
+    if(res.ok){ return await safeJson(res); }
+    else { console.warn('Sale post failed', await res.text()); return null; }
+  }catch(e){ console.warn('Network error posting sale', e); return null; }
+}
 
-    async function postSaleServer(sale){
-      try{
-        const res = await apiFetch(`${API_BASE}/sales`, {
-          method:'POST',
-          body: JSON.stringify(sale)
-        });
-        if(res.ok){ return await safeJson(res); }
-        else { console.warn('Sale post failed', await res.text()); return null; }
-      }catch(e){ console.warn('Network error posting sale', e); return null; }
-    }
 
-    // ---------- Ventes récentes ----------
-    async function afficherVentes() {
-      try {
-        const res = await apiFetch(`${API_BASE}/sales`);
-        if (!res.ok) throw new Error('Erreur chargement ventes');
-        const ventes = await res.json();
-        const container = document.getElementById('listeVentes');
-        container.innerHTML = '';
-        if (!ventes.length) {
-          container.innerHTML = '<div class="text-gray-500">Aucune vente enregistrée.</div>';
-          return;
-        }
-        ventes.forEach(v => {
-          const div = document.createElement('div');
-          div.className = 'border rounded-xl p-3 flex justify-between items-center';
-          const d = v.date ? new Date(v.date) : new Date();
-          div.innerHTML = `
-            <div>
-              <div><strong>Total :</strong> ${v.total} F</div>
-              <div><strong>Paiement :</strong> ${v.paiement}</div>
-              <div class="text-gray-500 text-xs">${d.toLocaleString()}</div>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="modifierVente('${v.id}')" class="bg-blue-500 text-white px-2 py-1 rounded">✏️</button>
-              <button onclick="annulerVente('${v.id}')" class="bg-red-500 text-white px-2 py-1 rounded">🗑️</button>
-            </div>`;
-          container.appendChild(div);
-        });
-      } catch (err) {
-        console.error(err);
-        document.getElementById('listeVentes').innerHTML = '<div class="text-red-500">Erreur chargement ventes</div>';
+
+// 🔹 AJOUT GESTION VENTES — Fonction pour afficher ventes
+async function afficherVentes() {
+  try {
+    const res = await fetch(`${API_BASE}/sales`, {
+      headers: { 
+        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
       }
+    });
+    if (!res.ok) throw new Error('Erreur chargement ventes');
+    const ventes = await res.json();
+
+    const container = document.getElementById('listeVentes');
+    container.innerHTML = '';
+
+    if (!ventes.length) {
+      container.innerHTML = '<div class="text-gray-500">Aucune vente enregistrée.</div>';
+      return;
     }
 
-    async function annulerVente(id) {
-      if (!confirm('Confirmer annulation de cette vente ?')) return;
-      const res = await apiFetch(`${API_BASE}/sales/${id}`, { method: 'DELETE' });
-      if (res.ok) { alert('✅ Vente annulée'); afficherVentes(); syncFromServer(); }
-      else { alert('❌ Erreur lors de l’annulation'); }
+    ventes.forEach(v => {
+      const div = document.createElement('div');
+      div.className = 'border rounded-xl p-3 flex justify-between items-center';
+      div.innerHTML = `
+        <div>
+          <div><strong>Total :</strong> ${v.total} F</div>
+          <div><strong>Paiement :</strong> ${v.paiement}</div>
+          <div class="text-gray-500 text-xs">${new Date(v.date).toLocaleString()}</div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="modifierVente('${v.id}')" class="bg-blue-500 text-white px-2 py-1 rounded">✏️</button>
+          <button onclick="annulerVente('${v.id}')" class="bg-red-500 text-white px-2 py-1 rounded">🗑️</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  } catch (err) {
+    console.error(err);
+    document.getElementById('listeVentes').innerHTML = '<div class="text-red-500">Erreur chargement ventes</div>';
+  }
+}
+
+// 🔹 AJOUT GESTION VENTES — Annuler vente
+async function annulerVente(id) {
+  if (!confirm('Confirmer annulation de cette vente ?')) return;
+  const res = await fetch(`${API_BASE}/sales/${id}`, {
+    method: 'DELETE',
+    headers: { 
+      'Authorization': 'Bearer ' + localStorage.getItem('authToken')
     }
+  });
+  if (res.ok) {
+    alert('✅ Vente annulée');
+    afficherVentes();
+    syncFromServer();
+  } else {
+    alert('❌ Erreur lors de l’annulation');
+  }
+}
 
-    async function modifierVente(id) {
-      const nouveauTotal = prompt('Nouveau total :');
-      if (!nouveauTotal) return;
-      const res = await apiFetch(`${API_BASE}/sales/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ total: parseInt(nouveauTotal) })
-      });
-      if (res.ok) { alert('✅ Vente modifiée'); afficherVentes(); syncFromServer(); }
-      else { alert('❌ Erreur lors de la modification'); }
-    }
+// 🔹 AJOUT GESTION VENTES — Modifier vente
+async function modifierVente(id) {
+  const nouveauTotal = prompt('Nouveau total :');
+  if (!nouveauTotal) return;
+  const res = await fetch(`${API_BASE}/sales/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+    },
+    body: JSON.stringify({ total: parseInt(nouveauTotal) })
+  });
+  if (res.ok) {
+    alert('✅ Vente modifiée');
+    afficherVentes();
+    syncFromServer();
+  } else {
+    alert('❌ Erreur lors de la modification');
+  }
+}
 
-    // ---------- UI Helpers (show/hide sections & modals) ----------
-    const sectionsMap = {
-      menu: 'menuSection',
-      vente: 'venteSection',
-      stock: 'stockSection',
-      categories: 'categoriesSection',
-      rapports: 'rapportsSection',
-      inventaire: 'inventaireSection'
-    };
+function showSection(section) {
+  const sections = ['menu','vente','stock','categories','rapports','inventaire'];
+  sections.forEach(s => {
+    const el = document.getElementById(s + 'Section');
+    if (el) el.classList.add('hidden');
+  });
 
-    function showSection(key){
-      Object.values(sectionsMap).forEach(id => document.getElementById(id).classList.add('hidden'));
-      const id = sectionsMap[key] || 'menuSection';
-      document.getElementById(id).classList.remove('hidden');
-      document.getElementById('backBtn').style.display = (key === 'menu') ? 'none' : 'block';
-      if(key === 'rapports') afficherVentes();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  const target = document.getElementById(section + 'Section');
+  if (target) target.classList.remove('hidden');
 
-    function showModal(name){
-      const overlay = document.getElementById('modalOverlay');
-      Array.from(overlay.children).forEach(c => c.classList.add('hidden'));
-      overlay.classList.remove('hidden');
-      if(name === 'ajoutProduit') document.getElementById('modalAjoutProduit').classList.remove('hidden');
-      if(name === 'ajoutCategorie') document.getElementById('modalAjoutCategorie').classList.remove('hidden');
-      if(name === 'paiement') document.getElementById('modalPaiement').classList.remove('hidden');
-    }
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) backBtn.style.display = (section === 'menu') ? 'none' : 'block';
 
-    function hideModal(){ document.getElementById('modalOverlay').classList.add('hidden'); }
+  currentSection = section;
 
-    // ---------- Stubs (sécurise les appels manquants) ----------
-    function updateStats(){
-      // Met à jour la tuile d’accueil depuis appData.stats
-      const ca = appData?.stats?.chiffreAffaires || 0;
-      document.getElementById('chiffreAffaires').textContent = `${ca} F`;
-      document.getElementById('ventesToday').textContent = appData?.stats?.ventesJour || 0;
-    }
+  if (section === 'vente') { afficherCategoriesVente(); afficherPanier(); }
+  else if (section === 'stock') { afficherProduits(); afficherFiltresCategories(); }
+  else if (section === 'categories') { afficherCategories(); }
+  else if (section === 'rapports') { afficherRapports(); afficherVentes(); }
+  else if (section === 'inventaire') { afficherInventaire(); }
+  else if (section === 'menu') { updateStats(); verifierStockFaible(); }
+}
 
-    function afficherCategoriesVente(){
-      const wrap = document.getElementById('categoriesVente');
-      if(!wrap) return;
-      wrap.innerHTML = '';
-      (appData?.categories||[]).forEach(c=>{
-        const btn = document.createElement('button');
-        btn.className = `big-button text-white p-4 rounded-2xl shadow ${c.couleur||'bg-purple-500'}`;
-        btn.innerHTML = `<div class="text-3xl">${c.emoji||'🏷️'}</div><div class="font-bold">${c.nom}</div>`;
-        wrap.appendChild(btn);
-      });
-    }
 
-    function afficherProduits(){ /* à brancher selon votre logique */ }
-    function afficherCategories(){ /* à brancher selon votre logique */ }
-    function afficherRapports(){ /* à brancher selon votre logique */ }
-    function afficherInventaire(){ /* à brancher selon votre logique */ }
-
-    function selectEmoji(e){ const i=document.getElementById('emojiCategorie'); if(i) i.value=e; }
-    function ajouterProduit(){ console.log('TODO: ajouterProduit'); hideModal(); }
-    function ajouterCategorie(){ console.log('TODO: ajouterCategorie'); hideModal(); }
-    function finaliserVente(m){ console.log('TODO: finaliserVente', m); hideModal(); }
-    function filtrerProduits(){ /* TODO */ }
-
-    // ---------- Init ----------
-    function initApp(){
-      loadAppDataLocal();
-      showSection('menu');
-      syncFromServer();
-    }
-  </script>
+// On recharge les ventes quand on ouvre la section rapports
+const originalShowSection = showSection;
+showSection = function(section) {
+  originalShowSection(section);
+  if (section === 'rapports') {
+    afficherVentes();
+  }
+};
+</script>
 </body>
-</html>
+</html> 
