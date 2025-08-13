@@ -296,6 +296,14 @@
     let appData = null;
     let chartVentesByDay = null, chartTopProduits = null, chartPaiements = null;
 
+    document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    // Pas de connexion → on redirige vers login
+    window.location.href = 'login.html';
+  }
+});
+
     // ---------- localStorage helpers ----------
     function loadAppDataLocal(){
       const raw = localStorage.getItem('boutique_appData');
