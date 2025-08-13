@@ -358,7 +358,7 @@ async function syncFromServer(){
     const [resCat, resProd, resStats] = await Promise.all([
       fetch(API_BASE + '/categories'),
       fetch(API_BASE + '/products'),
-      fetch(API_BASE + '/stats')
+      fetch(API_BASE + '/stats/ventes-par-jour')
     ]);
     if(resCat.ok && resProd.ok){
       const cats = await resCat.json();
@@ -366,7 +366,14 @@ async function syncFromServer(){
       prods.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
       appData.categories = cats;
       appData.produits = prods;
-      if(resStats.ok){ const s = await resStats.json(); if(s.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires; }
+      if (resStats.ok) {
+  const statsArray = await resStats.json();
+  if (Array.isArray(statsArray)) {
+    const today = new Date().toISOString().slice(0, 10);
+    const todayStats = statsArray.find(item => item.date === today);
+    appData.stats.chiffreAffaires = todayStats ? todayStats.total_montant : 0;
+  }
+}
       saveAppDataLocal();
       updateStats(); afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire();
       // after successful sync, try to flush outbox
