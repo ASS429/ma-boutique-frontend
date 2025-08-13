@@ -23,18 +23,18 @@
 </div>
 
 <script>
-const API_BASE = "https://ma-boutique-backend-3.onrender.com"; // Remplacer par ton URL backend Render
+const API_BASE = "https://ma-boutique-backend-3.onrender.com"; // URL backend
 
 document.getElementById('registerBtn').addEventListener('click', async () => {
   const username = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
 
-  if (!email || !password) return alert('Veuillez remplir tous les champs.');
+  if (!username || !password) return alert('Veuillez remplir tous les champs.');
 
   const res = await fetch(API_BASE + '/auth/register', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ username, password })
   });
 
   if (res.ok) {
@@ -45,6 +45,7 @@ document.getElementById('registerBtn').addEventListener('click', async () => {
   }
 });
 </script>
+
 
 </body>
 </html>
