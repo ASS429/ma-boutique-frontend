@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liste des utilisateurs</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+
+<div class="max-w-lg mx-auto bg-white p-6 rounded-xl shadow-md">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">👥 Utilisateurs</h1>
+    <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Déconnexion</button>
+  </div>
+  
+  <ul id="userList" class="space-y-2 text-gray-700"></ul>
+</div>
+
+<script>
+const API_BASE = "https://ma-boutique-backend-3.onrender.com";
+
+// Vérifier si token existe
+const token = localStorage.getItem("token");
+if (!token) {
+  window.location.href = "login.html";
+}
+
+// Déconnexion
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+});
+
+// Charger la liste des utilisateurs
+fetch(API_BASE + "/auth/users", {
+  headers: { "Authorization": "Bearer " + token }
+})
+.then(res => {
+  if (!res.ok) throw new Error("Erreur d'authentification");
+  return res.json();
+})
+.then(users => {
+  const list = document.getElementById("userList");
+  list.innerHTML = "";
+  users.forEach(u => {
+    const li = document.createElement("li");
+    li.className = "p-2 border rounded";
+    li.textContent = `${u.id} — ${u.username}`;
+    list.appendChild(li);
+  });
+})
+.catch(err => {
+  alert("Erreur : " + err.message);
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+});
+</script>
+
+</body>
+</html>
