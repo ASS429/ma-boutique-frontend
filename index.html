@@ -578,8 +578,10 @@ if('serviceWorker' in navigator){ window.addEventListener('load', function(){ na
 // 🔹 AJOUT GESTION VENTES — Fonction pour afficher ventes
 async function afficherVentes() {
   try {
-    const res = await fetch(API_BASE + '/sales', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('authToken') }
+    const res = await fetch(`${API_BASE}/sales`, {
+      headers: { 
+        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+      }
     });
     if (!res.ok) throw new Error('Erreur chargement ventes');
     const ventes = await res.json();
@@ -617,9 +619,11 @@ async function afficherVentes() {
 // 🔹 AJOUT GESTION VENTES — Annuler vente
 async function annulerVente(id) {
   if (!confirm('Confirmer annulation de cette vente ?')) return;
-  const res = await fetch(API_BASE + '/sales/' + id, {
+  const res = await fetch(`${API_BASE}/sales/${id}`, {
     method: 'DELETE',
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('authToken') }
+    headers: { 
+      'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+    }
   });
   if (res.ok) {
     alert('✅ Vente annulée');
@@ -634,7 +638,7 @@ async function annulerVente(id) {
 async function modifierVente(id) {
   const nouveauTotal = prompt('Nouveau total :');
   if (!nouveauTotal) return;
-  const res = await fetch(API_BASE + '/sales/' + id, {
+  const res = await fetch(`${API_BASE}/sales/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
