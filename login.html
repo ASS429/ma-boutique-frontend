@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Connexion - Ma Boutique</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center min-h-screen">
+
+<div class="bg-white rounded-3xl shadow-lg p-8 w-full max-w-sm">
+  <h1 class="text-2xl font-bold text-center mb-6">🔑 Connexion</h1>
+
+  <input type="email" id="email" placeholder="Email" class="w-full p-3 border rounded-lg mb-4">
+  <input type="password" id="password" placeholder="Mot de passe" class="w-full p-3 border rounded-lg mb-4">
+
+  <button id="loginBtn" class="w-full bg-purple-600 text-white p-3 rounded-lg font-bold">Se connecter</button>
+
+  <p class="text-center text-sm mt-4">
+    Pas encore de compte ?
+    <a href="register.html" class="text-purple-600 font-bold">Créer un compte</a>
+  </p>
+</div>
+
+<script>
+const API_BASE = "https://ton-backend-sur-render.com"; // Remplacer par ton URL backend Render
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!email || !password) return alert('Veuillez remplir tous les champs.');
+
+  const res = await fetch(API_BASE + '/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ email, password })
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    localStorage.setItem('authToken', data.token);
+    window.location.href = 'index.html';
+  } else {
+    alert('Identifiants incorrects.');
+  }
+});
+</script>
+
+</body>
+</html>
