@@ -1,23 +1,36 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ma Boutique </title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Optionnel: <meta name="api-base" content="https://mon-backend.example.com"> -->
-  <link rel="manifest" href="/pwa/manifest.json">
-  <meta name="theme-color" content="#6D28D9">
-  <link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="api-base" content="https://ma-boutique-backend-3.onrender.com">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ma Boutique</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- PWA meta -->
+<link rel="manifest" href="/pwa/manifest.json">
+<meta name="theme-color" content="#6D28D9">
+<!-- iOS support -->
+<link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="api-base" content="https://ma-boutique-backend-3.onrender.com">
 
 
-  <style>
-    .app-container { max-width: 900px; width: 100%; margin: 0 auto; box-shadow: 0 0 30px rgba(0,0,0,0.2); border-radius: 25px; overflow: hidden; background: white; min-height: 100vh; }
-    .big-button { transition: all 0.25s ease; transform: scale(1); }
+<style>
+    .app-container {
+        max-width: 100%; width: 100%; max-width: 900px;
+        margin: 0 auto;
+        box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        border-radius: 25px;
+        overflow: hidden;
+        background: white;
+        min-height: 100vh;
+    }
+    .big-button {
+        transition: all 0.25s ease;
+        transform: scale(1);
+    }
     .big-button:hover { transform: scale(1.03); }
     .slide-in { animation: slideIn 0.35s ease-out; }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0;} to { transform: translateX(0); opacity: 1;} }
@@ -29,536 +42,528 @@
     .category-cosmetiques { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
     .category-chaussures { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
     .category-accessoires { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-    @media (max-width: 600px) { .big-button { font-size: 1.05rem; padding: 1rem; } .app-container { border-radius: 8px; min-height: 100vh; } header, .bg-gradient-to-r { border-radius: 0; } .text-2xl { font-size: 1.25rem; } .text-6xl { font-size: 2.2rem; } }
-    @media (min-width: 601px) { .app-container { border-radius: 15px; } }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+        .big-button { font-size: 1.05rem; padding: 1rem; }
+        .app-container { border-radius: 8px; min-height: 100vh; }
+        header, .bg-gradient-to-r { border-radius: 0; }
+        .text-2xl { font-size: 1.25rem; }
+        .text-6xl { font-size: 2.2rem; }
+    }
+
+    @media (min-width: 601px) {
+        .app-container { border-radius: 15px; }
+    }
+    /* Simple table responsive */
     .table-sm td, .table-sm th { padding: 0.5rem; }
-    .chart-container { height: 250px; }
-  </style>
 
-  <script>
-    // ---------- AUTH UNIFIÉE ----------
-    const AUTH_KEY = 'authToken';
-    document.addEventListener('DOMContentLoaded', () => {
-      const token = localStorage.getItem(AUTH_KEY);
-      if (!token) { window.location.href = 'login.html'; return; }
-      initApp();
-    });
-
-    // Helper pour requêtes API avec Bearer token
-    async function apiFetch(url, options = {}) {
-      const token = localStorage.getItem(AUTH_KEY);
-      if (!options.headers) options.headers = {};
-      options.headers['Authorization'] = `Bearer ${token}`;
-      if (!options.method || ['POST','PUT','PATCH'].includes(options.method.toUpperCase())) {
-        options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/json';
-      }
-      return fetch(url, options);
-    }
-
-    function logout() {
-      localStorage.removeItem(AUTH_KEY);
-      window.location.href = 'login.html';
-    }
-  </script>
+.chart-container {
+    height: 250px;
+}
+</style>
 </head>
-
 <body class="bg-gradient-to-br from-purple-50 to-pink-50">
-  <div class="app-container">
-    <!-- En-tête -->
-    <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
-      <div class="flex items-center justify-between">
-        <button class="text-3xl" id="backBtn" onclick="showSection('menu')" style="display: none;">←</button>
-        <div class="text-center flex-1">
-          <h1 class="text-2xl font-bold">🏪 Ma Boutique</h1>
-          <div class="text-sm opacity-90">Ventes aujourd'hui: <span class="pulse" id="ventesToday">0</span></div>
+<div class="app-container">
+  <!-- En-tête -->
+  <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
+    <div class="flex items-center justify-between">
+      <button class="text-3xl" id="backBtn" onclick="showSection('menu')" style="display: none;">←</button>
+      <div class="text-center flex-1">
+        <h1 class="text-2xl font-bold">🏪 Ma Boutique</h1>
+        <div class="text-sm opacity-90">Ventes aujourd'hui: <span class="pulse" id="ventesToday">0</span></div>
+      </div>
+      <div class="text-3xl pulse">💰</div>
+    </div>
+  </div>
+
+  <!-- Menu Principal -->
+  <div class="p-6 space-y-6" id="menuSection">
+
+    <!-- Résumé du jour -->
+    <div class="bg-white rounded-3xl p-6 shadow-lg">
+      <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <span class="text-2xl mr-2">📊</span> Aujourd'hui
+      </h3>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="text-center bg-green-50 rounded-2xl p-4">
+          <div class="text-2xl font-bold text-green-600" id="chiffreAffaires">0 F</div>
+          <div class="text-xs text-green-700">Argent reçu</div>
         </div>
-        <div class="text-3xl pulse">💰</div>
+        <div class="text-center bg-blue-50 rounded-2xl p-4">
+          <div class="text-2xl font-bold text-blue-600" id="articlesVendus">0</div>
+          <div class="text-xs text-blue-700">Articles vendus</div>
+        </div>
+        <div class="text-center bg-orange-50 rounded-2xl p-4">
+          <div class="text-2xl font-bold text-orange-600" id="stockTotal">0</div>
+          <div class="text-xs text-orange-700">En stock</div>
+        </div>
       </div>
     </div>
 
-    <!-- Menu Principal -->
-    <div class="p-6 space-y-6" id="menuSection">
-      <!-- Résumé du jour -->
+    <!-- Actions principales (ajouté Inventaire à côté de Rapports) -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <button class="big-button bg-gradient-to-br from-green-400 to-green-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('vente')">
+        <div class="text-6xl mb-3">💳</div>
+        <div class="font-bold text-xl">VENDRE</div>
+        <div class="text-sm opacity-90">Vendre un article</div>
+      </button>
+
+      <button class="big-button bg-gradient-to-br from-blue-400 to-blue-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('stock')">
+        <div class="text-6xl mb-3">📦</div>
+        <div class="font-bold text-xl">STOCK</div>
+        <div class="text-sm opacity-90">Gérer produits</div>
+      </button>
+
+      <button class="big-button bg-gradient-to-br from-purple-400 to-purple-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('categories')">
+        <div class="text-6xl mb-3">🏷️</div>
+        <div class="font-bold text-xl">CATÉGORIES</div>
+        <div class="text-sm opacity-90">Organiser</div>
+      </button>
+
+      <button class="big-button bg-gradient-to-br from-orange-400 to-orange-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('rapports')">
+        <div class="text-6xl mb-3">📈</div>
+        <div class="font-bold text-xl">CHIFFRES</div>
+        <div class="text-sm opacity-90">Voir gains</div>
+      </button>
+
+      <button class="big-button bg-gradient-to-br from-teal-400 to-teal-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('inventaire')">
+        <div class="text-6xl mb-3">📋</div>
+        <div class="font-bold text-xl">INVENTAIRE</div>
+        <div class="text-sm opacity-90">Voir bénéfices</div>
+      </button>
+    </div>
+
+    <!-- Alertes stock faible -->
+    <div class="bg-gradient-to-r from-red-100 to-orange-100 rounded-3xl p-6 shadow-lg" id="alertesStock" style="display: none;">
+      <h3 class="text-lg font-bold mb-4 flex items-center text-red-700"><span class="text-2xl mr-2">⚠️</span> Presque fini</h3>
+      <div class="space-y-2" id="produitsStockFaible"></div>
+    </div>
+  </div>
+
+  <!-- Section Vente -->
+  <div class="hidden slide-in p-6" id="venteSection">
+    <h2 class="text-2xl font-bold mb-6 text-center">💳 Vendre</h2>
+
+    <!-- Panier -->
+    <div class="bg-white rounded-3xl p-6 shadow-lg mb-6">
+      <h3 class="text-lg font-bold mb-4 flex items-center"><span class="text-2xl mr-2">🛒</span> Panier</h3>
+      <div class="space-y-3 mb-4 min-h-[100px]" id="panierItems">
+        <div class="text-gray-500 text-center py-8"><div class="text-4xl mb-2">🛒</div><div>Panier vide</div></div>
+      </div>
+      <div class="border-t pt-4">
+        <div class="flex justify-between items-center text-2xl font-bold mb-4"><span>TOTAL:</span><span class="text-green-600" id="totalPanier">0 F</span></div>
+        <button class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg" onclick="showModal('paiement')">💰 ENCAISSER</button>
+      </div>
+    </div>
+
+    <!-- Sélection par catégorie -->
+    <div class="space-y-4">
+      <h3 class="text-lg font-bold">Choisir produits</h3>
+      <div class="grid grid-cols-2 gap-3" id="categoriesVente"></div>
+    </div>
+  </div>
+
+  <!-- Section Stock -->
+  <div class="hidden slide-in p-6" id="stockSection">
+    <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">📦 Mon Stock</h2><button class="bg-blue-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutProduit')">+ AJOUTER</button></div>
+    <div class="flex gap-2 mb-6 overflow-x-auto pb-2" id="filtreCategories"><button class="filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap" onclick="filtrerProduits('tous')">Tous</button></div>
+    <div class="space-y-4" id="listeProduits"></div>
+  </div>
+
+  <!-- Section Catégories -->
+  <div class="hidden slide-in p-6" id="categoriesSection">
+    <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">🏷️ Catégories</h2><button class="bg-purple-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutCategorie')">+ AJOUTER</button></div>
+    <input type="text" id="searchCategorie" placeholder="🔍 Rechercher une catégorie..." class="w-full p-2 border rounded mb-4">
+    <div class="space-y-4" id="listeCategories"></div>
+  </div>
+
+  <!-- Section Rapports (CHIFFRES) -->
+  <div class="hidden slide-in p-6" id="rapportsSection">
+    <h2 class="text-2xl font-bold mb-6 text-center">📈 Chiffres</h2>
+    <div class="space-y-6">
       <div class="bg-white rounded-3xl p-6 shadow-lg">
-        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-          <span class="text-2xl mr-2">📊</span> Aujourd'hui
-        </h3>
-        <div class="grid grid-cols-3 gap-4">
-          <div class="text-center bg-green-50 rounded-2xl p-4">
-            <div class="text-2xl font-bold text-green-600" id="chiffreAffaires">0 F</div>
-            <div class="text-xs text-green-700">Argent reçu</div>
-          </div>
-          <div class="text-center bg-blue-50 rounded-2xl p-4">
-            <div class="text-2xl font-bold text-blue-600" id="articlesVendus">0</div>
-            <div class="text-xs text-blue-700">Articles vendus</div>
-          </div>
-          <div class="text-center bg-orange-50 rounded-2xl p-4">
-            <div class="text-2xl font-bold text-orange-600" id="stockTotal">0</div>
-            <div class="text-xs text-orange-700">En stock</div>
-          </div>
+        <h3 class="text-lg font-bold mb-4">💰 Résumé</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-green-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-green-600" id="recettesJour">0 F</div><div class="text-sm text-green-700">Aujourd'hui</div></div>
+          <div class="bg-blue-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-blue-600" id="recettesSemaine">0 F</div><div class="text-sm text-blue-700">Cette semaine</div></div>
         </div>
       </div>
 
-      <!-- Actions principales -->
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <button class="big-button bg-gradient-to-br from-green-400 to-green-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('vente')">
-          <div class="text-6xl mb-3">💳</div>
-          <div class="font-bold text-xl">VENDRE</div>
-          <div class="text-sm opacity-90">Vendre un article</div>
-        </button>
-
-        <button class="big-button bg-gradient-to-br from-blue-400 to-blue-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('stock')">
-          <div class="text-6xl mb-3">📦</div>
-          <div class="font-bold text-xl">STOCK</div>
-          <div class="text-sm opacity-90">Gérer produits</div>
-        </button>
-
-        <button class="big-button bg-gradient-to-br from-purple-400 to-purple-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('categories')">
-          <div class="text-6xl mb-3">🏷️</div>
-          <div class="font-bold text-xl">CATÉGORIES</div>
-          <div class="text-sm opacity-90">Organiser</div>
-        </button>
-
-        <button class="big-button bg-gradient-to-br from-orange-400 to-orange-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('rapports')">
-          <div class="text-6xl mb-3">📈</div>
-          <div class="font-bold text-xl">CHIFFRES</div>
-          <div class="text-sm opacity-90">Voir gains</div>
-        </button>
-
-        <button class="big-button bg-gradient-to-br from-teal-400 to-teal-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('inventaire')">
-          <div class="text-6xl mb-3">📋</div>
-          <div class="font-bold text-xl">INVENTAIRE</div>
-          <div class="text-sm opacity-90">Voir bénéfices</div>
-        </button>
+      <div class="bg-white rounded-3xl p-6 shadow-lg">
+        <h3 class="text-lg font-bold mb-4">💳 Paiements</h3>
+        <div class="space-y-3" id="rapportsPaiements"></div>
       </div>
 
-      <!-- Alertes stock faible -->
-      <div class="bg-gradient-to-r from-red-100 to-orange-100 rounded-3xl p-6 shadow-lg" id="alertesStock" style="display: none;">
-        <h3 class="text-lg font-bold mb-4 flex items-center text-red-700"><span class="text-2xl mr-2">⚠️</span> Presque fini</h3>
-        <div class="space-y-2" id="produitsStockFaible"></div>
+      <div class="bg-white rounded-3xl p-6 shadow-lg">
+        <h3 class="text-lg font-bold mb-4">🔥 Produits Populaires</h3>
+        <div class="space-y-3" id="produitsPopulaires"></div>
       </div>
+
+      <!-- Graphiques -->
+      <div class="bg-white rounded-3xl p-6 shadow-lg">
+        <h3 class="text-lg font-bold mb-4">📊 Graphiques</h3>
+        
+<div class="chart-container"><canvas id="chartVentesByDay"></canvas></div>
+<div class="chart-container"><canvas id="chartTopProduits"></canvas></div>
+<div class="chart-container"><canvas id="chartPaiements"></canvas></div>
+</div>
+
     </div>
+  </div>
 
-    <!-- Section Vente -->
-    <div class="hidden slide-in p-6" id="venteSection">
-      <h2 class="text-2xl font-bold mb-6 text-center">💳 Vendre</h2>
-      <div class="bg-white rounded-3xl p-6 shadow-lg mb-6">
-        <h3 class="text-lg font-bold mb-4 flex items-center"><span class="text-2xl mr-2">🛒</span> Panier</h3>
-        <div class="space-y-3 mb-4 min-h-[100px]" id="panierItems">
-          <div class="text-gray-500 text-center py-8"><div class="text-4xl mb-2">🛒</div><div>Panier vide</div></div>
-        </div>
-        <div class="border-t pt-4">
-          <div class="flex justify-between items-center text-2xl font-bold mb-4"><span>TOTAL:</span><span class="text-green-600" id="totalPanier">0 F</span></div>
-          <button class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg" onclick="showModal('paiement')">💰 ENCAISSER</button>
-        </div>
-      </div>
+  <!-- Section Inventaire -->
+  <div class="hidden slide-in p-6" id="inventaireSection">
+    <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
+    <input type="text" id="searchInventaire" placeholder="🔍 Rechercher un produit..." class="w-full p-2 border rounded mb-4">
+    <div class="bg-white rounded-3xl p-4 shadow-lg">
+      <table class="w-full table-sm">
+        <thead class="bg-gray-100"><tr><th class="p-2 border">Produit</th><th class="p-2 border">Achat</th><th class="p-2 border">Vente</th><th class="p-2 border">En stock</th><th class="p-2 border">Vendues</th><th class="p-2 border">Bénéfice réalisé</th></tr></thead>
+        <tbody id="inventaireListe"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modales -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" id="modalOverlay">
+
+    <!-- Modal Ajout Produit -->
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutProduit">
+      <h3 class="text-2xl font-bold mb-6 text-center">📦 Nouveau Produit</h3>
       <div class="space-y-4">
-        <h3 class="text-lg font-bold">Choisir produits</h3>
-        <div class="grid grid-cols-2 gap-3" id="categoriesVente"></div>
-      </div>
-    </div>
-
-    <!-- Section Stock -->
-    <div class="hidden slide-in p-6" id="stockSection">
-      <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">📦 Mon Stock</h2><button class="bg-blue-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutProduit')">+ AJOUTER</button></div>
-      <div class="flex gap-2 mb-6 overflow-x-auto pb-2" id="filtreCategories"><button class="filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap" onclick="filtrerProduits('tous')">Tous</button></div>
-      <div class="space-y-4" id="listeProduits"></div>
-    </div>
-
-    <!-- Section Catégories -->
-    <div class="hidden slide-in p-6" id="categoriesSection">
-      <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">🏷️ Catégories</h2><button class="bg-purple-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutCategorie')">+ AJOUTER</button></div>
-      <input type="text" id="searchCategorie" placeholder="🔍 Rechercher une catégorie..." class="w-full p-2 border rounded mb-4">
-      <div class="space-y-4" id="listeCategories"></div>
-    </div>
-
-    <!-- Section Rapports (CHIFFRES) -->
-    <div class="hidden slide-in p-6" id="rapportsSection">
-      <h2 class="text-2xl font-bold mb-6 text-center">📈 Chiffres</h2>
-      <div class="space-y-6">
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">💰 Résumé</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-green-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-green-600" id="recettesJour">0 F</div><div class="text-sm text-green-700">Aujourd'hui</div></div>
-            <div class="bg-blue-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-blue-600" id="recettesSemaine">0 F</div><div class="text-sm text-blue-700">Cette semaine</div></div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">💳 Paiements</h3>
-          <div class="space-y-3" id="rapportsPaiements"></div>
-        </div>
-
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">🔥 Produits Populaires</h3>
-          <div class="space-y-3" id="produitsPopulaires"></div>
-        </div>
-
-        <!-- Graphiques -->
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">📊 Graphiques</h3>
-          <div class="chart-container"><canvas id="chartVentesByDay"></canvas></div>
-          <div class="chart-container"><canvas id="chartTopProduits"></canvas></div>
-          <div class="chart-container"><canvas id="chartPaiements"></canvas></div>
-        </div>
-
-        <!-- 🔹 Ventes récentes (déplacé ICI, dans Rapports) -->
-        <div class="bg-white rounded-3xl p-6 shadow-lg">
-          <h3 class="text-lg font-bold mb-4">🧾 Ventes récentes</h3>
-          <div id="listeVentes" class="space-y-3 text-sm"></div>
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomProduit" placeholder="Nom du produit" type="text"/>
+        <select class="w-full p-4 border-2 rounded-2xl text-lg" id="categorieProduit"><option value="">Choisir catégorie</option></select>
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="prixAchatProduit" placeholder="Prix achat (F CFA)" type="number"/>
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="prixProduit" placeholder="Prix vente (F CFA)" type="number"/>
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="stockProduit" placeholder="Quantité en stock" type="number"/>
+        <textarea class="w-full p-4 border-2 rounded-2xl text-lg h-20" id="descriptionProduit" placeholder="Description (optionnel)"></textarea>
+        <div class="flex gap-3">
+          <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
+          <button class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterProduit()">Ajouter</button>
         </div>
       </div>
     </div>
 
-    <!-- Section Inventaire -->
-    <div class="hidden slide-in p-6" id="inventaireSection">
-      <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
-      <input type="text" id="searchInventaire" placeholder="🔍 Rechercher un produit..." class="w-full p-2 border rounded mb-4">
-      <div class="bg-white rounded-3xl p-4 shadow-lg">
-        <table class="w-full table-sm">
-          <thead class="bg-gray-100"><tr><th class="p-2 border">Produit</th><th class="p-2 border">Achat</th><th class="p-2 border">Vente</th><th class="p-2 border">En stock</th><th class="p-2 border">Vendues</th><th class="p-2 border">Bénéfice réalisé</th></tr></thead>
-          <tbody id="inventaireListe"></tbody>
-        </table>
+    <!-- Modal Ajout Catégorie -->
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutCategorie">
+      <h3 class="text-2xl font-bold mb-6 text-center">🏷️ Nouvelle Catégorie</h3>
+      <div class="space-y-4">
+        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomCategorie" placeholder="Nom de la catégorie" type="text"/>
+        <div class="grid grid-cols-4 gap-3">
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👕')" type="button">👕</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💄')" type="button">💄</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👠')" type="button">👠</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💍')" type="button">💍</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🎒')" type="button">🎒</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👜')" type="button">👜</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🧴')" type="button">🧴</button>
+          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('✨')" type="button">✨</button>
+        </div>
+        <input id="emojiCategorie" type="hidden" value="🏷️"/>
+        <div class="flex gap-3">
+          <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
+          <button class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterCategorie()">Ajouter</button>
+        </div>
       </div>
     </div>
 
-    <!-- Modales -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" id="modalOverlay">
-      <!-- Modal Ajout Produit -->
-      <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutProduit">
-        <h3 class="text-2xl font-bold mb-6 text-center">📦 Nouveau Produit</h3>
-        <div class="space-y-4">
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomProduit" placeholder="Nom du produit" type="text"/>
-          <select class="w-full p-4 border-2 rounded-2xl text-lg" id="categorieProduit"><option value="">Choisir catégorie</option></select>
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="prixAchatProduit" placeholder="Prix achat (F CFA)" type="number"/>
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="prixProduit" placeholder="Prix vente (F CFA)" type="number"/>
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="stockProduit" placeholder="Quantité en stock" type="number"/>
-          <textarea class="w-full p-4 border-2 rounded-2xl text-lg h-20" id="descriptionProduit" placeholder="Description (optionnel)"></textarea>
-          <div class="flex gap-3">
-            <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
-            <button class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterProduit()">Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Ajout Catégorie -->
-      <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutCategorie">
-        <h3 class="text-2xl font-bold mb-6 text-center">🏷️ Nouvelle Catégorie</h3>
-        <div class="space-y-4">
-          <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomCategorie" placeholder="Nom de la catégorie" type="text"/>
-          <div class="grid grid-cols-4 gap-3">
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👕')" type="button">👕</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💄')" type="button">💄</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👠')" type="button">👠</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💍')" type="button">💍</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🎒')" type="button">🎒</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👜')" type="button">👜</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🧴')" type="button">🧴</button>
-            <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('✨')" type="button">✨</button>
-          </div>
-          <input id="emojiCategorie" type="hidden" value="🏷️"/>
-          <div class="flex gap-3">
-            <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
-            <button class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterCategorie()">Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Méthodes de Paiement -->
-      <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalPaiement">
-        <h3 class="text-2xl font-bold mb-6 text-center">💳 Choisir Paiement</h3>
-        <div class="space-y-4">
-          <button class="w-full bg-green-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('especes')"><span class="text-2xl">💵</span> Espèces</button>
-          <button class="w-full bg-blue-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('wave')"><span class="text-2xl">📱</span> Wave</button>
-          <button class="w-full bg-orange-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('orange')"><span class="text-2xl">📞</span> Orange Money</button>
-          <button class="w-full bg-gray-300 text-gray-700 p-4 rounded-2xl text-lg font-bold" onclick="hideModal()">Annuler</button>
-        </div>
+    <!-- Modal Méthodes de Paiement -->
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalPaiement">
+      <h3 class="text-2xl font-bold mb-6 text-center">💳 Choisir Paiement</h3>
+      <div class="space-y-4">
+        <button class="w-full bg-green-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('especes')"><span class="text-2xl">💵</span> Espèces</button>
+        <button class="w-full bg-blue-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('wave')"><span class="text-2xl">📱</span> Wave</button>
+        <button class="w-full bg-orange-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('orange')"><span class="text-2xl">📞</span> Orange Money</button>
+        <button class="w-full bg-gray-300 text-gray-700 p-4 rounded-2xl text-lg font-bold" onclick="hideModal()">Annuler</button>
       </div>
     </div>
   </div>
 
-  <script>
-    // ---------- CONFIG & DATA ----------
-    const metaApi = document.querySelector('meta[name="api-base"]');
-    const API_BASE = metaApi ? metaApi.content : '';
+</div>
 
-    const defaultData = {
-      categories: [
-        {id: 1, nom: "Habits", emoji: "👕", couleur: "category-habits"},
-        {id: 2, nom: "Cosmétiques", emoji: "💄", couleur: "category-cosmetiques"},
-        {id: 3, nom: "Chaussures", emoji: "👠", couleur: "category-chaussures"},
-        {id: 4, nom: "Accessoires", emoji: "💍", couleur: "category-accessoires"}
-      ],
-      produits: [],
-      ventes: [],
-      panier: [],
-      stats: { ventesJour: 0, chiffreAffaires: 0, paiements: {especes: 0, wave: 0, orange: 0} }
-    };
+<script>
+// ---------- CONFIG & DATA ----------
+// API_BASE can be set to full URL when deployed. To auto-detect hosted API, set a meta tag in the hosting HTML head like:
+// <meta name="api-base" content="https://mon-backend.example.com">
+const metaApi = document.querySelector('meta[name="api-base"]');
+const API_BASE = metaApi ? metaApi.content : ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? '' : ''); // '' -> relative
 
-    let appData = null;
-    let chartVentesByDay = null, chartTopProduits = null, chartPaiements = null;
+const defaultData = {
+  categories: [
+    {id: 1, nom: "Habits", emoji: "👕", couleur: "category-habits"},
+    {id: 2, nom: "Cosmétiques", emoji: "💄", couleur: "category-cosmetiques"},
+    {id: 3, nom: "Chaussures", emoji: "👠", couleur: "category-chaussures"},
+    {id: 4, nom: "Accessoires", emoji: "💍", couleur: "category-accessoires"}
+  ],
+  produits: [], // start empty to prefer server data after first sync
+  ventes: [],
+  panier: [],
+  stats: { ventesJour: 0, chiffreAffaires: 0, paiements: {especes: 0, wave: 0, orange: 0} }
+};
 
-    document.addEventListener('DOMContentLoaded', () => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    // Pas de connexion → on redirige vers login
-    window.location.href = 'login.html';
-  }
+let appData = null;
+let chartVentesByDay = null, chartTopProduits = null, chartPaiements = null;
+
+// ---------- localStorage helpers ----------
+function loadAppDataLocal(){
+  const raw = localStorage.getItem('boutique_appData');
+  if(raw){
+    try{ appData = JSON.parse(raw); }
+    catch(e){ appData = JSON.parse(JSON.stringify(defaultData)); }
+  } else appData = JSON.parse(JSON.stringify(defaultData));
+  appData.produits.forEach(p=>{ if(typeof p.prixAchat === 'undefined') p.prixAchat = p.prix_achat || 0; });
+  // ensure outbox exists
+  if(!localStorage.getItem('boutique_outbox')) localStorage.setItem('boutique_outbox', JSON.stringify([]));
+}
+function saveAppDataLocal(){ localStorage.setItem('boutique_appData', JSON.stringify(appData)); }
+
+// ---------- Outbox / Background retry ----------
+function enqueueOutbox(item){ // item example: {type:'sale', payload: {...}, tries:0, id: Date.now()}
+  const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]'); q.push(item); localStorage.setItem('boutique_outbox', JSON.stringify(q)); }
+
+async function processOutboxOne(){
+  const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]');
+  if(!q.length) return null;
+  const item = q[0];
+  try{
+    let res=null;
+    if(item.type==='sale') res = await postSaleServer(item.payload);
+    else if(item.type==='product') res = await postProductServer(item.payload);
+    else if(item.type==='category') res = await postCategoryServer(item.payload);
+
+    if(res){ // success -> pop
+      q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q)); saveAppDataLocal();
+      return {ok:true, item};
+    } else {
+      item.tries = (item.tries||0) + 1;
+      if(item.tries > 10){ // drop after many tries
+        console.warn('Dropping outbox item after many tries', item);
+        q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q));
+        return {ok:false};
+      }
+      q[0] = item; localStorage.setItem('boutique_outbox', JSON.stringify(q));
+      return {ok:false};
+    }
+  }catch(err){ console.warn('Outbox process error', err); return {ok:false}; }
+}
+
+async function processOutboxAll(){ let did=false; try{ while(true){ const r = await processOutboxOne(); if(!r) break; if(r.ok) did=true; else break; } }catch(e){ console.warn(e); } return did; }
+
+// periodic retry
+setInterval(()=>{ if(navigator.onLine) processOutboxAll(); }, 30*1000); // try every 30s if online
+window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox'); processOutboxAll(); });
+
+// ---------- Sync with server (read + write) ----------
+async function syncFromServer(){
+  try{
+    const [resCat, resProd, resStats] = await Promise.all([
+      fetch(API_BASE + '/api/categories'),
+      fetch(API_BASE + '/api/products'),
+      fetch(API_BASE + '/api/stats/summary')
+    ]);
+    if(resCat.ok && resProd.ok){
+      const cats = await resCat.json();
+      const prods = await resProd.json();
+      prods.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
+      appData.categories = cats;
+      appData.produits = prods;
+      if(resStats.ok){ const s = await resStats.json(); if(s.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires; }
+      saveAppDataLocal();
+      updateStats(); afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire();
+      // after successful sync, try to flush outbox
+      if(navigator.onLine) processOutboxAll();
+      afficherRapports();
+      console.log('Sync from server done');
+    }
+  }catch(err){ console.log('Sync failed, offline or server down', err); }
+}
+
+async function postProductServer(product){
+  try{
+    const res = await fetch(API_BASE + '/api/products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(product)});
+    if(res.ok){ const p = await res.json(); return p; }
+    else { console.warn('Add product failed', await res.text()); return null; }
+  }catch(e){ console.warn('Network error adding product', e); return null; }
+}
+
+async function postCategoryServer(category){
+  try{
+    const res = await fetch(API_BASE + '/api/categories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(category)});
+    if(res.ok){ return await res.json(); }
+    else { console.warn('Add category failed', await res.text()); return null; }
+  }catch(e){ console.warn('Network error adding category', e); return null; }
+}
+
+async function postSaleServer(sale){
+  try{
+    const res = await fetch(API_BASE + '/api/sales', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sale)});
+    if(res.ok){ return await res.json(); }
+    else { console.warn('Sale post failed', await res.text()); return null; }
+  }catch(e){ console.warn('Network error posting sale', e); return null; }
+}
+
+// ---------- Navigation & UI helpers (structure kept) ----------
+let currentSection = 'menu';
+function showSection(section){
+  const sections = ['menu','vente','stock','categories','rapports','inventaire'];
+  sections.forEach(function(s){ const el = document.getElementById(s+'Section'); if(el) el.classList.add('hidden'); });
+  const target = document.getElementById(section+'Section'); if(target) target.classList.remove('hidden');
+  const backBtn = document.getElementById('backBtn'); if(backBtn) backBtn.style.display = (section==='menu') ? 'none' : 'block';
+  currentSection = section;
+  if(section==='vente'){ afficherCategoriesVente(); afficherPanier(); }
+  else if(section==='stock'){ afficherProduits(); afficherFiltresCategories(); }
+  else if(section==='categories'){ afficherCategories(); }
+  else if(section==='rapports'){ afficherRapports(); }
+  else if(section==='inventaire'){ afficherInventaire(); }
+  else if(section==='menu'){ updateStats(); verifierStockFaible(); }
+}
+
+function showModal(modalName){
+  const overlay = document.getElementById('modalOverlay'); if(overlay) overlay.classList.remove('hidden');
+  const modalId = 'modal' + modalName.charAt(0).toUpperCase() + modalName.slice(1);
+  const modalEl = document.getElementById(modalId);
+  if(modalEl) modalEl.classList.remove('hidden');
+  if(modalName==='ajoutProduit') remplirSelectCategories();
+}
+function hideModal(){
+  const overlay = document.getElementById('modalOverlay'); if(overlay) overlay.classList.add('hidden');
+  document.querySelectorAll('[id^="modal"]').forEach(function(m){ m.classList.add('hidden'); });
+  ['nomProduit','categorieProduit','prixProduit','prixAchatProduit','stockProduit','descriptionProduit','nomCategorie','emojiCategorie'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
+  document.querySelectorAll('.emoji-btn').forEach(function(btn){ btn.classList.remove('bg-blue-200','border-blue-400'); });
+}
+
+// ---------- Stats & alerts ----------
+function updateStats(){
+  if(!appData) return;
+  const ventesTodayEl = document.getElementById('ventesToday'); if(ventesTodayEl) ventesTodayEl.textContent = appData.stats.ventesJour || 0;
+  const chiffreEl = document.getElementById('chiffreAffaires'); if(chiffreEl) chiffreEl.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F';
+  const articlesEl = document.getElementById('articlesVendus'); if(articlesEl) articlesEl.textContent = appData.stats.ventesJour || 0;
+  const stockTotalEl = document.getElementById('stockTotal'); if(stockTotalEl) stockTotalEl.textContent = appData.produits.reduce(function(t,p){ return t + (p.stock||0); }, 0);
+}
+function verifierStockFaible(){
+  if(!appData) return;
+  const low = appData.produits.filter(function(p){ return p.stock>0 && p.stock<=5; });
+  const div = document.getElementById('produitsStockFaible'); const alertDiv = document.getElementById('alertesStock');
+  if(low.length){ if(alertDiv) alertDiv.style.display = 'block'; if(div) div.innerHTML = ''; low.forEach(function(produit){ const cat = appData.categories.find(function(c){ return c.id === produit.categorie; }); const el = document.createElement('div'); el.className = 'bg-white rounded-xl p-3 flex justify-between items-center'; el.innerHTML = '<span class="font-bold">' + (cat?cat.emoji:'📦') + ' ' + produit.nom + '</span><span class="text-red-600 font-bold">' + produit.stock + ' restants</span>'; if(div) div.appendChild(el); }); }
+  else if(alertDiv) alertDiv.style.display = 'none';
+}
+
+// ---------- Vente / Panier ----------
+function afficherCategoriesVente(){ const ctn=document.getElementById('categoriesVente'); if(!ctn) return; ctn.innerHTML=''; appData.categories.forEach(function(cat){ const produitsCategorie = appData.produits.filter(function(p){ return p.categorie===cat.id && p.stock>0; }); if(!produitsCategorie.length) return; const d=document.createElement('div'); d.className = 'big-button ' + (cat.couleur || '') + ' text-white p-4 rounded-2xl text-center cursor-pointer shadow-lg'; d.addEventListener('click', function(){ afficherProduitsCategorie(cat.id); }); d.innerHTML = '<div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="font-bold">' + cat.nom + '</div><div class="text-sm opacity-90">' + produitsCategorie.length + ' produits</div>'; ctn.appendChild(d); }); }
+
+function afficherProduitsCategorie(categorieId){ const produits = appData.produits.filter(function(p){ return p.categorie===categorieId && p.stock>0; }); const container=document.getElementById('categoriesVente'); if(!container) return; container.innerHTML = '';const retourBtn = document.createElement('button');retourBtn.textContent = '← Retour';retourBtn.className = 'col-span-2 mb-4 text-blue-600 font-bold';retourBtn.addEventListener('click', afficherCategoriesVente);container.appendChild(retourBtn);
+  produits.forEach(function(produit){ const div=document.createElement('div'); div.className='bg-white border-2 border-gray-200 p-4 rounded-2xl text-center cursor-pointer hover:border-blue-400 transition-all'; div.addEventListener('click', function(){ ajouterAuPanier(produit); }); div.innerHTML = '<div class="font-bold text-lg mb-1">' + produit.nom + '</div><div class="text-2xl font-bold text-green-600 mb-1">' + (produit.prix||0).toLocaleString() + ' F</div><div class="text-sm text-gray-600">Stock: ' + (produit.stock||0) + '</div>'; container.appendChild(div); }); }
+
+function ajouterAuPanier(produit){ if(!appData) return; const exist = appData.panier.find(function(i){ return i.id===produit.id; }); if(exist){ if(exist.quantite < produit.stock) exist.quantite++; else { alert('❌ Stock insuffisant!'); return; } } else appData.panier.push(Object.assign({}, produit, {quantite:1})); afficherPanier(); saveAppDataLocal(); }
+
+function afficherPanier(){ const c=document.getElementById('panierItems'); const total=document.getElementById('totalPanier'); if(!c) return; if(!appData || !appData.panier || !appData.panier.length){ c.innerHTML = '<div class="text-gray-500 text-center py-8"><div class="text-4xl mb-2">🛒</div><div>Panier vide</div></div>'; if(total) total.textContent = '0 F'; return; }
+  c.innerHTML=''; var totalPrix = 0; appData.panier.forEach(function(item){ const div=document.createElement('div'); div.className='flex justify-between items-center bg-gray-50 rounded-2xl p-3'; div.innerHTML = '<div><div class="font-bold">' + item.nom + '</div><div class="text-sm text-gray-600">' + (item.prix||0).toLocaleString() + ' F × ' + item.quantite + '</div></div><div class="flex items-center gap-2"><button class="bg-red-500 text-white w-8 h-8 rounded-full text-sm font-bold">-</button><span class="font-bold text-lg w-8 text-center">' + item.quantite + '</span><button class="bg-green-500 text-white w-8 h-8 rounded-full text-sm font-bold">+</button></div>'; // wire buttons
+    c.appendChild(div);
+    // attach handlers to +/- buttons
+    const btns = div.querySelectorAll('button'); if(btns && btns.length>=2){ btns[0].addEventListener('click', function(){ modifierQuantitePanier(item.id, -1); }); btns[1].addEventListener('click', function(){ modifierQuantitePanier(item.id, 1); }); }
+    totalPrix += (item.prix||0) * item.quantite;
+  }); if(total) total.textContent = totalPrix.toLocaleString() + ' F'; }
+
+function modifierQuantitePanier(id, delta){ if(!appData) return; const item = appData.panier.find(function(i){ return i.id===id; }); const produit = appData.produits.find(function(p){ return p.id===id; }); if(item){ item.quantite += delta; if(item.quantite <= 0) appData.panier = appData.panier.filter(function(i){ return i.id !== id; }); else if(produit && item.quantite > produit.stock){ item.quantite = produit.stock; alert('❌ Stock insuffisant!'); } afficherPanier(); saveAppDataLocal(); } }
+
+async function finaliserVente(methodePaiement){ if(!appData) return; if(!appData.panier.length){ alert('❌ Le panier est vide!'); return; } var totalVente = 0; var itemsPayload = appData.panier.map(function(item){ return { id: item.id, quantite: item.quantite, prix: item.prix }; }); appData.panier.forEach(function(item){ var produit = appData.produits.find(function(p){ return p.id===item.id; }); if(produit){ produit.stock = (produit.stock||0) - item.quantite; produit.vendu = (produit.vendu||0) + item.quantite; totalVente += (item.prix||0) * item.quantite; } }); appData.ventes.push({ date: new Date().toISOString(), items: itemsPayload, total: totalVente, paiement: methodePaiement }); appData.stats.ventesJour = (appData.stats.ventesJour||0) + 1; appData.stats.chiffreAffaires = (appData.stats.chiffreAffaires||0) + totalVente; appData.stats.paiements[methodePaiement] = (appData.stats.paiements[methodePaiement]||0) + totalVente; appData.panier = []; afficherPanier(); updateStats(); verifierStockFaible(); saveAppDataLocal(); hideModal();
+
+  // try to send to server; if fail enqueue for retry
+  const serverRes = await postSaleServer({ items: itemsPayload, total: totalVente, paiement: methodePaiement });
+  if(serverRes && serverRes.id){ alert('✅ Vente envoyée au serveur. Total: ' + totalVente.toLocaleString() + ' F'); syncFromServer(); }
+  else { enqueueOutbox({ type:'sale', payload:{ items: itemsPayload, total: totalVente, paiement: methodePaiement }, tries:0, id: Date.now() }); alert('✅ Vente enregistrée localement et mise en file d\'envoi. Total: ' + totalVente.toLocaleString() + ' F'); }
+}
+
+// ---------- Produits / catégories gestion (avec POST) ----------
+function remplirSelectCategories(){ const select = document.getElementById('categorieProduit'); if(!select) return; select.innerHTML = '<option value="">Choisir catégorie</option>'; appData.categories.forEach(function(categ){ var opt = document.createElement('option'); opt.value = categ.id; opt.textContent = (categ.emoji ? categ.emoji + ' ' : '') + categ.nom; select.appendChild(opt); }); }
+
+async function ajouterProduit(){ if(!appData) return; const nom = (document.getElementById('nomProduit')||{}).value; const categorie = parseInt((document.getElementById('categorieProduit')||{}).value); const prix = parseInt((document.getElementById('prixProduit')||{}).value); const prixAchat = parseInt((document.getElementById('prixAchatProduit')||{}).value) || 0; const stock = parseInt((document.getElementById('stockProduit')||{}).value); const description = (document.getElementById('descriptionProduit')||{}).value;
+  if(nom && categorie && (prix>=0) && (stock>=0)){
+    const newProdLocal = { id: Date.now(), nom: nom, categorie: categorie, prix: prix, prixAchat: prixAchat, stock: stock, vendu:0, description: description||'' };
+    appData.produits.push(newProdLocal);
+    if(currentSection==='stock') afficherProduits(); updateStats(); saveAppDataLocal(); hideModal();
+    const created = await postProductServer({ nom: nom, categorie: categorie, prix: prix, prixAchat: prixAchat, stock: stock, description: description });
+    if(created){ const idx = appData.produits.findIndex(function(p){ return p.id === newProdLocal.id; }); if(idx>=0) appData.produits[idx] = Object.assign({}, created, { prixAchat: created.prix_achat || created.prixAchat || 0 }); saveAppDataLocal(); alert('✅ Produit ajouté (serveur).'); syncFromServer(); }
+    else { enqueueOutbox({ type:'product', payload:{ nom: nom, categorie: categorie, prix: prix, prixAchat: prixAchat, stock: stock, description: description }, tries:0, id:Date.now() }); alert('✅ Produit ajouté localement (offline) et mis en file d\'envoi.'); }
+  } else alert('❌ Remplissez tous les champs obligatoires!'); }
+
+async function ajouterCategorie(){ if(!appData) return; const nom = (document.getElementById('nomCategorie')||{}).value; const emoji = (document.getElementById('emojiCategorie')||{}).value || '🏷️'; if(nom){ const newCatLocal = { id: Date.now(), nom: nom, emoji: emoji, couleur: 'category-habits' }; appData.categories.push(newCatLocal); if(currentSection==='categories') afficherCategories(); hideModal(); saveAppDataLocal(); const created = await postCategoryServer({ nom: nom, emoji: emoji }); if(created){ const idx = appData.categories.findIndex(function(c){ return c.id === newCatLocal.id; }); if(idx>=0) appData.categories[idx] = created; saveAppDataLocal(); syncFromServer(); alert('✅ Catégorie ajoutée (serveur).'); } else { enqueueOutbox({ type:'category', payload:{ nom: nom, emoji: emoji }, tries:0, id:Date.now() }); alert('✅ Catégorie ajoutée localement et mise en file d\'envoi.'); } } else alert('❌ Saisir un nom'); }
+
+function afficherFiltresCategories(){ const container = document.getElementById('filtreCategories'); if(!container) return; container.innerHTML = ''; var btnAll = document.createElement('button'); btnAll.className = 'filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; btnAll.textContent = 'Tous'; btnAll.addEventListener('click', function(){ filtrerProduits('tous'); }); container.appendChild(btnAll);
+  appData.categories.forEach(function(c){ var button = document.createElement('button'); button.className = 'filtre-btn bg-gray-200 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; button.textContent = (c.emoji?c.emoji+' ':'') + c.nom; button.addEventListener('click', function(){ filtrerProduits(c.id); }); container.appendChild(button); }); }
+
+function filtrerProduits(categorieId){ document.querySelectorAll('.filtre-btn').forEach(function(btn){ btn.classList.remove('bg-blue-500','text-white'); btn.classList.add('bg-gray-200'); }); if(window.event && window.event.target){ var t = window.event.target; t.classList.add('bg-blue-500','text-white'); t.classList.remove('bg-gray-200'); } afficherProduits(categorieId); }
+
+function afficherProduits(categorieFilter){ if(typeof categorieFilter === 'undefined') categorieFilter = 'tous'; const container = document.getElementById('listeProduits'); if(!container) return; container.innerHTML = ''; var produits = appData.produits.slice(); if(categorieFilter !== 'tous') produits = produits.filter(function(p){ return p.categorie === categorieFilter; }); produits.forEach(function(produit){ var categorie = appData.categories.find(function(c){ return c.id === produit.categorie; }); var div = document.createElement('div'); var stockColor = (produit.stock < 5) ? 'text-red-600' : (produit.stock < 10) ? 'text-orange-600' : 'text-green-600'; div.className = 'bg-white rounded-2xl p-4 shadow-lg'; var descriptionHtml = produit.description ? '<div class="text-xs text-gray-500 mt-1">' + produit.description + '</div>' : ''; div.innerHTML = '<div class="flex justify-between items-start mb-3"><div><div class="text-lg font-bold">' + produit.nom + '</div><div class="text-sm text-gray-600">' + (categorie ? (categorie.emoji + ' ' + categorie.nom) : 'Sans catégorie') + '</div>' + descriptionHtml + '</div><div class="text-right"><div class="text-xl font-bold text-green-600">' + (produit.prix||0).toLocaleString() + ' F</div><div class="text-sm ' + stockColor + ' font-bold">Stock: ' + (produit.stock||0) + '</div><div class="text-xs text-gray-500">Achat: ' + ((produit.prixAchat||produit.prix_achat||0).toLocaleString()) + ' F</div></div></div><div class="flex gap-2"><button class="btn-mod-stock-minus bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">- Stock</button><button class="btn-mod-stock-plus bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold">+ Stock</button><button class="btn-suppr bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">🗑️</button></div>'; container.appendChild(div);
+    // wire buttons
+    var btnMinus = div.querySelector('.btn-mod-stock-minus'); if(btnMinus) btnMinus.addEventListener('click', function(){ modifierStock(produit.id, -1); });
+    var btnPlus = div.querySelector('.btn-mod-stock-plus'); if(btnPlus) btnPlus.addEventListener('click', function(){ modifierStock(produit.id, 1); });
+    var btnSuppr = div.querySelector('.btn-suppr'); if(btnSuppr) btnSuppr.addEventListener('click', function(){ supprimerProduit(produit.id); });
+  }); }
+
+function modifierStock(id, delta){ var produit = appData.produits.find(function(p){ return p.id === id; }); if(produit && produit.stock + delta >= 0){ produit.stock += delta; afficherProduits(); updateStats(); saveAppDataLocal(); // try update server
+  fetch(API_BASE + '/api/products/' + id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nom: produit.nom, prix: produit.prix, prixAchat: produit.prixAchat||produit.prix_achat||0, stock: produit.stock, description: produit.description }) }).then(function(r){ if(!r.ok) console.warn('update failed'); }).catch(function(){});
+ } }
+
+function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appData.produits = appData.produits.filter(function(p){ return p.id !== id; }); afficherProduits(); updateStats(); saveAppDataLocal(); fetch(API_BASE + '/api/products/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Supprimé'); } }
+
+// ---------- Catégories UI ----------
+function selectEmoji(emoji){ var el = document.getElementById('emojiCategorie'); if(el) el.value = emoji; document.querySelectorAll('.emoji-btn').forEach(function(btn){ btn.classList.remove('bg-blue-200','border-blue-400'); }); if(window.event && window.event.target) window.event.target.classList.add('bg-blue-200','border-blue-400'); }
+
+function afficherCategories(){ var ctn = document.getElementById('listeCategories'); if(!ctn) return; ctn.innerHTML = ''; appData.categories.forEach(function(cat){ var produitsCount = appData.produits.filter(function(p){ return p.categorie === cat.id; }).length; var div = document.createElement('div'); div.className = (cat.couleur || '') + ' text-white rounded-2xl p-6 shadow-lg'; div.innerHTML = '<div class="flex justify-between items-center"><div><div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="text-xl font-bold">' + cat.nom + '</div><div class="text-sm opacity-90">' + produitsCount + ' produits</div></div><button class="bg-white bg-opacity-20 text-white px-3 py-2 rounded-lg text-sm">🗑️</button></div>'; ctn.appendChild(div); }); }
+
+function supprimerCategorie(id){ var produitsCategorie = appData.produits.filter(function(p){ return p.categorie === id; }); if(produitsCategorie.length){ alert('❌ Impossible: catégorie contient des produits'); return; } if(confirm('❓ Supprimer catégorie ?')){ appData.categories = appData.categories.filter(function(c){ return c.id !== id; }); afficherCategories(); saveAppDataLocal(); fetch(API_BASE + '/api/categories/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Catégorie supprimée'); } }
+
+// ---------- Rapports & charts ----------
+function afficherRapports(){ var recettesJour = document.getElementById('recettesJour'); if(recettesJour) recettesJour.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var recettesSemaine = document.getElementById('recettesSemaine'); if(recettesSemaine) recettesSemaine.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var containerPaiements = document.getElementById('rapportsPaiements'); if(containerPaiements) containerPaiements.innerHTML = ''; var methodesNoms = {especes:{nom:'Espèces', emoji:'💵', couleur:'green'}, wave:{nom:'Wave', emoji:'📱', couleur:'blue'}, orange:{nom:'Orange Money', emoji:'📞', couleur:'orange'}}; Object.keys(appData.stats.paiements || {}).forEach(function(m){ var montant = appData.stats.paiements[m] || 0; var info = methodesNoms[m] || {nom:m, emoji:'', couleur:'gray'}; var div = document.createElement('div'); div.className = 'bg-' + info.couleur + '-50 rounded-2xl p-3 flex justify-between items-center'; div.innerHTML = '<div class="flex items-center gap-3"><span class="text-2xl">' + (info.emoji||'') + '</span><span class="font-bold">' + info.nom + '</span></div><span class="font-bold">' + montant.toLocaleString() + ' F</span>'; if(containerPaiements) containerPaiements.appendChild(div); }); var cPop = document.getElementById('produitsPopulaires'); if(cPop) cPop.innerHTML=''; var populaires = appData.produits.filter(function(p){ return p.vendu > 0; }).sort(function(a,b){ return b.vendu - a.vendu; }).slice(0,5); if(!populaires.length && cPop) cPop.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune vente</div>'; else populaires.forEach(function(p){ var d = document.createElement('div'); d.className='flex justify-between items-center bg-gray-50 rounded-lg p-3'; d.innerHTML = '<div class="font-bold">' + p.nom + '</div><div class="text-blue-600 font-bold">' + p.vendu + ' vendus</div>'; if(cPop) cPop.appendChild(d); }); updateCharts(); }
+
+function updateCharts(){ var ventes = appData.ventes || []; var byDay = {}; ventes.forEach(function(v){ var d = (new Date(v.date)).toISOString().slice(0,10); byDay[d] = (byDay[d]||0) + (v.total||0); }); var labels = Object.keys(byDay).sort(); var data = labels.map(function(l){ return byDay[l]; }); if(chartVentesByDay) chartVentesByDay.destroy(); var ctx1 = document.getElementById('chartVentesByDay'); if(ctx1) { chartVentesByDay = new Chart(ctx1.getContext('2d'), { type:'line', data:{ labels: labels, datasets:[{ label:'Total ventes par jour', data: data, borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,0.15)', fill:true }]}, options:{ responsive:true, maintainAspectRatio:false } }); }
+  var productsSorted = (appData.produits||[]).slice().sort(function(a,b){ return (b.vendu||0) - (a.vendu||0); }).slice(0,8); var labels2 = productsSorted.map(function(p){ return p.nom; }); var data2 = productsSorted.map(function(p){ return p.vendu||0; }); if(chartTopProduits) chartTopProduits.destroy(); var ctx2 = document.getElementById('chartTopProduits'); if(ctx2) { chartTopProduits = new Chart(ctx2.getContext('2d'), { type:'bar', data:{ labels: labels2, datasets:[{ label:'Quantités vendues', data: data2, backgroundColor:'rgba(16,185,129,0.8)'}]}, options:{ responsive:true, maintainAspectRatio:false } }); }
+  var pays = appData.stats.paiements || {}; var labels3 = Object.keys(pays); var data3 = labels3.map(function(k){ return pays[k] || 0; }); if(chartPaiements) chartPaiements.destroy(); var ctx3 = document.getElementById('chartPaiements'); if(ctx3) { chartPaiements = new Chart(ctx3.getContext('2d'), { type:'pie', data:{ labels: labels3.map(function(l){ return l.charAt(0).toUpperCase()+l.slice(1); }), datasets:[{ data: data3, backgroundColor:['#10b981','#3b82f6','#f97316'] }] ,}, options:{ responsive:true, maintainAspectRatio:false } }); }
+}
+
+// ---------- Inventaire ----------
+function afficherInventaire(){ var tbody = document.getElementById('inventaireListe'); if(!tbody) return; tbody.innerHTML=''; appData.produits.forEach(function(p){ var profitRealise = (p.vendu || 0) * ((p.prix || 0) - (p.prixAchat || p.prix_achat || 0)); var tr = document.createElement('tr'); tr.innerHTML = '<td class="p-2 border">' + p.nom + '</td><td class="p-2 border">' + ((p.prixAchat||p.prix_achat||0).toLocaleString()) + ' F</td><td class="p-2 border">' + ((p.prix||0).toLocaleString()) + ' F</td><td class="p-2 border">' + (p.stock||0) + '</td><td class="p-2 border">' + (p.vendu||0) + '</td><td class="p-2 border">' + profitRealise.toLocaleString() + ' F</td>'; tbody.appendChild(tr); }); }
+
+// ---------- Search handlers for inventory and categories ----------
+function setupSearchInputs(){ var inv = document.getElementById('searchInventaire'); if(inv){ inv.addEventListener('input', function(){ var term = this.value.toLowerCase(); document.querySelectorAll('#inventaireListe tr').forEach(function(row){ var prodName = (row.cells[0] && row.cells[0].textContent || '').toLowerCase(); row.style.display = prodName.indexOf(term) !== -1 ? '' : 'none'; }); }); }
+  var cat = document.getElementById('searchCategorie'); if(cat){ cat.addEventListener('input', function(){ var term = this.value.toLowerCase(); document.querySelectorAll('#listeCategories > div').forEach(function(div){ var catName = (div.textContent || '').toLowerCase(); div.style.display = catName.indexOf(term) !== -1 ? '' : 'none'; }); }); }
+}
+
+// ---------- Init ----------
+document.addEventListener('DOMContentLoaded', async function(){ loadAppDataLocal(); updateStats(); verifierStockFaible(); // initial render from local
+  afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire(); setupSearchInputs();
+  // then try sync from server (won't override if offline)
+  await syncFromServer();
 });
 
-    // ---------- localStorage helpers ----------
-    function loadAppDataLocal(){
-      const raw = localStorage.getItem('boutique_appData');
-      if(raw){
-        try{ appData = JSON.parse(raw); }
-        catch(e){ appData = JSON.parse(JSON.stringify(defaultData)); }
-      } else appData = JSON.parse(JSON.stringify(defaultData));
-      appData.produits.forEach(p=>{ if(typeof p.prixAchat === 'undefined') p.prixAchat = p.prix_achat || 0; });
-      if(!localStorage.getItem('boutique_outbox')) localStorage.setItem('boutique_outbox', JSON.stringify([]));
-    }
-    function saveAppDataLocal(){ localStorage.setItem('boutique_appData', JSON.stringify(appData)); }
+// Register service worker if supported
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('/pwa/sw.js').then(function(reg){ console.log('SW registered', reg); }).catch(function(err){ console.warn('SW failed', err); }); }); }
+</script>
 
-    // ---------- Outbox ----------
-    function enqueueOutbox(item){
-      const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]');
-      q.push(item);
-      localStorage.setItem('boutique_outbox', JSON.stringify(q));
-    }
 
-    async function processOutboxOne(){
-      const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]');
-      if(!q.length) return null;
-      const item = q[0];
-      try{
-        let res=null;
-        if(item.type==='sale') res = await postSaleServer(item.payload);
-        else if(item.type==='product') res = await postProductServer(item.payload);
-        else if(item.type==='category') res = await postCategoryServer(item.payload);
 
-        if(res){
-          q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q)); saveAppDataLocal();
-          return {ok:true, item};
-        } else {
-          item.tries = (item.tries||0) + 1;
-          if(item.tries > 10){
-            console.warn('Dropping outbox item after many tries', item);
-            q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q));
-            return {ok:false};
-          }
-          q[0] = item; localStorage.setItem('boutique_outbox', JSON.stringify(q));
-          return {ok:false};
-        }
-      }catch(err){ console.warn('Outbox process error', err); return {ok:false}; }
-    }
 
-    async function processOutboxAll(){
-      let did=false;
-      try{
-        while(true){
-          const r = await processOutboxOne();
-          if(!r) break;
-          if(r.ok) did=true; else break;
-        }
-      }catch(e){ console.warn(e); }
-      return did;
-    }
+<script>
+function showSection(section) {
+  const sections = ['menu','vente','stock','categories','rapports','inventaire'];
+  sections.forEach(function(s){ 
+    const el = document.getElementById(s+'Section'); 
+    if(el) el.classList.add('hidden'); 
+  });
+  const target = document.getElementById(section+'Section'); 
+  if(target) target.classList.remove('hidden');
+  const backBtn = document.getElementById('backBtn'); 
+  if(backBtn) backBtn.style.display = (section==='menu') ? 'none' : 'block';
+  currentSection = section;
+  if(section==='vente'){ afficherCategoriesVente(); afficherPanier(); }
+  else if(section==='stock'){ afficherProduits(); afficherFiltresCategories(); }
+  else if(section==='categories'){ afficherCategories(); }
+  else if(section==='rapports'){ afficherRapports(); }
+  else if(section==='inventaire'){ afficherInventaire(); }
+  else if(section==='menu'){ updateStats(); verifierStockFaible(); }
+}
+</script>
 
-    setInterval(()=>{ if(navigator.onLine) processOutboxAll(); }, 30*1000);
-    window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox'); processOutboxAll(); });
-
-    async function safeJson(res) {
-      try { return await res.json(); }
-      catch (e) {
-        const rawText = await res.text();
-        console.error("❌ Erreur parsing JSON:", e);
-        console.warn("--- Réponse brute du serveur ---\n" + rawText + "\n--------------------------------");
-        return null;
-      }
-    }
-
-    // ---------- Sync with server ----------
-    async function syncFromServer(){
-      try{
-        const [resCat, resProd, resStats] = await Promise.all([
-          apiFetch(`${API_BASE}/categories`),
-          apiFetch(`${API_BASE}/products`),
-          apiFetch(`${API_BASE}/stats/summary`)
-        ]);
-        if(resCat.ok && resProd.ok){
-          const cats = await safeJson(resCat);
-          const prods = await safeJson(resProd);
-          prods?.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
-          appData.categories = cats || [];
-          appData.produits = prods || [];
-          if(resStats.ok){
-            const s = await safeJson(resStats);
-            if(s?.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires;
-          }
-          saveAppDataLocal();
-          updateStats();
-          afficherCategoriesVente();
-          afficherProduits();
-          afficherCategories();
-          afficherRapports();
-          afficherInventaire();
-          if(navigator.onLine) processOutboxAll();
-          console.log('Sync from server done');
-        }
-      }catch(err){ console.log('Sync failed, offline or server down', err); }
-    }
-
-    async function postProductServer(product){
-      try{
-        const res = await apiFetch(`${API_BASE}/products`, {
-          method:'POST',
-          body: JSON.stringify(product)
-        });
-        if(res.ok){ return await safeJson(res); }
-        else { console.warn('Add product failed', await res.text()); return null; }
-      }catch(e){ console.warn('Network error adding product', e); return null; }
-    }
-
-    async function postCategoryServer(category){
-      try{
-        const res = await apiFetch(`${API_BASE}/categories`, {
-          method:'POST',
-          body: JSON.stringify(category)
-        });
-        if(res.ok){ return await safeJson(res); }
-        else { console.warn('Add category failed', await res.text()); return null; }
-      }catch(e){ console.warn('Network error adding category', e); return null; }
-    }
-
-    async function postSaleServer(sale){
-      try{
-        const res = await apiFetch(`${API_BASE}/sales`, {
-          method:'POST',
-          body: JSON.stringify(sale)
-        });
-        if(res.ok){ return await safeJson(res); }
-        else { console.warn('Sale post failed', await res.text()); return null; }
-      }catch(e){ console.warn('Network error posting sale', e); return null; }
-    }
-
-    // ---------- Ventes récentes ----------
-    async function afficherVentes() {
-      try {
-        const res = await apiFetch(`${API_BASE}/sales`);
-        if (!res.ok) throw new Error('Erreur chargement ventes');
-        const ventes = await res.json();
-        const container = document.getElementById('listeVentes');
-        container.innerHTML = '';
-        if (!ventes.length) {
-          container.innerHTML = '<div class="text-gray-500">Aucune vente enregistrée.</div>';
-          return;
-        }
-        ventes.forEach(v => {
-          const div = document.createElement('div');
-          div.className = 'border rounded-xl p-3 flex justify-between items-center';
-          const d = v.date ? new Date(v.date) : new Date();
-          div.innerHTML = `
-            <div>
-              <div><strong>Total :</strong> ${v.total} F</div>
-              <div><strong>Paiement :</strong> ${v.paiement}</div>
-              <div class="text-gray-500 text-xs">${d.toLocaleString()}</div>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="modifierVente('${v.id}')" class="bg-blue-500 text-white px-2 py-1 rounded">✏️</button>
-              <button onclick="annulerVente('${v.id}')" class="bg-red-500 text-white px-2 py-1 rounded">🗑️</button>
-            </div>`;
-          container.appendChild(div);
-        });
-      } catch (err) {
-        console.error(err);
-        document.getElementById('listeVentes').innerHTML = '<div class="text-red-500">Erreur chargement ventes</div>';
-      }
-    }
-
-    async function annulerVente(id) {
-      if (!confirm('Confirmer annulation de cette vente ?')) return;
-      const res = await apiFetch(`${API_BASE}/sales/${id}`, { method: 'DELETE' });
-      if (res.ok) { alert('✅ Vente annulée'); afficherVentes(); syncFromServer(); }
-      else { alert('❌ Erreur lors de l’annulation'); }
-    }
-
-    async function modifierVente(id) {
-      const nouveauTotal = prompt('Nouveau total :');
-      if (!nouveauTotal) return;
-      const res = await apiFetch(`${API_BASE}/sales/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ total: parseInt(nouveauTotal) })
-      });
-      if (res.ok) { alert('✅ Vente modifiée'); afficherVentes(); syncFromServer(); }
-      else { alert('❌ Erreur lors de la modification'); }
-    }
-
-    // ---------- UI Helpers (show/hide sections & modals) ----------
-    const sectionsMap = {
-      menu: 'menuSection',
-      vente: 'venteSection',
-      stock: 'stockSection',
-      categories: 'categoriesSection',
-      rapports: 'rapportsSection',
-      inventaire: 'inventaireSection'
-    };
-
-    function showSection(key){
-      Object.values(sectionsMap).forEach(id => document.getElementById(id).classList.add('hidden'));
-      const id = sectionsMap[key] || 'menuSection';
-      document.getElementById(id).classList.remove('hidden');
-      document.getElementById('backBtn').style.display = (key === 'menu') ? 'none' : 'block';
-      if(key === 'rapports') afficherVentes();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function showModal(name){
-      const overlay = document.getElementById('modalOverlay');
-      Array.from(overlay.children).forEach(c => c.classList.add('hidden'));
-      overlay.classList.remove('hidden');
-      if(name === 'ajoutProduit') document.getElementById('modalAjoutProduit').classList.remove('hidden');
-      if(name === 'ajoutCategorie') document.getElementById('modalAjoutCategorie').classList.remove('hidden');
-      if(name === 'paiement') document.getElementById('modalPaiement').classList.remove('hidden');
-    }
-
-    function hideModal(){ document.getElementById('modalOverlay').classList.add('hidden'); }
-
-    // ---------- Stubs (sécurise les appels manquants) ----------
-    function updateStats(){
-      // Met à jour la tuile d’accueil depuis appData.stats
-      const ca = appData?.stats?.chiffreAffaires || 0;
-      document.getElementById('chiffreAffaires').textContent = `${ca} F`;
-      document.getElementById('ventesToday').textContent = appData?.stats?.ventesJour || 0;
-    }
-
-    function afficherCategoriesVente(){
-      const wrap = document.getElementById('categoriesVente');
-      if(!wrap) return;
-      wrap.innerHTML = '';
-      (appData?.categories||[]).forEach(c=>{
-        const btn = document.createElement('button');
-        btn.className = `big-button text-white p-4 rounded-2xl shadow ${c.couleur||'bg-purple-500'}`;
-        btn.innerHTML = `<div class="text-3xl">${c.emoji||'🏷️'}</div><div class="font-bold">${c.nom}</div>`;
-        wrap.appendChild(btn);
-      });
-    }
-
-    function afficherProduits(){ /* à brancher selon votre logique */ }
-    function afficherCategories(){ /* à brancher selon votre logique */ }
-    function afficherRapports(){ /* à brancher selon votre logique */ }
-    function afficherInventaire(){ /* à brancher selon votre logique */ }
-
-    function selectEmoji(e){ const i=document.getElementById('emojiCategorie'); if(i) i.value=e; }
-    function ajouterProduit(){ console.log('TODO: ajouterProduit'); hideModal(); }
-    function ajouterCategorie(){ console.log('TODO: ajouterCategorie'); hideModal(); }
-    function finaliserVente(m){ console.log('TODO: finaliserVente', m); hideModal(); }
-    function filtrerProduits(){ /* TODO */ }
-
-    // ---------- Init ----------
-    function initApp(){
-      loadAppDataLocal();
-      showSection('menu');
-      syncFromServer();
-    }
-  </script>
 </body>
 </html>
