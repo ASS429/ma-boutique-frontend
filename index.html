@@ -1,16 +1,20 @@
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Ma Boutique - Gestion Complète</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- PWA meta -->
 <link rel="manifest" href="/pwa/manifest.json">
 <meta name="theme-color" content="#6D28D9">
+<!-- iOS support -->
 <link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
 <style>
     .app-container {
         max-width: 100%; width: 100%; max-width: 900px;
@@ -56,43 +60,10 @@
     height: 250px;
 }
 </style>
-
-    <script>
-        // Vérification de l'authentification
-        document.addEventListener("DOMContentLoaded", () => {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                window.location.href = "login.html";
-            }
-        });
-
-        // Fonction utilitaire pour effectuer des requêtes avec le token
-        async function apiFetch(url, options = {}) {
-            const token = localStorage.getItem('authToken');
-            if (!options.headers) options.headers = {};
-            options.headers['Authorization'] = `Bearer ${token}`;
-            return fetch(url, options);
-        }
-
-        // Déconnexion
-        function logout() {
-            localStorage.removeItem('authToken');
-            window.location.href = "login.html";
-        }
-    </script>
-
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50">
-
-<script>
-// 🔹 AJOUT AUTH — Vérification si connecté
-if (!localStorage.getItem('authToken')) {
-  window.location.href = 'login.html';
-}
-</script>
-
 <div class="app-container">
- <!-- En-tête -->
+  <!-- En-tête -->
   <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
     <div class="flex items-center justify-between">
       <button class="text-3xl" id="backBtn" onclick="showSection('menu')" style="display: none;">←</button>
@@ -239,15 +210,7 @@ if (!localStorage.getItem('authToken')) {
     </div>
   </div>
 
-      <!-- 🔹 AJOUT GESTION VENTES -->
-      <div class="bg-white rounded-3xl p-6 shadow-lg">
-        <h3 class="text-lg font-bold mb-4">🧾 Ventes récentes</h3>
-        <div id="listeVentes" class="space-y-3 text-sm"></div>
-      </div>
-    </div>
-  </div>
-
- <!-- Section Inventaire -->
+  <!-- Section Inventaire -->
   <div class="hidden slide-in p-6" id="inventaireSection">
     <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
     <input type="text" id="searchInventaire" placeholder="🔍 Rechercher un produit..." class="w-full p-2 border rounded mb-4">
@@ -321,12 +284,7 @@ if (!localStorage.getItem('authToken')) {
 // API_BASE can be set to full URL when deployed. To auto-detect hosted API, set a meta tag in the hosting HTML head like:
 // <meta name="api-base" content="https://mon-backend.example.com">
 const metaApi = document.querySelector('meta[name="api-base"]');
-const API_BASE = metaApi 
-  ? metaApi.content 
-  : (location.hostname === 'localhost' || location.hostname === '127.0.0.1') 
-    ? 'http://localhost:5000'  // ton backend local
-    : 'https://ma-boutique-backend-3.onrender.com'; // backend en ligne
-
+const API_BASE = metaApi ? metaApi.content : ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? '' : ''); // '' -> relative
 
 const defaultData = {
   categories: [
@@ -352,16 +310,14 @@ function loadAppDataLocal(){
     catch(e){ appData = JSON.parse(JSON.stringify(defaultData)); }
   } else appData = JSON.parse(JSON.stringify(defaultData));
   appData.produits.forEach(p=>{ if(typeof p.prixAchat === 'undefined') p.prixAchat = p.prix_achat || 0; });
+  // ensure outbox exists
   if(!localStorage.getItem('boutique_outbox')) localStorage.setItem('boutique_outbox', JSON.stringify([]));
 }
 function saveAppDataLocal(){ localStorage.setItem('boutique_appData', JSON.stringify(appData)); }
 
 // ---------- Outbox / Background retry ----------
-function enqueueOutbox(item){
-  const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]'); 
-  q.push(item); 
-  localStorage.setItem('boutique_outbox', JSON.stringify(q));
-}
+function enqueueOutbox(item){ // item example: {type:'sale', payload: {...}, tries:0, id: Date.now()}
+  const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]'); q.push(item); localStorage.setItem('boutique_outbox', JSON.stringify(q)); }
 
 async function processOutboxOne(){
   const q = JSON.parse(localStorage.getItem('boutique_outbox')||'[]');
@@ -373,12 +329,12 @@ async function processOutboxOne(){
     else if(item.type==='product') res = await postProductServer(item.payload);
     else if(item.type==='category') res = await postCategoryServer(item.payload);
 
-    if(res){
+    if(res){ // success -> pop
       q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q)); saveAppDataLocal();
       return {ok:true, item};
     } else {
       item.tries = (item.tries||0) + 1;
-      if(item.tries > 10){
+      if(item.tries > 10){ // drop after many tries
         console.warn('Dropping outbox item after many tries', item);
         q.shift(); localStorage.setItem('boutique_outbox', JSON.stringify(q));
         return {ok:false};
@@ -389,51 +345,30 @@ async function processOutboxOne(){
   }catch(err){ console.warn('Outbox process error', err); return {ok:false}; }
 }
 
-async function processOutboxAll(){ 
-  let did=false; 
-  try{ 
-    while(true){ 
-      const r = await processOutboxOne(); 
-      if(!r) break; 
-      if(r.ok) did=true; else break; 
-    } 
-  }catch(e){ console.warn(e); } 
-  return did; 
-}
+async function processOutboxAll(){ let did=false; try{ while(true){ const r = await processOutboxOne(); if(!r) break; if(r.ok) did=true; else break; } }catch(e){ console.warn(e); } return did; }
 
-setInterval(()=>{ if(navigator.onLine) processOutboxAll(); }, 30*1000);
+// periodic retry
+setInterval(()=>{ if(navigator.onLine) processOutboxAll(); }, 30*1000); // try every 30s if online
 window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox'); processOutboxAll(); });
 
-    async function safeJson(res) {
-  try {
-    return await res.json();
-  } catch (e) {
-    const rawText = await res.text();
-    console.error("❌ Erreur parsing JSON:", e);
-    console.warn("--- Réponse brute du serveur ---\n" + rawText + "\n--------------------------------");
-    return null;
-  }
-}
-// ---------- Sync with server ----------
+// ---------- Sync with server (read + write) ----------
 async function syncFromServer(){
   try{
     const [resCat, resProd, resStats] = await Promise.all([
-      fetch(`${API_BASE}/categories`),
-      fetch(`${API_BASE}/products`),
-      fetch(`${API_BASE}/stats/summary`)
+      fetch(API_BASE + '/api/categories'),
+      fetch(API_BASE + '/api/products'),
+      fetch(API_BASE + '/api/stats/summary')
     ]);
     if(resCat.ok && resProd.ok){
-      const cats = await safeJson(resCat);
-      const prods = await safeJson(resProd);
-      prods?.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
-      appData.categories = cats || [];
-      appData.produits = prods || [];
-      if(resStats.ok){ 
-        const s = await safeJson(resStats); 
-        if(s?.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires; 
-      }
+      const cats = await resCat.json();
+      const prods = await resProd.json();
+      prods.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
+      appData.categories = cats;
+      appData.produits = prods;
+      if(resStats.ok){ const s = await resStats.json(); if(s.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires; }
       saveAppDataLocal();
       updateStats(); afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire();
+      // after successful sync, try to flush outbox
       if(navigator.onLine) processOutboxAll();
       afficherRapports();
       console.log('Sync from server done');
@@ -443,43 +378,31 @@ async function syncFromServer(){
 
 async function postProductServer(product){
   try{
-    const res = await fetch(`${API_BASE}/products`, { 
-      method:'POST', 
-      headers:{'Content-Type':'application/json'}, 
-      body: JSON.stringify(product)
-    });
-    if(res.ok){ return await safeJson(res); }
+    const res = await fetch(API_BASE + '/api/products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(product)});
+    if(res.ok){ const p = await res.json(); return p; }
     else { console.warn('Add product failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error adding product', e); return null; }
 }
 
 async function postCategoryServer(category){
   try{
-    const res = await fetch(`${API_BASE}/categories`, { 
-      method:'POST', 
-      headers:{'Content-Type':'application/json'}, 
-      body: JSON.stringify(category)
-    });
-    if(res.ok){ return await safeJson(res); }
+    const res = await fetch(API_BASE + '/api/categories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(category)});
+    if(res.ok){ return await res.json(); }
     else { console.warn('Add category failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error adding category', e); return null; }
 }
 
 async function postSaleServer(sale){
   try{
-    const res = await fetch(`${API_BASE}/sales`, { 
-      method:'POST', 
-      headers:{'Content-Type':'application/json'}, 
-      body: JSON.stringify(sale)
-    });
-    if(res.ok){ return await safeJson(res); }
+    const res = await fetch(API_BASE + '/api/sales', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sale)});
+    if(res.ok){ return await res.json(); }
     else { console.warn('Sale post failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error posting sale', e); return null; }
 }
 
 // ---------- Navigation & UI helpers (structure kept) ----------
 let currentSection = 'menu';
-/*function showSection(section){
+function showSection(section){
   const sections = ['menu','vente','stock','categories','rapports','inventaire'];
   sections.forEach(function(s){ const el = document.getElementById(s+'Section'); if(el) el.classList.add('hidden'); });
   const target = document.getElementById(section+'Section'); if(target) target.classList.remove('hidden');
@@ -491,29 +414,6 @@ let currentSection = 'menu';
   else if(section==='rapports'){ afficherRapports(); }
   else if(section==='inventaire'){ afficherInventaire(); }
   else if(section==='menu'){ updateStats(); verifierStockFaible(); }
-}*/
-
-function showSection(section) {
-  const sections = ['menu','vente','stock','categories','rapports','inventaire'];
-  sections.forEach(s => {
-    const el = document.getElementById(s + 'Section');
-    if (el) el.classList.add('hidden');
-  });
-
-  const target = document.getElementById(section + 'Section');
-  if (target) target.classList.remove('hidden');
-
-  const backBtn = document.getElementById('backBtn');
-  if (backBtn) backBtn.style.display = (section === 'menu') ? 'none' : 'block';
-
-  currentSection = section;
-
-  if (section === 'vente') { afficherCategoriesVente(); afficherPanier(); }
-  else if (section === 'stock') { afficherProduits(); afficherFiltresCategories(); }
-  else if (section === 'categories') { afficherCategories(); }
-  else if (section === 'rapports') { afficherRapports(); afficherVentes(); }
-  else if (section === 'inventaire') { afficherInventaire(); }
-  else if (section === 'menu') { updateStats(); verifierStockFaible(); }
 }
 
 function showModal(modalName){
@@ -635,101 +535,11 @@ document.addEventListener('DOMContentLoaded', async function(){ loadAppDataLocal
   await syncFromServer();
 });
 
-
-// 🔹 AJOUT GESTION VENTES — Fonction pour afficher ventes
-async function afficherVentes() {
-  try {
-    const res = await fetch(`${API_BASE}/sales`, {
-      headers: { 
-        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-      }
-    });
-    if (!res.ok) throw new Error('Erreur chargement ventes');
-    const ventes = await res.json();
-
-    const container = document.getElementById('listeVentes');
-    container.innerHTML = '';
-
-    if (!ventes.length) {
-      container.innerHTML = '<div class="text-gray-500">Aucune vente enregistrée.</div>';
-      return;
-    }
-
-    ventes.forEach(v => {
-      const div = document.createElement('div');
-      div.className = 'border rounded-xl p-3 flex justify-between items-center';
-      div.innerHTML = `
-        <div>
-          <div><strong>Total :</strong> ${v.total} F</div>
-          <div><strong>Paiement :</strong> ${v.paiement}</div>
-          <div class="text-gray-500 text-xs">${new Date(v.date).toLocaleString()}</div>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="modifierVente('${v.id}')" class="bg-blue-500 text-white px-2 py-1 rounded">✏️</button>
-          <button onclick="annulerVente('${v.id}')" class="bg-red-500 text-white px-2 py-1 rounded">🗑️</button>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  } catch (err) {
-    console.error(err);
-    document.getElementById('listeVentes').innerHTML = '<div class="text-red-500">Erreur chargement ventes</div>';
-  }
-}
-
-// 🔹 AJOUT GESTION VENTES — Annuler vente
-async function annulerVente(id) {
-  if (!confirm('Confirmer annulation de cette vente ?')) return;
-  const res = await fetch(`${API_BASE}/sales/${id}`, {
-    method: 'DELETE',
-    headers: { 
-      'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-    }
-  });
-  if (res.ok) {
-    alert('✅ Vente annulée');
-    afficherVentes();
-    syncFromServer();
-  } else {
-    alert('❌ Erreur lors de l’annulation');
-  }
-}
-
-// 🔹 AJOUT GESTION VENTES — Modifier vente
-async function modifierVente(id) {
-  const nouveauTotal = prompt('Nouveau total :');
-  if (!nouveauTotal) return;
-  const res = await fetch(`${API_BASE}/sales/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-    },
-    body: JSON.stringify({ total: parseInt(nouveauTotal) })
-  });
-  if (res.ok) {
-    alert('✅ Vente modifiée');
-    afficherVentes();
-    syncFromServer();
-  } else {
-    alert('❌ Erreur lors de la modification');
-  }
-}
-
-
-
-// On recharge les ventes quand on ouvre la section rapports
-const originalShowSection = showSection;
-showSection = function(section) {
-  originalShowSection(section);
-  if (section === 'rapports') {
-    afficherVentes();
-  }
-};
-
 // Register service worker if supported
 if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('/pwa/sw.js').then(function(reg){ console.log('SW registered', reg); }).catch(function(err){ console.warn('SW failed', err); }); }); }
-
 </script>
+
+
+
 </body>
-</html> 
+</html>
