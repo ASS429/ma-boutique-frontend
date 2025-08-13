@@ -358,7 +358,7 @@ async function syncFromServer(){
     const [resCat, resProd, resStats] = await Promise.all([
       fetch(API_BASE + '/api/categories'),
       fetch(API_BASE + '/api/products'),
-      fetch(API_BASE + '/api/stats/summary')
+      fetch(API_BASE + '/api/stats')
     ]);
     if(resCat.ok && resProd.ok){
       const cats = await resCat.json();
