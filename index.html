@@ -399,6 +399,16 @@ async function processOutboxAll(){
 setInterval(()=>{ if(navigator.onLine) processOutboxAll(); }, 30*1000);
 window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox'); processOutboxAll(); });
 
+    async function safeJson(res) {
+  try {
+    return await res.json();
+  } catch (e) {
+    const rawText = await res.text();
+    console.error("❌ Erreur parsing JSON:", e);
+    console.warn("--- Réponse brute du serveur ---\n" + rawText + "\n--------------------------------");
+    return null;
+  }
+}
 // ---------- Sync with server ----------
 async function syncFromServer(){
   try{
@@ -408,14 +418,14 @@ async function syncFromServer(){
       fetch(`${API_BASE}/stats/summary`)
     ]);
     if(resCat.ok && resProd.ok){
-      const cats = await resCat.json();
-      const prods = await resProd.json();
-      prods.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
-      appData.categories = cats;
-      appData.produits = prods;
+      const cats = await safeJson(resCat);
+      const prods = await safeJson(resProd);
+      prods?.forEach(p=>{ if(p.prix_achat!==undefined) p.prixAchat = p.prix_achat; if(typeof p.vendu === 'undefined') p.vendu = 0; });
+      appData.categories = cats || [];
+      appData.produits = prods || [];
       if(resStats.ok){ 
-        const s = await resStats.json(); 
-        if(s.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires; 
+        const s = await safeJson(resStats); 
+        if(s?.chiffreAffaires!==undefined) appData.stats.chiffreAffaires = s.chiffreAffaires; 
       }
       saveAppDataLocal();
       updateStats(); afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire();
@@ -433,7 +443,7 @@ async function postProductServer(product){
       headers:{'Content-Type':'application/json'}, 
       body: JSON.stringify(product)
     });
-    if(res.ok){ const p = await res.json(); return p; }
+    if(res.ok){ return await safeJson(res); }
     else { console.warn('Add product failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error adding product', e); return null; }
 }
@@ -445,7 +455,7 @@ async function postCategoryServer(category){
       headers:{'Content-Type':'application/json'}, 
       body: JSON.stringify(category)
     });
-    if(res.ok){ return await res.json(); }
+    if(res.ok){ return await safeJson(res); }
     else { console.warn('Add category failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error adding category', e); return null; }
 }
@@ -457,7 +467,7 @@ async function postSaleServer(sale){
       headers:{'Content-Type':'application/json'}, 
       body: JSON.stringify(sale)
     });
-    if(res.ok){ return await res.json(); }
+    if(res.ok){ return await safeJson(res); }
     else { console.warn('Sale post failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error posting sale', e); return null; }
 }
