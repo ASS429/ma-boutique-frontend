@@ -356,9 +356,9 @@ window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox
 async function syncFromServer(){
   try{
     const [resCat, resProd, resStats] = await Promise.all([
-      fetch(API_BASE + '/api/categories'),
-      fetch(API_BASE + '/api/products'),
-      fetch(API_BASE + '/api/stats')
+      fetch(API_BASE + '/categories'),
+      fetch(API_BASE + '/products'),
+      fetch(API_BASE + '/stats')
     ]);
     if(resCat.ok && resProd.ok){
       const cats = await resCat.json();
@@ -379,7 +379,7 @@ async function syncFromServer(){
 
 async function postProductServer(product){
   try{
-    const res = await fetch(API_BASE + '/api/products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(product)});
+    const res = await fetch(API_BASE + '/products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(product)});
     if(res.ok){ const p = await res.json(); return p; }
     else { console.warn('Add product failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error adding product', e); return null; }
@@ -387,7 +387,7 @@ async function postProductServer(product){
 
 async function postCategoryServer(category){
   try{
-    const res = await fetch(API_BASE + '/api/categories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(category)});
+    const res = await fetch(API_BASE + '/categories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(category)});
     if(res.ok){ return await res.json(); }
     else { console.warn('Add category failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error adding category', e); return null; }
@@ -395,7 +395,7 @@ async function postCategoryServer(category){
 
 async function postSaleServer(sale){
   try{
-    const res = await fetch(API_BASE + '/api/sales', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sale)});
+    const res = await fetch(API_BASE + '/sales', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sale)});
     if(res.ok){ return await res.json(); }
     else { console.warn('Sale post failed', await res.text()); return null; }
   }catch(e){ console.warn('Network error posting sale', e); return null; }
@@ -501,17 +501,17 @@ function afficherProduits(categorieFilter){ if(typeof categorieFilter === 'undef
   }); }
 
 function modifierStock(id, delta){ var produit = appData.produits.find(function(p){ return p.id === id; }); if(produit && produit.stock + delta >= 0){ produit.stock += delta; afficherProduits(); updateStats(); saveAppDataLocal(); // try update server
-  fetch(API_BASE + '/api/products/' + id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nom: produit.nom, prix: produit.prix, prixAchat: produit.prixAchat||produit.prix_achat||0, stock: produit.stock, description: produit.description }) }).then(function(r){ if(!r.ok) console.warn('update failed'); }).catch(function(){});
+  fetch(API_BASE + '/products/' + id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nom: produit.nom, prix: produit.prix, prixAchat: produit.prixAchat||produit.prix_achat||0, stock: produit.stock, description: produit.description }) }).then(function(r){ if(!r.ok) console.warn('update failed'); }).catch(function(){});
  } }
 
-function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appData.produits = appData.produits.filter(function(p){ return p.id !== id; }); afficherProduits(); updateStats(); saveAppDataLocal(); fetch(API_BASE + '/api/products/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Supprimé'); } }
+function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appData.produits = appData.produits.filter(function(p){ return p.id !== id; }); afficherProduits(); updateStats(); saveAppDataLocal(); fetch(API_BASE + '/products/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Supprimé'); } }
 
 // ---------- Catégories UI ----------
 function selectEmoji(emoji){ var el = document.getElementById('emojiCategorie'); if(el) el.value = emoji; document.querySelectorAll('.emoji-btn').forEach(function(btn){ btn.classList.remove('bg-blue-200','border-blue-400'); }); if(window.event && window.event.target) window.event.target.classList.add('bg-blue-200','border-blue-400'); }
 
 function afficherCategories(){ var ctn = document.getElementById('listeCategories'); if(!ctn) return; ctn.innerHTML = ''; appData.categories.forEach(function(cat){ var produitsCount = appData.produits.filter(function(p){ return p.categorie === cat.id; }).length; var div = document.createElement('div'); div.className = (cat.couleur || '') + ' text-white rounded-2xl p-6 shadow-lg'; div.innerHTML = '<div class="flex justify-between items-center"><div><div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="text-xl font-bold">' + cat.nom + '</div><div class="text-sm opacity-90">' + produitsCount + ' produits</div></div><button class="bg-white bg-opacity-20 text-white px-3 py-2 rounded-lg text-sm">🗑️</button></div>'; ctn.appendChild(div); }); }
 
-function supprimerCategorie(id){ var produitsCategorie = appData.produits.filter(function(p){ return p.categorie === id; }); if(produitsCategorie.length){ alert('❌ Impossible: catégorie contient des produits'); return; } if(confirm('❓ Supprimer catégorie ?')){ appData.categories = appData.categories.filter(function(c){ return c.id !== id; }); afficherCategories(); saveAppDataLocal(); fetch(API_BASE + '/api/categories/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Catégorie supprimée'); } }
+function supprimerCategorie(id){ var produitsCategorie = appData.produits.filter(function(p){ return p.categorie === id; }); if(produitsCategorie.length){ alert('❌ Impossible: catégorie contient des produits'); return; } if(confirm('❓ Supprimer catégorie ?')){ appData.categories = appData.categories.filter(function(c){ return c.id !== id; }); afficherCategories(); saveAppDataLocal(); fetch(API_BASE + '/categories/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Catégorie supprimée'); } }
 
 // ---------- Rapports & charts ----------
 function afficherRapports(){ var recettesJour = document.getElementById('recettesJour'); if(recettesJour) recettesJour.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var recettesSemaine = document.getElementById('recettesSemaine'); if(recettesSemaine) recettesSemaine.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var containerPaiements = document.getElementById('rapportsPaiements'); if(containerPaiements) containerPaiements.innerHTML = ''; var methodesNoms = {especes:{nom:'Espèces', emoji:'💵', couleur:'green'}, wave:{nom:'Wave', emoji:'📱', couleur:'blue'}, orange:{nom:'Orange Money', emoji:'📞', couleur:'orange'}}; Object.keys(appData.stats.paiements || {}).forEach(function(m){ var montant = appData.stats.paiements[m] || 0; var info = methodesNoms[m] || {nom:m, emoji:'', couleur:'gray'}; var div = document.createElement('div'); div.className = 'bg-' + info.couleur + '-50 rounded-2xl p-3 flex justify-between items-center'; div.innerHTML = '<div class="flex items-center gap-3"><span class="text-2xl">' + (info.emoji||'') + '</span><span class="font-bold">' + info.nom + '</span></div><span class="font-bold">' + montant.toLocaleString() + ' F</span>'; if(containerPaiements) containerPaiements.appendChild(div); }); var cPop = document.getElementById('produitsPopulaires'); if(cPop) cPop.innerHTML=''; var populaires = appData.produits.filter(function(p){ return p.vendu > 0; }).sort(function(a,b){ return b.vendu - a.vendu; }).slice(0,5); if(!populaires.length && cPop) cPop.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune vente</div>'; else populaires.forEach(function(p){ var d = document.createElement('div'); d.className='flex justify-between items-center bg-gray-50 rounded-lg p-3'; d.innerHTML = '<div class="font-bold">' + p.nom + '</div><div class="text-blue-600 font-bold">' + p.vendu + ' vendus</div>'; if(cPop) cPop.appendChild(d); }); updateCharts(); }
