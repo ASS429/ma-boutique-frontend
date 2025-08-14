@@ -673,20 +673,40 @@ function setupSearchInputs(){ var inv = document.getElementById('searchInventair
 }
 
 // ---------- Init ----------
-document.addEventListener('DOMContentLoaded', async function(){ loadAppDataLocal(); updateStats(); verifierStockFaible(); // initial render from local
-  afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire(); setupSearchInputs();
-  // then try sync from server (won't override if offline)
-  await syncFromServer();
-
+document.addEventListener('DOMContentLoaded', async function(){
+  loadAppDataLocal();
   updateStats();
-verifierStockFaible();
-afficherCategoriesVente();
-afficherProduits();
-afficherCategories();
-afficherRapports();
-afficherInventaire();
+  verifierStockFaible();
+  afficherCategoriesVente();
+  afficherProduits();
+  afficherCategories();
+  afficherRapports();
+  afficherInventaire();
+  setupSearchInputs();
 
+  // Première synchro serveur
+  await syncFromServer();
+  updateStats();
+  verifierStockFaible();
+  afficherCategoriesVente();
+  afficherProduits();
+  afficherCategories();
+  afficherRapports();
+  afficherInventaire();
+
+  // 🔄 Rafraîchissement auto toutes les 30 secondes
+  setInterval(async () => {
+    await syncFromServer();
+    updateStats();
+    verifierStockFaible();
+    afficherCategoriesVente();
+    afficherProduits();
+    afficherCategories();
+    afficherRapports();
+    afficherInventaire();
+  }, 30000);
 });
+
 
 // Register service worker if supported
 if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('./pwa/sw.js').then(function(reg){ console.log('SW registered', reg); }).catch(function(err){ console.warn('SW failed', err); }); }); }
