@@ -63,6 +63,10 @@
 </style>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50">
+  <div id="syncBanner" style="display:none;" class="bg-blue-500 text-white text-center py-2 text-sm">
+  🔄 Synchronisation en cours...
+</div>
+
 <div class="app-container">
   <!-- En-tête -->
   <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
@@ -206,6 +210,8 @@
 <div class="chart-container"><canvas id="chartVentesByDay"></canvas></div>
 <div class="chart-container"><canvas id="chartTopProduits"></canvas></div>
 <div class="chart-container"><canvas id="chartPaiements"></canvas></div>
+<div class="chart-container"><canvas id="chartStocksFaibles"></canvas></div>
+
 </div>
 
     </div>
@@ -354,6 +360,9 @@ window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox
 
 // ---------- Sync with server (read only) ----------
 async function syncFromServer() {
+  const syncBanner = document.getElementById('syncBanner');
+  if (syncBanner) syncBanner.style.display = 'block';
+
   // Vérifier si offline
   if (!navigator.onLine) {
     console.warn('Mode hors ligne : données locales utilisées.');
@@ -364,6 +373,7 @@ async function syncFromServer() {
     offlineBanner.style.textAlign = 'center';
     offlineBanner.textContent = '⚠️ Vous êtes hors ligne - affichage des données locales';
     document.body.prepend(offlineBanner);
+    if (syncBanner) syncBanner.style.display = 'none';
     return;
   }
 
@@ -375,28 +385,39 @@ async function syncFromServer() {
     ]);
 
     // Récupération catégories
-if (resCat.ok) {
-  const cats = await resCat.json();
-  appData.categories = cats.map(c => ({
-    id: parseInt(c.id), // 👈 important : convertir en nombre
-    name: c.name,
-    emoji: c.emoji || '🏷️',
-    couleur: c.couleur || 'bg-purple-400'
-  }));
-}
+    if (resCat.ok) {
+      const cats = await resCat.json();
+      const defaultCategoryStyles = [
+        { emoji: '👕', couleur: 'category-habits' },
+        { emoji: '💄', couleur: 'category-cosmetiques' },
+        { emoji: '👠', couleur: 'category-chaussures' },
+        { emoji: '💍', couleur: 'category-accessoires' },
+        { emoji: '🧴', couleur: 'bg-blue-400' },
+        { emoji: '✨', couleur: 'bg-yellow-400' }
+      ];
+      appData.categories = cats.map((c, index) => {
+        const style = defaultCategoryStyles[index % defaultCategoryStyles.length];
+        return {
+          id: parseInt(c.id),
+          name: c.name,
+          emoji: c.emoji || style.emoji,
+          couleur: c.couleur || style.couleur
+        };
+      });
+    }
 
-// Récupération produits
-if (resProd.ok) {
-  const prods = await resProd.json();
-  appData.produits = prods.map(p => ({
-    id: parseInt(p.id), // 👈 idem
-    name: p.name,
-    category_id: parseInt(p.category_id), // 👈 idem
-    scent: p.scent,
-    price: p.price,
-    stock: p.stock
-  }));
-}
+    // Récupération produits
+    if (resProd.ok) {
+      const prods = await resProd.json();
+      appData.produits = prods.map(p => ({
+        id: parseInt(p.id),
+        name: p.name,
+        category_id: parseInt(p.category_id),
+        scent: p.scent,
+        price: p.price,
+        stock: p.stock
+      }));
+    }
 
     // Récupération stats
     if (resStats.ok) {
@@ -408,7 +429,10 @@ if (resProd.ok) {
   } catch (err) {
     console.warn('❌ Erreur lors de la synchronisation depuis le serveur', err);
   }
+
+  if (syncBanner) syncBanner.style.display = 'none';
 }
+
 
 async function postCategoryServer(category) {
   try {
@@ -520,7 +544,11 @@ function verifierStockFaible(){
 }
 
 // ---------- Vente / Panier ----------
-function afficherCategoriesVente(){ const ctn=document.getElementById('categoriesVente'); if(!ctn) return; ctn.innerHTML=''; appData.categories.forEach(function(cat){ const produitsCategorie = appData.produits.filter(function(p){ return p.category_id===cat.id && p.stock>0; }); if(!produitsCategorie.length) return; const d=document.createElement('div'); d.className = 'big-button ' + (cat.couleur || '') + ' text-white p-4 rounded-2xl text-center cursor-pointer shadow-lg'; d.addEventListener('click', function(){ afficherProduitsCategorie(cat.id); }); d.innerHTML = '<div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="font-bold">' + cat.name + '</div><div class="text-sm opacity-90">' + produitsCategorie.length + ' produits</div>'; ctn.appendChild(d); }); }
+function afficherCategoriesVente(){ const ctn=document.getElementById('categoriesVente'); if(!ctn) return; ctn.innerHTML=''; if (appData.categories.length === 0) {
+  ctn.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune catégorie disponible</div>';
+  return;
+}
+ appData.categories.forEach(function(cat){ const produitsCategorie = appData.produits.filter(function(p){ return p.category_id===cat.id && p.stock>0; }); if(!produitsCategorie.length) return; const d=document.createElement('div'); d.className = 'big-button ' + (cat.couleur || '') + ' text-white p-4 rounded-2xl text-center cursor-pointer shadow-lg'; d.addEventListener('click', function(){ afficherProduitsCategorie(cat.id); }); d.innerHTML = '<div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="font-bold">' + cat.name + '</div><div class="text-sm opacity-90">' + produitsCategorie.length + ' produits</div>'; ctn.appendChild(d); }); }
 
 function afficherProduitsCategorie(categorieId){ const produits = appData.produits.filter(function(p){ return p.category_id===categorieId && p.stock>0; }); const container=document.getElementById('categoriesVente'); if(!container) return; container.innerHTML = '';const retourBtn = document.createElement('button');retourBtn.textContent = '← Retour';retourBtn.className = 'col-span-2 mb-4 text-blue-600 font-bold';retourBtn.addEventListener('click', afficherCategoriesVente);container.appendChild(retourBtn);
   produits.forEach(function(produit){ const div=document.createElement('div'); div.className='bg-white border-2 border-gray-200 p-4 rounded-2xl text-center cursor-pointer hover:border-blue-400 transition-all'; div.addEventListener('click', function(){ ajouterAuPanier(produit); }); div.innerHTML = '<div class="font-bold text-lg mb-1">' + produit.name + '</div><div class="text-2xl font-bold text-green-600 mb-1">' + (produit.price||0).toLocaleString() + ' F</div><div class="text-sm text-gray-600">Stock: ' + (produit.stock||0) + '</div>'; container.appendChild(div); }); }
@@ -557,10 +585,18 @@ async function finaliserVente(paymentMethod) {
   }
 
   alert('✅ Vente enregistrée.');
-  appData.panier = [];
-  saveAppDataLocal();
-  syncFromServer();
-  hideModal();
+appData.panier = [];
+saveAppDataLocal();
+await syncFromServer();
+updateStats();
+verifierStockFaible();
+afficherCategoriesVente();
+afficherProduits();
+afficherCategories();
+afficherRapports();
+afficherInventaire();
+hideModal();
+
 }
 
 
@@ -590,11 +626,19 @@ async function ajouterProduit(){
 
   const created = await postProductServer(produit);
   if (created) {
-    appData.produits.push(created);
-    saveAppDataLocal();
-    afficherProduits();
-    alert('✅ Produit ajouté (serveur).');
-  } else {
+  alert('✅ Produit ajouté (serveur).');
+  await syncFromServer();
+  updateStats();
+  verifierStockFaible();
+  afficherCategoriesVente();
+  afficherProduits();
+  afficherCategories();
+  afficherRapports();
+  afficherInventaire();
+  hideModal();
+}
+
+  else {
     alert('❌ Erreur lors de l\'ajout du produit.');
   }
 }
@@ -621,6 +665,11 @@ async function ajouterCategorie(){
       saveAppDataLocal();
       syncFromServer();
       alert('✅ Catégorie ajoutée (serveur).');
+      await syncFromServer();
+      afficherCategories();
+      afficherCategoriesVente();
+      afficherProduits();
+
     } else {
       enqueueOutbox({ type: 'category', payload: { name: name }, tries: 0, id: Date.now() });
       alert('✅ Catégorie ajoutée localement et mise en file d\'envoi.');
@@ -636,8 +685,52 @@ function afficherFiltresCategories(){ const container = document.getElementById(
 
 function filtrerProduits(categorieId){ document.querySelectorAll('.filtre-btn').forEach(function(btn){ btn.classList.remove('bg-blue-500','text-white'); btn.classList.add('bg-gray-200'); }); if(window.event && window.event.target){ var t = window.event.target; t.classList.add('bg-blue-500','text-white'); t.classList.remove('bg-gray-200'); } afficherProduits(categorieId); }
 
-function afficherProduits(categorieFilter){ if(typeof categorieFilter === 'undefined') categorieFilter = 'tous'; const container = document.getElementById('listeProduits'); if(!container) return; container.innerHTML = ''; var produits = appData.produits.slice(); if(categorieFilter !== 'tous') produits = produits.filter(function(p){ return p.category_id === categorieFilter; }); produits.forEach(function(produit){ var categorie = appData.categories.find(function(c){ return c.id === produit.category_id; }); var div = document.createElement('div'); var stockColor = (produit.stock < 5) ? 'text-red-600' : (produit.stock < 10) ? 'text-orange-600' : 'text-green-600'; div.className = 'bg-white rounded-2xl p-4 shadow-lg'; var descriptionHtml = produit.description ? '<div class="text-xs text-gray-500 mt-1">' + produit.description + '</div>' : ''; div.innerHTML = '<div class="flex justify-between items-start mb-3"><div><div class="text-lg font-bold">' + produit.name + '</div><div class="text-sm text-gray-600">' + (categorie ? (categorie.emoji + ' ' + categorie.name) : 'Sans catégorie') + '</div>' + descriptionHtml + '</div><div class="text-right"><div class="text-xl font-bold text-green-600">' + (produit.price||0).toLocaleString() + ' F</div><div class="text-sm ' + stockColor + ' font-bold">Stock: ' + (produit.stock||0) + '</div><div class="text-xs text-gray-500">Achat: ' + ((produit.priceAchat||produit.price_achat||0).toLocaleString()) + ' F</div></div></div><div class="flex gap-2"><button class="btn-mod-stock-minus bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">- Stock</button><button class="btn-mod-stock-plus bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold">+ Stock</button><button class="btn-suppr bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">🗑️</button></div>'; container.appendChild(div);
-    // wire buttons
+function afficherProduits(categorieFilter){ if(typeof categorieFilter === 'undefined') categorieFilter = 'tous'; const container = document.getElementById('listeProduits'); if(!container) return; container.innerHTML = ''; if (produits.length === 0) {
+  container.innerHTML = '<div class="text-gray-500 text-center py-4">Aucun produit trouvé</div>';
+  return;
+}
+ var produits = appData.produits.slice(); if(categorieFilter !== 'tous') produits = produits.filter(function(p){ return p.category_id === categorieFilter; }); produits.forEach(function(produit){ var categorie = appData.categories.find(function(c){ return c.id === produit.category_id; }); var div = document.createElement('div'); var stockColor = (produit.stock < 5) ? 'text-red-600' : (produit.stock < 10) ? 'text-orange-600' : 'text-green-600'; var stockBadge = '';
+if (produit.stock <= 5) {
+  stockBadge = `<span class="ml-2 inline-block px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">⚠️</span>`;
+} else if (produit.stock < 10) {
+  stockBadge = `<span class="ml-2 inline-block px-2 py-0.5 text-xs font-bold text-white bg-orange-500 rounded-full">⚠️</span>`;
+}
+div.className = 'bg-white rounded-2xl p-4 shadow-lg';
+
+var bgAlertClass = '';
+if (produit.stock <= 5) bgAlertClass = 'bg-red-50';
+else if (produit.stock < 10) bgAlertClass = 'bg-orange-50';
+
+div.className = 'rounded-2xl p-4 shadow-lg ' + bgAlertClass;
+
+
+var descriptionHtml = produit.description
+    ? '<div class="text-xs text-gray-500 mt-1">' + produit.description + '</div>'
+    : '';
+
+div.innerHTML =
+    '<div class="flex justify-between items-start mb-3">' +
+        '<div>' +
+            '<div class="text-lg font-bold">' + produit.name + '</div>' +
+            '<div class="text-sm text-gray-600">' +
+                (categorie ? (categorie.emoji + ' ' + categorie.name) : 'Sans catégorie') +
+            '</div>' +
+            descriptionHtml +
+        '</div>' +
+        '<div class="text-right">' +
+            '<div class="text-xl font-bold text-green-600">' + (produit.price || 0).toLocaleString() + ' F</div>' +
+            '<div class="text-sm ' + stockColor + ' font-bold">Stock: ' + (produit.stock || 0) + (stockBadge || '') + '</div>' +
+            '<div class="text-xs text-gray-500">Achat: ' + ((produit.priceAchat || produit.price_achat || 0).toLocaleString()) + ' F</div>' +
+        '</div>' +
+    '</div>' +
+    '<div class="flex gap-2">' +
+        '<button class="btn-mod-stock-minus bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">- Stock</button>' +
+        '<button class="btn-mod-stock-plus bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold">+ Stock</button>' +
+        '<button class="btn-suppr bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">🗑️</button>' +
+    '</div>';
+
+container.appendChild(div);
+  // wire buttons
     var btnMinus = div.querySelector('.btn-mod-stock-minus'); if(btnMinus) btnMinus.addEventListener('click', function(){ modifierStock(produit.id, -1); });
     var btnPlus = div.querySelector('.btn-mod-stock-plus'); if(btnPlus) btnPlus.addEventListener('click', function(){ modifierStock(produit.id, 1); });
     var btnSuppr = div.querySelector('.btn-suppr'); if(btnSuppr) btnSuppr.addEventListener('click', function(){ supprimerProduit(produit.id); });
@@ -652,7 +745,11 @@ function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appDat
 // ---------- Catégories UI ----------
 function selectEmoji(emoji){ var el = document.getElementById('emojiCategorie'); if(el) el.value = emoji; document.querySelectorAll('.emoji-btn').forEach(function(btn){ btn.classList.remove('bg-blue-200','border-blue-400'); }); if(window.event && window.event.target) window.event.target.classList.add('bg-blue-200','border-blue-400'); }
 
-function afficherCategories(){ var ctn = document.getElementById('listeCategories'); if(!ctn) return; ctn.innerHTML = ''; appData.categories.forEach(function(cat){ var produitsCount = appData.produits.filter(function(p){ return p.category_id === cat.id; }).length; var div = document.createElement('div'); div.className = (cat.couleur || '') + ' text-white rounded-2xl p-6 shadow-lg'; div.innerHTML = '<div class="flex justify-between items-center"><div><div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="text-xl font-bold">' + cat.name + '</div><div class="text-sm opacity-90">' + produitsCount + ' produits</div></div><button class="bg-white bg-opacity-20 text-white px-3 py-2 rounded-lg text-sm">🗑️</button></div>'; ctn.appendChild(div); }); }
+function afficherCategories(){ var ctn = document.getElementById('listeCategories'); if(!ctn) return; ctn.innerHTML = ''; if (appData.categories.length === 0) {
+  ctn.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune catégorie trouvée</div>';
+  return;
+}
+ appData.categories.forEach(function(cat){ var produitsCount = appData.produits.filter(function(p){ return p.category_id === cat.id; }).length; var div = document.createElement('div'); div.className = (cat.couleur || '') + ' text-white rounded-2xl p-6 shadow-lg'; div.innerHTML = '<div class="flex justify-between items-center"><div><div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="text-xl font-bold">' + cat.name + '</div><div class="text-sm opacity-90">' + produitsCount + ' produits</div></div><button class="bg-white bg-opacity-20 text-white px-3 py-2 rounded-lg text-sm">🗑️</button></div>'; ctn.appendChild(div); }); }
 
 function supprimerCategorie(id){ var produitsCategorie = appData.produits.filter(function(p){ return p.category_id === id; }); if(produitsCategorie.length){ alert('❌ Impossible: catégorie contient des produits'); return; } if(confirm('❓ Supprimer catégorie ?')){ appData.categories = appData.categories.filter(function(c){ return c.id !== id; }); afficherCategories(); saveAppDataLocal(); fetch(API_BASE + '/categories/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Catégorie supprimée'); } }
 
@@ -662,10 +759,44 @@ function afficherRapports(){ var recettesJour = document.getElementById('recette
 function updateCharts(){ var ventes = appData.ventes || []; var byDay = {}; ventes.forEach(function(v){ var d = (new Date(v.date)).toISOString().slice(0,10); byDay[d] = (byDay[d]||0) + (v.total||0); }); var labels = Object.keys(byDay).sort(); var data = labels.map(function(l){ return byDay[l]; }); if(chartVentesByDay) chartVentesByDay.destroy(); var ctx1 = document.getElementById('chartVentesByDay'); if(ctx1) { chartVentesByDay = new Chart(ctx1.getContext('2d'), { type:'line', data:{ labels: labels, datasets:[{ label:'Total ventes par jour', data: data, borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,0.15)', fill:true }]}, options:{ responsive:true, maintainAspectRatio:false } }); }
   var productsSorted = (appData.produits||[]).slice().sort(function(a,b){ return (b.vendu||0) - (a.vendu||0); }).slice(0,8); var labels2 = productsSorted.map(function(p){ return p.name; }); var data2 = productsSorted.map(function(p){ return p.vendu||0; }); if(chartTopProduits) chartTopProduits.destroy(); var ctx2 = document.getElementById('chartTopProduits'); if(ctx2) { chartTopProduits = new Chart(ctx2.getContext('2d'), { type:'bar', data:{ labels: labels2, datasets:[{ label:'Quantités vendues', data: data2, backgroundColor:'rgba(16,185,129,0.8)'}]}, options:{ responsive:true, maintainAspectRatio:false } }); }
   var pays = appData.stats.paiements || {}; var labels3 = Object.keys(pays); var data3 = labels3.map(function(k){ return pays[k] || 0; }); if(chartPaiements) chartPaiements.destroy(); var ctx3 = document.getElementById('chartPaiements'); if(ctx3) { chartPaiements = new Chart(ctx3.getContext('2d'), { type:'pie', data:{ labels: labels3.map(function(l){ return l.charAt(0).toUpperCase()+l.slice(1); }), datasets:[{ data: data3, backgroundColor:['#10b981','#3b82f6','#f97316'] }] ,}, options:{ responsive:true, maintainAspectRatio:false } }); }
+  // 📉 Graphe stocks faibles
+var produitsFaibles = (appData.produits || []).filter(p => p.stock <= 5);
+var labelsStock = produitsFaibles.map(p => p.name);
+var dataStock = produitsFaibles.map(p => p.stock);
+
+if (window.chartStocksFaibles) window.chartStocksFaibles.destroy();
+
+var ctxStock = document.getElementById('chartStocksFaibles');
+if (ctxStock) {
+  window.chartStocksFaibles = new Chart(ctxStock.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: labelsStock,
+      datasets: [{
+        label: 'Stock restant',
+        data: dataStock,
+        backgroundColor: 'rgba(239,68,68,0.8)' // rouge
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y', // barres horizontales
+      scales: {
+        x: { beginAtZero: true }
+      }
+    }
+  });
+}
+
 }
 
 // ---------- Inventaire ----------
-function afficherInventaire(){ var tbody = document.getElementById('inventaireListe'); if(!tbody) return; tbody.innerHTML=''; appData.produits.forEach(function(p){ var profitRealise = (p.vendu || 0) * ((p.price || 0) - (p.priceAchat || p.price_achat || 0)); var tr = document.createElement('tr'); tr.innerHTML = '<td class="p-2 border">' + p.name + '</td><td class="p-2 border">' + ((p.priceAchat||p.price_achat||0).toLocaleString()) + ' F</td><td class="p-2 border">' + ((p.price||0).toLocaleString()) + ' F</td><td class="p-2 border">' + (p.stock||0) + '</td><td class="p-2 border">' + (p.vendu||0) + '</td><td class="p-2 border">' + profitRealise.toLocaleString() + ' F</td>'; tbody.appendChild(tr); }); }
+function afficherInventaire(){ var tbody = document.getElementById('inventaireListe'); if(!tbody) return; tbody.innerHTML=''; if (appData.produits.length === 0) {
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-4">Aucun produit dans l’inventaire</td></tr>';
+  return;
+}
+ appData.produits.forEach(function(p){ var profitRealise = (p.vendu || 0) * ((p.price || 0) - (p.priceAchat || p.price_achat || 0)); var tr = document.createElement('tr'); tr.innerHTML = '<td class="p-2 border">' + p.name + '</td><td class="p-2 border">' + ((p.priceAchat||p.price_achat||0).toLocaleString()) + ' F</td><td class="p-2 border">' + ((p.price||0).toLocaleString()) + ' F</td><td class="p-2 border">' + (p.stock||0) + '</td><td class="p-2 border">' + (p.vendu||0) + '</td><td class="p-2 border">' + profitRealise.toLocaleString() + ' F</td>'; tbody.appendChild(tr); }); }
 
 // ---------- Search handlers for inventory and categories ----------
 function setupSearchInputs(){ var inv = document.getElementById('searchInventaire'); if(inv){ inv.addEventListener('input', function(){ var term = this.value.toLowerCase(); document.querySelectorAll('#inventaireListe tr').forEach(function(row){ var prodName = (row.cells[0] && row.cells[0].textContent || '').toLowerCase(); row.style.display = prodName.indexOf(term) !== -1 ? '' : 'none'; }); }); }
