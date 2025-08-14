@@ -384,7 +384,7 @@ async function syncFromServer() {
     const [resCat, resProd, resStats, resSales] = await Promise.all([
       fetch(API_BASE + '/categories'),
       fetch(API_BASE + '/products'),
-      fetch(API_BASE + '/stats'),
+      fetch(API_BASE + '/stats/ventes-par-jour'),
       fetch(API_BASE + '/sales')
     ]);
 
