@@ -591,6 +591,9 @@ async function finaliserVente(paymentMethod) {
 appData.panier = [];
 saveAppDataLocal();
 await syncFromServer();
+const statsResponse = await fetch(`${API_BASE}/stats`);
+const stats = await statsResponse.json();
+appData.stats = stats;
 updateStats();
 verifierStockFaible();
 afficherCategoriesVente();
