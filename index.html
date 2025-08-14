@@ -380,10 +380,12 @@ async function syncFromServer() {
   }
 
   try {
-    const [resCat, resProd, resStats] = await Promise.all([
+    // On récupère tout en parallèle
+    const [resCat, resProd, resStats, resSales] = await Promise.all([
       fetch(API_BASE + '/categories'),
       fetch(API_BASE + '/products'),
-      fetch(API_BASE + '/stats/ventes-par-jour')
+      fetch(API_BASE + '/stats'),
+      fetch(API_BASE + '/sales')
     ]);
 
     // Récupération catégories
@@ -417,13 +419,21 @@ async function syncFromServer() {
         category_id: parseInt(p.category_id),
         scent: p.scent,
         price: p.price,
-        stock: p.stock
+        stock: p.stock,
+        vendu: p.vendu || 0,
+        priceAchat: p.price_achat || 0,
+        description: p.description || ''
       }));
     }
 
     // Récupération stats
     if (resStats.ok) {
       appData.stats = await resStats.json();
+    }
+
+    // Récupération ventes
+    if (resSales.ok) {
+      appData.ventes = await resSales.json();
     }
 
     saveAppDataLocal();
@@ -574,6 +584,7 @@ async function finaliserVente(paymentMethod) {
     return;
   }
 
+  // Envoi des ventes une par une au backend
   for (const item of appData.panier) {
     const vente = {
       product_id: item.id,
@@ -588,23 +599,25 @@ async function finaliserVente(paymentMethod) {
   }
 
   alert('✅ Vente enregistrée.');
-appData.panier = [];
-saveAppDataLocal();
-await syncFromServer();
-const statsResponse = await fetch(`${API_BASE}/stats`);
-const stats = await statsResponse.json();
-appData.stats = stats;
-updateStats();
-verifierStockFaible();
-afficherCategoriesVente();
-afficherProduits();
-afficherCategories();
-afficherRapports();
-afficherInventaire();
-hideModal();
 
+  // Vider le panier local
+  appData.panier = [];
+  saveAppDataLocal();
+
+  // Recharger toutes les données depuis le serveur (stats, ventes, produits, etc.)
+  await syncFromServer();
+
+  // Rafraîchir toute l'UI avec les données à jour
+  updateStats();
+  afficherCategoriesVente();
+  afficherProduits();
+  afficherCategories();
+  afficherRapports();
+  afficherInventaire();
+  verifierStockFaible();
+
+  hideModal();
 }
-
 
 
 // ---------- Produits / catégories gestion (avec POST) ----------
@@ -780,11 +793,40 @@ function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appDat
 // ---------- Catégories UI ----------
 function selectEmoji(emoji){ var el = document.getElementById('emojiCategorie'); if(el) el.value = emoji; document.querySelectorAll('.emoji-btn').forEach(function(btn){ btn.classList.remove('bg-blue-200','border-blue-400'); }); if(window.event && window.event.target) window.event.target.classList.add('bg-blue-200','border-blue-400'); }
 
-function afficherCategories(){ var ctn = document.getElementById('listeCategories'); if(!ctn) return; ctn.innerHTML = ''; if (appData.categories.length === 0) {
-  ctn.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune catégorie trouvée</div>';
-  return;
+function afficherCategories(){
+  var ctn = document.getElementById('listeCategories');
+  if(!ctn) return;
+  ctn.innerHTML = '';
+  
+  if (appData.categories.length === 0) {
+    ctn.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune catégorie trouvée</div>';
+    return;
+  }
+
+  appData.categories.forEach(function(cat){
+    var produitsCount = appData.produits.filter(function(p){ return p.category_id === cat.id; }).length;
+    
+    var div = document.createElement('div');
+    div.className = (cat.couleur || '') + ' text-white rounded-2xl p-6 shadow-lg';
+    div.innerHTML = `
+      <div class="flex justify-between items-center">
+        <div>
+          <div class="text-4xl mb-2">${cat.emoji || ''}</div>
+          <div class="text-xl font-bold">${cat.name}</div>
+          <div class="text-sm opacity-90">${produitsCount} produits</div>
+        </div>
+        <button class="bg-white bg-opacity-20 text-white px-3 py-2 rounded-lg text-sm">🗑️</button>
+      </div>`;
+    
+    // Rendre le bouton actif
+    const btn = div.querySelector('button');
+    if (btn) {
+      btn.addEventListener('click', () => supprimerCategorie(cat.id));
+    }
+    
+    ctn.appendChild(div);
+  });
 }
- appData.categories.forEach(function(cat){ var produitsCount = appData.produits.filter(function(p){ return p.category_id === cat.id; }).length; var div = document.createElement('div'); div.className = (cat.couleur || '') + ' text-white rounded-2xl p-6 shadow-lg'; div.innerHTML = '<div class="flex justify-between items-center"><div><div class="text-4xl mb-2">' + (cat.emoji||'') + '</div><div class="text-xl font-bold">' + cat.name + '</div><div class="text-sm opacity-90">' + produitsCount + ' produits</div></div><button class="bg-white bg-opacity-20 text-white px-3 py-2 rounded-lg text-sm">🗑️</button></div>'; ctn.appendChild(div); }); }
 
 function supprimerCategorie(id){ var produitsCategorie = appData.produits.filter(function(p){ return p.category_id === id; }); if(produitsCategorie.length){ alert('❌ Impossible: catégorie contient des produits'); return; } if(confirm('❓ Supprimer catégorie ?')){ appData.categories = appData.categories.filter(function(c){ return c.id !== id; }); afficherCategories(); saveAppDataLocal(); fetch(API_BASE + '/categories/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Catégorie supprimée'); } }
 
