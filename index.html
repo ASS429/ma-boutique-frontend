@@ -289,10 +289,10 @@ const API_BASE = metaApi ? metaApi.content : ((location.hostname === 'localhost'
 
 const defaultData = {
   categories: [
-    {id: 1, nom: "Habits", emoji: "👕", couleur: "category-habits"},
-    {id: 2, nom: "Cosmétiques", emoji: "💄", couleur: "category-cosmetiques"},
-    {id: 3, nom: "Chaussures", emoji: "👠", couleur: "category-chaussures"},
-    {id: 4, nom: "Accessoires", emoji: "💍", couleur: "category-accessoires"}
+    {id: 1, name: "Habits", emoji: "👕", couleur: "category-habits"},
+    {id: 2, name: "Cosmétiques", emoji: "💄", couleur: "category-cosmetiques"},
+    {id: 3, name: "Chaussures", emoji: "👠", couleur: "category-chaussures"},
+    {id: 4, name: "Accessoires", emoji: "💍", couleur: "category-accessoires"}
   ],
   produits: [], // start empty to prefer server data after first sync
   ventes: [],
@@ -354,8 +354,8 @@ window.addEventListener('online', ()=>{ console.log('Back online -> retry outbox
 
 // ---------- Sync with server (read only) ----------
 async function syncFromServer() {
-// Vérifier si offline
-if (!navigator.onLine) {
+  // Vérifier si offline
+  if (!navigator.onLine) {
     console.warn('Mode hors ligne : données locales utilisées.');
     const offlineBanner = document.createElement('div');
     offlineBanner.style.background = '#f87171';
@@ -365,87 +365,50 @@ if (!navigator.onLine) {
     offlineBanner.textContent = '⚠️ Vous êtes hors ligne - affichage des données locales';
     document.body.prepend(offlineBanner);
     return;
-}
+  }
 
   try {
     const [resCat, resProd, resStats] = await Promise.all([
       fetch(API_BASE + '/categories'),
       fetch(API_BASE + '/products'),
-      fetch(API_BASE + '/stats/ventes-par-jour') // exemple, selon ce que tu veux afficher
+      fetch(API_BASE + '/stats/ventes-par-jour')
     ]);
 
     // Récupération catégories
-    if (resCat.ok) {
-      const cats = await resCat.json();
-      appData.categories = cats.map(c => ({
-        id: c.id,
-        name: c.name // ✅ correspond à ta table
-      }));
-    } else {
-      console.warn('Erreur récupération catégories', await resCat.text());
-    }
+if (resCat.ok) {
+  const cats = await resCat.json();
+  appData.categories = cats.map(c => ({
+    id: parseInt(c.id), // 👈 important : convertir en nombre
+    name: c.name,
+    emoji: c.emoji || '🏷️',
+    couleur: c.couleur || 'bg-purple-400'
+  }));
+}
 
-    // Récupération produits
-    if (resProd.ok) {
-      const prods = await resProd.json();
-      appData.produits = prods.map(p => ({
-        id: p.id,
-        name: p.name,
-        category_id: p.category_id,
-        scent: p.scent,
-        price: p.price,
-        stock: p.stock
-      }));
-    } else {
-      console.warn('Erreur récupération produits', await resProd.text());
-    }
+// Récupération produits
+if (resProd.ok) {
+  const prods = await resProd.json();
+  appData.produits = prods.map(p => ({
+    id: parseInt(p.id), // 👈 idem
+    name: p.name,
+    category_id: parseInt(p.category_id), // 👈 idem
+    scent: p.scent,
+    price: p.price,
+    stock: p.stock
+  }));
+}
 
     // Récupération stats
     if (resStats.ok) {
-      const stats = await resStats.json();
-      appData.stats = stats; // tu peux formater selon tes besoins
-    } else {
-      console.warn('Erreur récupération stats', await resStats.text());
+      appData.stats = await resStats.json();
     }
 
-    // Sauvegarde en local
     saveAppDataLocal();
-
-    // Mise à jour affichage
-    updateStats();
-    afficherCategoriesVente();
-    afficherProduits();
-    afficherCategories();
-    afficherRapports();
-    afficherInventaire();
-
     console.log('✅ Sync from server done');
   } catch (err) {
-    console.log('❌ Sync failed, offline or server down', err);
+    console.warn('❌ Erreur lors de la synchronisation depuis le serveur', err);
   }
 }
-
-async function postProductServer(product) {
-  try {
-    const res = await fetch(API_BASE + '/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product) // { name, category_id, scent, price, stock }
-    });
-
-    if (!res.ok) {
-      const errorMsg = await res.text();
-      console.warn('Add product failed', errorMsg);
-      return null;
-    }
-
-    return await res.json();
-  } catch (e) {
-    console.warn('Network error adding product', e);
-    return null;
-  }
-}
-
 
 async function postCategoryServer(category) {
   try {
@@ -464,6 +427,25 @@ async function postCategoryServer(category) {
     return await res.json();
   } catch (e) {
     console.warn('Network error adding category', e);
+    return null;
+  }
+}
+
+async function postProductServer(product) {
+  try {
+    const res = await fetch(API_BASE + '/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product)
+    });
+    if (!res.ok) {
+      const errorMsg = await res.text();
+      console.warn('Add product failed', errorMsg);
+      return null;
+    }
+    return await res.json();
+  } catch (e) {
+    console.warn('Network error adding product', e);
     return null;
   }
 }
@@ -546,43 +528,45 @@ function afficherProduitsCategorie(categorieId){ const produits = appData.produi
 function ajouterAuPanier(produit){ if(!appData) return; const exist = appData.panier.find(function(i){ return i.id===produit.id; }); if(exist){ if(exist.quantite < produit.stock) exist.quantite++; else { alert('❌ Stock insuffisant!'); return; } } else appData.panier.push(Object.assign({}, produit, {quantite:1})); afficherPanier(); saveAppDataLocal(); }
 
 function afficherPanier(){ const c=document.getElementById('panierItems'); const total=document.getElementById('totalPanier'); if(!c) return; if(!appData || !appData.panier || !appData.panier.length){ c.innerHTML = '<div class="text-gray-500 text-center py-8"><div class="text-4xl mb-2">🛒</div><div>Panier vide</div></div>'; if(total) total.textContent = '0 F'; return; }
-  c.innerHTML=''; var totalPrix = 0; appData.panier.forEach(function(item){ const div=document.createElement('div'); div.className='flex justify-between items-center bg-gray-50 rounded-2xl p-3'; div.innerHTML = '<div><div class="font-bold">' + item.nom + '</div><div class="text-sm text-gray-600">' + (item.prix||0).toLocaleString() + ' F × ' + item.quantite + '</div></div><div class="flex items-center gap-2"><button class="bg-red-500 text-white w-8 h-8 rounded-full text-sm font-bold">-</button><span class="font-bold text-lg w-8 text-center">' + item.quantite + '</span><button class="bg-green-500 text-white w-8 h-8 rounded-full text-sm font-bold">+</button></div>'; // wire buttons
+  c.innerHTML=''; var totalPrix = 0; appData.panier.forEach(function(item){ const div=document.createElement('div'); div.className='flex justify-between items-center bg-gray-50 rounded-2xl p-3'; div.innerHTML = '<div><div class="font-bold">' + item.name + '</div><div class="text-sm text-gray-600">' + (item.price||0).toLocaleString() + ' F × ' + item.quantite + '</div></div><div class="flex items-center gap-2"><button class="bg-red-500 text-white w-8 h-8 rounded-full text-sm font-bold">-</button><span class="font-bold text-lg w-8 text-center">' + item.quantite + '</span><button class="bg-green-500 text-white w-8 h-8 rounded-full text-sm font-bold">+</button></div>'; // wire buttons
     c.appendChild(div);
     // attach handlers to +/- buttons
     const btns = div.querySelectorAll('button'); if(btns && btns.length>=2){ btns[0].addEventListener('click', function(){ modifierQuantitePanier(item.id, -1); }); btns[1].addEventListener('click', function(){ modifierQuantitePanier(item.id, 1); }); }
-    totalPrix += (item.prix||0) * item.quantite;
+    totalPrix += (item.price||0) * item.quantite;
   }); if(total) total.textContent = totalPrix.toLocaleString() + ' F'; }
 
 function modifierQuantitePanier(id, delta){ if(!appData) return; const item = appData.panier.find(function(i){ return i.id===id; }); const produit = appData.produits.find(function(p){ return p.id===id; }); if(item){ item.quantite += delta; if(item.quantite <= 0) appData.panier = appData.panier.filter(function(i){ return i.id !== id; }); else if(produit && item.quantite > produit.stock){ item.quantite = produit.stock; alert('❌ Stock insuffisant!'); } afficherPanier(); saveAppDataLocal(); } }
 
-async function finaliserVente(){
-  const product_id = parseInt(document.getElementById('produitVente').value);
-  const quantity = parseInt(document.getElementById('quantiteVente').value);
-  const payment_method = document.getElementById('paiementVente').value;
-
-  if (!product_id || isNaN(quantity) || quantity <= 0) {
-    alert('❌ Sélectionnez un produit et une quantité valide.');
+async function finaliserVente(paymentMethod) {
+  if (!appData.panier.length) {
+    alert('❌ Panier vide.');
     return;
   }
 
-  const vente = {
-    product_id: product_id,
-    quantity: quantity,
-    payment_method: payment_method
-  };
-
-  const created = await postSaleServer(vente);
-  if (created) {
-    alert('✅ Vente enregistrée (serveur).');
-    syncFromServer();
-  } else {
-    alert('❌ Erreur lors de l\'enregistrement de la vente.');
+  for (const item of appData.panier) {
+    const vente = {
+      product_id: item.id,
+      quantity: item.quantite,
+      payment_method: paymentMethod
+    };
+    const created = await postSaleServer(vente);
+    if (!created) {
+      alert('❌ Erreur lors de l\'enregistrement de la vente.');
+      return;
+    }
   }
+
+  alert('✅ Vente enregistrée.');
+  appData.panier = [];
+  saveAppDataLocal();
+  syncFromServer();
+  hideModal();
 }
 
 
+
 // ---------- Produits / catégories gestion (avec POST) ----------
-function remplirSelectCategories(){ const select = document.getElementById('categorieProduit'); if(!select) return; select.innerHTML = '<option value="">Choisir catégorie</option>'; appData.categories.forEach(function(categ){ var opt = document.createElement('option'); opt.value = categ.id; opt.textContent = (categ.emoji ? categ.emoji + ' ' : '') + categ.nom; select.appendChild(opt); }); }
+function remplirSelectCategories(){ const select = document.getElementById('categorieProduit'); if(!select) return; select.innerHTML = '<option value="">Choisir catégorie</option>'; appData.categories.forEach(function(categ){ var opt = document.createElement('option'); opt.value = categ.id; opt.textContent = (categ.emoji ? categ.emoji + ' ' : '') + categ.name; select.appendChild(opt); }); }
 
 async function ajouterProduit(){
   const name = document.getElementById('nomProduit').value;
@@ -642,13 +626,13 @@ async function ajouterCategorie(){
       alert('✅ Catégorie ajoutée localement et mise en file d\'envoi.');
     }
   } else {
-    alert('❌ Saisir un nom');
+    alert('❌ Saisir un name');
   }
 }
 
 
 function afficherFiltresCategories(){ const container = document.getElementById('filtreCategories'); if(!container) return; container.innerHTML = ''; var btnAll = document.createElement('button'); btnAll.className = 'filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; btnAll.textContent = 'Tous'; btnAll.addEventListener('click', function(){ filtrerProduits('tous'); }); container.appendChild(btnAll);
-  appData.categories.forEach(function(c){ var button = document.createElement('button'); button.className = 'filtre-btn bg-gray-200 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; button.textContent = (c.emoji?c.emoji+' ':'') + c.nom; button.addEventListener('click', function(){ filtrerProduits(c.id); }); container.appendChild(button); }); }
+  appData.categories.forEach(function(c){ var button = document.createElement('button'); button.className = 'filtre-btn bg-gray-200 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; button.textContent = (c.emoji?c.emoji+' ':'') + c.name; button.addEventListener('click', function(){ filtrerProduits(c.id); }); container.appendChild(button); }); }
 
 function filtrerProduits(categorieId){ document.querySelectorAll('.filtre-btn').forEach(function(btn){ btn.classList.remove('bg-blue-500','text-white'); btn.classList.add('bg-gray-200'); }); if(window.event && window.event.target){ var t = window.event.target; t.classList.add('bg-blue-500','text-white'); t.classList.remove('bg-gray-200'); } afficherProduits(categorieId); }
 
@@ -660,7 +644,7 @@ function afficherProduits(categorieFilter){ if(typeof categorieFilter === 'undef
   }); }
 
 function modifierStock(id, delta){ var produit = appData.produits.find(function(p){ return p.id === id; }); if(produit && produit.stock + delta >= 0){ produit.stock += delta; afficherProduits(); updateStats(); saveAppDataLocal(); // try update server
-  fetch(API_BASE + '/products/' + id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nom: produit.name, prix: produit.price, prixAchat: produit.priceAchat||produit.price_achat||0, stock: produit.stock, description: produit.description }) }).then(function(r){ if(!r.ok) console.warn('update failed'); }).catch(function(){});
+  fetch(API_BASE + '/products/' + id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: produit.name, price: produit.price, prixAchat: produit.priceAchat||produit.price_achat||0, stock: produit.stock, description: produit.description }) }).then(function(r){ if(!r.ok) console.warn('update failed'); }).catch(function(){});
  } }
 
 function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appData.produits = appData.produits.filter(function(p){ return p.id !== id; }); afficherProduits(); updateStats(); saveAppDataLocal(); fetch(API_BASE + '/products/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Supprimé'); } }
@@ -673,7 +657,7 @@ function afficherCategories(){ var ctn = document.getElementById('listeCategorie
 function supprimerCategorie(id){ var produitsCategorie = appData.produits.filter(function(p){ return p.category_id === id; }); if(produitsCategorie.length){ alert('❌ Impossible: catégorie contient des produits'); return; } if(confirm('❓ Supprimer catégorie ?')){ appData.categories = appData.categories.filter(function(c){ return c.id !== id; }); afficherCategories(); saveAppDataLocal(); fetch(API_BASE + '/categories/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Catégorie supprimée'); } }
 
 // ---------- Rapports & charts ----------
-function afficherRapports(){ var recettesJour = document.getElementById('recettesJour'); if(recettesJour) recettesJour.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var recettesSemaine = document.getElementById('recettesSemaine'); if(recettesSemaine) recettesSemaine.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var containerPaiements = document.getElementById('rapportsPaiements'); if(containerPaiements) containerPaiements.innerHTML = ''; var methodesNoms = {especes:{nom:'Espèces', emoji:'💵', couleur:'green'}, wave:{nom:'Wave', emoji:'📱', couleur:'blue'}, orange:{nom:'Orange Money', emoji:'📞', couleur:'orange'}}; Object.keys(appData.stats.paiements || {}).forEach(function(m){ var montant = appData.stats.paiements[m] || 0; var info = methodesNoms[m] || {nom:m, emoji:'', couleur:'gray'}; var div = document.createElement('div'); div.className = 'bg-' + info.couleur + '-50 rounded-2xl p-3 flex justify-between items-center'; div.innerHTML = '<div class="flex items-center gap-3"><span class="text-2xl">' + (info.emoji||'') + '</span><span class="font-bold">' + info.nom + '</span></div><span class="font-bold">' + montant.toLocaleString() + ' F</span>'; if(containerPaiements) containerPaiements.appendChild(div); }); var cPop = document.getElementById('produitsPopulaires'); if(cPop) cPop.innerHTML=''; var populaires = appData.produits.filter(function(p){ return p.vendu > 0; }).sort(function(a,b){ return b.vendu - a.vendu; }).slice(0,5); if(!populaires.length && cPop) cPop.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune vente</div>'; else populaires.forEach(function(p){ var d = document.createElement('div'); d.className='flex justify-between items-center bg-gray-50 rounded-lg p-3'; d.innerHTML = '<div class="font-bold">' + p.name + '</div><div class="text-blue-600 font-bold">' + p.vendu + ' vendus</div>'; if(cPop) cPop.appendChild(d); }); updateCharts(); }
+function afficherRapports(){ var recettesJour = document.getElementById('recettesJour'); if(recettesJour) recettesJour.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var recettesSemaine = document.getElementById('recettesSemaine'); if(recettesSemaine) recettesSemaine.textContent = (appData.stats.chiffreAffaires||0).toLocaleString() + ' F'; var containerPaiements = document.getElementById('rapportsPaiements'); if(containerPaiements) containerPaiements.innerHTML = ''; var methodesNoms = {especes:{name:'Espèces', emoji:'💵', couleur:'green'}, wave:{name:'Wave', emoji:'📱', couleur:'blue'}, orange:{name:'Orange Money', emoji:'📞', couleur:'orange'}}; Object.keys(appData.stats.paiements || {}).forEach(function(m){ var montant = appData.stats.paiements[m] || 0; var info = methodesNoms[m] || {name:m, emoji:'', couleur:'gray'}; var div = document.createElement('div'); div.className = 'bg-' + info.couleur + '-50 rounded-2xl p-3 flex justify-between items-center'; div.innerHTML = '<div class="flex items-center gap-3"><span class="text-2xl">' + (info.emoji||'') + '</span><span class="font-bold">' + info.name + '</span></div><span class="font-bold">' + montant.toLocaleString() + ' F</span>'; if(containerPaiements) containerPaiements.appendChild(div); }); var cPop = document.getElementById('produitsPopulaires'); if(cPop) cPop.innerHTML=''; var populaires = appData.produits.filter(function(p){ return p.vendu > 0; }).sort(function(a,b){ return b.vendu - a.vendu; }).slice(0,5); if(!populaires.length && cPop) cPop.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune vente</div>'; else populaires.forEach(function(p){ var d = document.createElement('div'); d.className='flex justify-between items-center bg-gray-50 rounded-lg p-3'; d.innerHTML = '<div class="font-bold">' + p.name + '</div><div class="text-blue-600 font-bold">' + p.vendu + ' vendus</div>'; if(cPop) cPop.appendChild(d); }); updateCharts(); }
 
 function updateCharts(){ var ventes = appData.ventes || []; var byDay = {}; ventes.forEach(function(v){ var d = (new Date(v.date)).toISOString().slice(0,10); byDay[d] = (byDay[d]||0) + (v.total||0); }); var labels = Object.keys(byDay).sort(); var data = labels.map(function(l){ return byDay[l]; }); if(chartVentesByDay) chartVentesByDay.destroy(); var ctx1 = document.getElementById('chartVentesByDay'); if(ctx1) { chartVentesByDay = new Chart(ctx1.getContext('2d'), { type:'line', data:{ labels: labels, datasets:[{ label:'Total ventes par jour', data: data, borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,0.15)', fill:true }]}, options:{ responsive:true, maintainAspectRatio:false } }); }
   var productsSorted = (appData.produits||[]).slice().sort(function(a,b){ return (b.vendu||0) - (a.vendu||0); }).slice(0,8); var labels2 = productsSorted.map(function(p){ return p.name; }); var data2 = productsSorted.map(function(p){ return p.vendu||0; }); if(chartTopProduits) chartTopProduits.destroy(); var ctx2 = document.getElementById('chartTopProduits'); if(ctx2) { chartTopProduits = new Chart(ctx2.getContext('2d'), { type:'bar', data:{ labels: labels2, datasets:[{ label:'Quantités vendues', data: data2, backgroundColor:'rgba(16,185,129,0.8)'}]}, options:{ responsive:true, maintainAspectRatio:false } }); }
@@ -693,6 +677,15 @@ document.addEventListener('DOMContentLoaded', async function(){ loadAppDataLocal
   afficherCategoriesVente(); afficherProduits(); afficherCategories(); afficherRapports(); afficherInventaire(); setupSearchInputs();
   // then try sync from server (won't override if offline)
   await syncFromServer();
+
+  updateStats();
+verifierStockFaible();
+afficherCategoriesVente();
+afficherProduits();
+afficherCategories();
+afficherRapports();
+afficherInventaire();
+
 });
 
 // Register service worker if supported
