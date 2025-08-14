@@ -15,6 +15,8 @@
 <link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+
 
 <style>
     .app-container {
@@ -428,6 +430,7 @@ async function syncFromServer() {
     console.log('✅ Sync from server done');
   } catch (err) {
     console.warn('❌ Erreur lors de la synchronisation depuis le serveur', err);
+    alert('⚠️ Impossible de contacter le serveur API. Vérifiez la connexion ou la configuration CORS.');
   }
 
   if (syncBanner) syncBanner.style.display = 'none';
@@ -607,7 +610,8 @@ function remplirSelectCategories(){ const select = document.getElementById('cate
 async function ajouterProduit(){
   const name = document.getElementById('nomProduit').value;
   const category_id = parseInt(document.getElementById('categorieProduit').value);
-  const scent = document.getElementById('parfumProduit').value;
+  const scentEl = document.getElementById('parfumProduit');
+  const scent = scentEl ? scentEl.value : '';
   const price = parseFloat(document.getElementById('prixProduit').value);
   const stock = parseInt(document.getElementById('stockProduit').value);
 
@@ -685,56 +689,84 @@ function afficherFiltresCategories(){ const container = document.getElementById(
 
 function filtrerProduits(categorieId){ document.querySelectorAll('.filtre-btn').forEach(function(btn){ btn.classList.remove('bg-blue-500','text-white'); btn.classList.add('bg-gray-200'); }); if(window.event && window.event.target){ var t = window.event.target; t.classList.add('bg-blue-500','text-white'); t.classList.remove('bg-gray-200'); } afficherProduits(categorieId); }
 
-function afficherProduits(categorieFilter){ if(typeof categorieFilter === 'undefined') categorieFilter = 'tous'; const container = document.getElementById('listeProduits'); if(!container) return; container.innerHTML = ''; if (produits.length === 0) {
-  container.innerHTML = '<div class="text-gray-500 text-center py-4">Aucun produit trouvé</div>';
-  return;
+function afficherProduits(categorieFilter) { 
+  if (typeof categorieFilter === 'undefined') categorieFilter = 'tous';
+  
+  const container = document.getElementById('listeProduits');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  let produits = appData.produits.slice();
+  
+  if (produits.length === 0) {
+    container.innerHTML = '<div class="text-gray-500 text-center py-4">Aucun produit trouvé</div>';
+    return;
+  }
+  
+  if (categorieFilter !== 'tous') {
+    produits = produits.filter(p => p.category_id === categorieFilter);
+  }
+  
+  produits.forEach(function(produit) {
+    const categorie = appData.categories.find(c => c.id === produit.category_id);
+    
+    const stockColor = (produit.stock < 5) ? 'text-red-600' : 
+                       (produit.stock < 10) ? 'text-orange-600' : 
+                       'text-green-600';
+    
+    let stockBadge = '';
+    if (produit.stock <= 5) {
+      stockBadge = `<span class="ml-2 inline-block px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">⚠️</span>`;
+    } else if (produit.stock < 10) {
+      stockBadge = `<span class="ml-2 inline-block px-2 py-0.5 text-xs font-bold text-white bg-orange-500 rounded-full">⚠️</span>`;
+    }
+    
+    let bgAlertClass = '';
+    if (produit.stock <= 5) bgAlertClass = 'bg-red-50';
+    else if (produit.stock < 10) bgAlertClass = 'bg-orange-50';
+    
+    const div = document.createElement('div');
+    div.className = 'rounded-2xl p-4 shadow-lg ' + bgAlertClass;
+    
+    const descriptionHtml = produit.description
+      ? `<div class="text-xs text-gray-500 mt-1">${produit.description}</div>`
+      : '';
+    
+    div.innerHTML =
+      `<div class="flex justify-between items-start mb-3">
+         <div>
+           <div class="text-lg font-bold">${produit.name}</div>
+           <div class="text-sm text-gray-600">
+             ${categorie ? (categorie.emoji + ' ' + categorie.name) : 'Sans catégorie'}
+           </div>
+           ${descriptionHtml}
+         </div>
+         <div class="text-right">
+           <div class="text-xl font-bold text-green-600">${(produit.price || 0).toLocaleString()} F</div>
+           <div class="text-sm ${stockColor} font-bold">Stock: ${produit.stock || 0}${stockBadge}</div>
+           <div class="text-xs text-gray-500">Achat: ${(produit.priceAchat || produit.price_achat || 0).toLocaleString()} F</div>
+         </div>
+       </div>
+       <div class="flex gap-2">
+         <button class="btn-mod-stock-minus bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">- Stock</button>
+         <button class="btn-mod-stock-plus bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold">+ Stock</button>
+         <button class="btn-suppr bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">🗑️</button>
+       </div>`;
+    
+    container.appendChild(div);
+    
+    // Wire buttons
+    const btnMinus = div.querySelector('.btn-mod-stock-minus');
+    if (btnMinus) btnMinus.addEventListener('click', () => modifierStock(produit.id, -1));
+    
+    const btnPlus = div.querySelector('.btn-mod-stock-plus');
+    if (btnPlus) btnPlus.addEventListener('click', () => modifierStock(produit.id, 1));
+    
+    const btnSuppr = div.querySelector('.btn-suppr');
+    if (btnSuppr) btnSuppr.addEventListener('click', () => supprimerProduit(produit.id));
+  });
 }
- var produits = appData.produits.slice(); if(categorieFilter !== 'tous') produits = produits.filter(function(p){ return p.category_id === categorieFilter; }); produits.forEach(function(produit){ var categorie = appData.categories.find(function(c){ return c.id === produit.category_id; }); var div = document.createElement('div'); var stockColor = (produit.stock < 5) ? 'text-red-600' : (produit.stock < 10) ? 'text-orange-600' : 'text-green-600'; var stockBadge = '';
-if (produit.stock <= 5) {
-  stockBadge = `<span class="ml-2 inline-block px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">⚠️</span>`;
-} else if (produit.stock < 10) {
-  stockBadge = `<span class="ml-2 inline-block px-2 py-0.5 text-xs font-bold text-white bg-orange-500 rounded-full">⚠️</span>`;
-}
-div.className = 'bg-white rounded-2xl p-4 shadow-lg';
-
-var bgAlertClass = '';
-if (produit.stock <= 5) bgAlertClass = 'bg-red-50';
-else if (produit.stock < 10) bgAlertClass = 'bg-orange-50';
-
-div.className = 'rounded-2xl p-4 shadow-lg ' + bgAlertClass;
-
-
-var descriptionHtml = produit.description
-    ? '<div class="text-xs text-gray-500 mt-1">' + produit.description + '</div>'
-    : '';
-
-div.innerHTML =
-    '<div class="flex justify-between items-start mb-3">' +
-        '<div>' +
-            '<div class="text-lg font-bold">' + produit.name + '</div>' +
-            '<div class="text-sm text-gray-600">' +
-                (categorie ? (categorie.emoji + ' ' + categorie.name) : 'Sans catégorie') +
-            '</div>' +
-            descriptionHtml +
-        '</div>' +
-        '<div class="text-right">' +
-            '<div class="text-xl font-bold text-green-600">' + (produit.price || 0).toLocaleString() + ' F</div>' +
-            '<div class="text-sm ' + stockColor + ' font-bold">Stock: ' + (produit.stock || 0) + (stockBadge || '') + '</div>' +
-            '<div class="text-xs text-gray-500">Achat: ' + ((produit.priceAchat || produit.price_achat || 0).toLocaleString()) + ' F</div>' +
-        '</div>' +
-    '</div>' +
-    '<div class="flex gap-2">' +
-        '<button class="btn-mod-stock-minus bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">- Stock</button>' +
-        '<button class="btn-mod-stock-plus bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold">+ Stock</button>' +
-        '<button class="btn-suppr bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">🗑️</button>' +
-    '</div>';
-
-container.appendChild(div);
-  // wire buttons
-    var btnMinus = div.querySelector('.btn-mod-stock-minus'); if(btnMinus) btnMinus.addEventListener('click', function(){ modifierStock(produit.id, -1); });
-    var btnPlus = div.querySelector('.btn-mod-stock-plus'); if(btnPlus) btnPlus.addEventListener('click', function(){ modifierStock(produit.id, 1); });
-    var btnSuppr = div.querySelector('.btn-suppr'); if(btnSuppr) btnSuppr.addEventListener('click', function(){ supprimerProduit(produit.id); });
-  }); }
 
 function modifierStock(id, delta){ var produit = appData.produits.find(function(p){ return p.id === id; }); if(produit && produit.stock + delta >= 0){ produit.stock += delta; afficherProduits(); updateStats(); saveAppDataLocal(); // try update server
   fetch(API_BASE + '/products/' + id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: produit.name, price: produit.price, prixAchat: produit.priceAchat||produit.price_achat||0, stock: produit.stock, description: produit.description }) }).then(function(r){ if(!r.ok) console.warn('update failed'); }).catch(function(){});
@@ -764,7 +796,10 @@ var produitsFaibles = (appData.produits || []).filter(p => p.stock <= 5);
 var labelsStock = produitsFaibles.map(p => p.name);
 var dataStock = produitsFaibles.map(p => p.stock);
 
-if (window.chartStocksFaibles) window.chartStocksFaibles.destroy();
+if (window.chartStocksFaibles && typeof window.chartStocksFaibles.destroy === 'function') {
+    window.chartStocksFaibles.destroy();
+}
+
 
 var ctxStock = document.getElementById('chartStocksFaibles');
 if (ctxStock) {
