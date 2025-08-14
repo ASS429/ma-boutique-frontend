@@ -429,12 +429,12 @@ async function syncFromServer() {
     // Récupération stats
     if (resStats.ok) {
   const statsArray = await resStats.json();
-  const today = new Date().toISOString().split('T')[0]; // format YYYY-MM-DD
-  const todayStat = statsArray.find(s => s.date.startsWith(today));
+  const todayStat = statsArray[0] || { total_montant: 0, total_quantite: 0 };
 
-  appData.stats.ventesJour = todayStat ? parseInt(todayStat.total_montant, 10) : 0;
-  // Tu peux aussi calculer articles vendus si tu ajoutes SUM(s.quantity) dans la requête
+  appData.stats.ventesJour = parseInt(todayStat.total_montant, 10) || 0;
+  appData.stats.articlesVendus = parseInt(todayStat.total_quantite, 10) || 0;
 }
+
 
 
     // Récupération ventes
