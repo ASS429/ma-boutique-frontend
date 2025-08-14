@@ -429,13 +429,17 @@ async function syncFromServer() {
     // Récupération stats
     if (resStats.ok) {
   const statsArray = await resStats.json();
-  const todayStat = statsArray[0] || { total_montant: 0, total_quantite: 0 };
 
-  appData.stats.ventesJour = parseInt(todayStat.total_montant, 10) || 0;
-  appData.stats.articlesVendus = parseInt(todayStat.total_quantite, 10) || 0;
+  // Trouver la date du jour
+  const today = new Date().toISOString().split('T')[0];
+  const todayStat = statsArray.find(s => s.date.startsWith(today));
+
+  appData.stats.ventesJour = todayStat ? parseInt(todayStat.total_montant, 10) : 0;
+  appData.stats.articlesVendus = todayStat ? parseInt(todayStat.total_quantite, 10) : 0;
+
+  // Historique pour graphiques si besoin
+  appData.stats.historique = statsArray;
 }
-
-
 
     // Récupération ventes
     if (resSales.ok) {
