@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-     <script>
+ <script>
   (function () {
     try {
       var token = localStorage.getItem('authToken');
@@ -13,6 +13,10 @@
     }
   })();
 </script>
+
+
+
+
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Ma Boutique - Gestion Complète</title>
@@ -320,6 +324,7 @@
 </div>
 
 <script>
+
 // ---------- CONFIG & DATA ----------
 // API_BASE can be set to full URL when deployed. To auto-detect hosted API, set a meta tag in the hosting HTML head like:
 // <meta name="api-base" content="https://mon-backend.example.com">
@@ -403,35 +408,13 @@ async function syncFromServer() {
   }
 
   try {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      window.location.href = 'login.html';
-      return;
-    }
-
-    // Récupération en parallèle avec Authorization
+    // 🔹 Récupération en parallèle avec authFetch
     const [resCat, resProd, resStats, resSales] = await Promise.all([
-      fetch(API_BASE + '/categories', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      }),
-      fetch(API_BASE + '/products', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      }),
-      fetch(API_BASE + '/stats/ventes-par-jour', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      }),
-      fetch(API_BASE + '/sales', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
+      authFetch(API_BASE + '/categories'),
+      authFetch(API_BASE + '/products'),
+      authFetch(API_BASE + '/stats/ventes-par-jour'),
+      authFetch(API_BASE + '/sales')
     ]);
-
-    // Vérifier si session expirée
-    if ([resCat, resProd, resStats, resSales].some(r => r.status === 401)) {
-      alert("❌ Session expirée. Veuillez vous reconnecter.");
-      localStorage.removeItem('authToken');
-      window.location.href = 'login.html';
-      return;
-    }
 
     // --- Catégories ---
     if (resCat.ok) {
@@ -466,7 +449,9 @@ async function syncFromServer() {
         price: Number(p.price) || 0,
         stock: Number(p.stock) || 0,
         vendu: 0,
-        priceAchat: (typeof p.price_achat !== 'undefined' ? Number(p.price_achat) : (p.priceAchat || 0)) || 0,
+        priceAchat: (typeof p.price_achat !== 'undefined'
+          ? Number(p.price_achat)
+          : (p.priceAchat || 0)) || 0,
         description: p.description || ''
       }));
     }
@@ -511,7 +496,7 @@ async function syncFromServer() {
 
   } catch (err) {
     console.warn('❌ Erreur lors de la synchronisation depuis le serveur', err);
-    console.warn('⚠️ Impossible de contacter le serveur API. Vérifiez la connexion ou la configuration CORS.');
+    console.warn('⚠️ Impossible de contacter le serveur API.');
   }
 
   if (syncBanner) syncBanner.style.display = 'none';
@@ -523,7 +508,7 @@ async function syncFromServer() {
 
 async function postCategoryServer(category) {
   try {
-    const res = await fetch(API_BASE + '/categories', {
+    const res = await authfetch(API_BASE + '/categories', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(category) // category = { name: "..." }
@@ -544,7 +529,7 @@ async function postCategoryServer(category) {
 
 async function postProductServer(product) {
   try {
-    const res = await fetch(API_BASE + '/products', {
+    const res = await authfetch(API_BASE + '/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(product)
@@ -564,7 +549,7 @@ async function postProductServer(product) {
 
 async function postSaleServer(sale) {
   try {
-    const res = await fetch(API_BASE + '/sales', {
+    const res = await authfetch(API_BASE + '/sales', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sale) // { product_id, quantity, payment_method }
@@ -877,7 +862,7 @@ function modifierStock(id, delta){
     saveAppDataLocal();
 
     // ✅ on envoie bien "price_achat"
-    fetch(API_BASE + '/products/' + id, {
+    authfetch(API_BASE + '/products/' + id, {
       method:'PATCH', // PATCH plutôt que PUT pour ne mettre à jour que les champs modifiés
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -894,7 +879,7 @@ function modifierStock(id, delta){
 }
 
 
-function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appData.produits = appData.produits.filter(function(p){ return p.id !== id; }); afficherProduits(); updateStats(); saveAppDataLocal(); fetch(API_BASE + '/products/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Supprimé'); } }
+function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appData.produits = appData.produits.filter(function(p){ return p.id !== id; }); afficherProduits(); updateStats(); saveAppDataLocal(); authfetch(API_BASE + '/products/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Supprimé'); } }
 
 // ---------- Catégories UI ----------
 function selectEmoji(emoji){ var el = document.getElementById('emojiCategorie'); if(el) el.value = emoji; document.querySelectorAll('.emoji-btn').forEach(function(btn){ btn.classList.remove('bg-blue-200','border-blue-400'); }); if(window.event && window.event.target) window.event.target.classList.add('bg-blue-200','border-blue-400'); }
@@ -938,7 +923,7 @@ async function supprimerCategorie(id) {
   if (!confirm('❓ Supprimer cette catégorie ?')) return;
 
   try {
-    const res = await fetch(API_BASE + '/categories/' + id, { method: 'DELETE' });
+    const res = await authfetch(API_BASE + '/categories/' + id, { method: 'DELETE' });
 
     const data = await res.json();
 
@@ -1100,7 +1085,7 @@ async function mettreAJourProduit() {
   }
 
   try {
-    const res = await fetch(API_BASE + '/products/' + id, {
+    const res = await authfetch(API_BASE + '/products/' + id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(produit)
@@ -1171,6 +1156,31 @@ function renderVentesChart() {
     }
   });
 }
+
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    // Pas connecté → on renvoie vers login
+    window.location.href = 'login.html';
+    return Promise.reject(new Error('Token manquant'));
+  }
+
+  const headers = {
+    ...(options.headers || {}),
+    'Authorization': 'Bearer ' + token
+  };
+
+  return authfetch(url, { ...options, headers }).then(res => {
+    if (res.status === 401) {
+      alert('❌ Session expirée. Veuillez vous reconnecter.');
+      localStorage.removeItem('authToken');
+      window.location.href = 'login.html';
+      throw new Error('401 Unauthorized');
+    }
+    return res;
+  });
+}
+
 
 </script>
 
