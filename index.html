@@ -680,21 +680,23 @@ async function ajouterProduit(){
   const category_id = parseInt(document.getElementById('categorieProduit').value);
   const scentEl = document.getElementById('parfumProduit');
   const scent = scentEl ? scentEl.value : '';
-  const priceAchat = parseFloat(document.getElementById('prixAchatProduit').value); // ✅ nouveau
+  const priceAchat = parseFloat(document.getElementById('prixAchatProduit').value); // ✅ prix achat
   const price = parseFloat(document.getElementById('prixProduit').value);
   const stock = parseInt(document.getElementById('stockProduit').value);
 
+  // Validation
   if (!name || !category_id || isNaN(price) || isNaN(stock) || isNaN(priceAchat)) {
     alert('❌ Remplissez tous les champs correctement.');
     return;
   }
 
+  // ✅ envoyer avec le nom correct pour la BDD
   const produit = {
     name: name,
     category_id: category_id,
     scent: scent,
     price: price,
-    price_achat: priceAchat, // ✅ envoyer au backend avec le nom exact de la colonne
+    price_achat: priceAchat,
     stock: stock
   };
 
