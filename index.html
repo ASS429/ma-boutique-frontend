@@ -252,6 +252,23 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal Éditer Produit -->
+<div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalEditProduit">
+  <h3 class="text-2xl font-bold mb-6 text-center">✏️ Modifier Produit</h3>
+  <div class="space-y-4">
+    <input class="w-full p-4 border-2 rounded-2xl text-lg" id="editNomProduit" placeholder="Nom du produit" type="text"/>
+    <select class="w-full p-4 border-2 rounded-2xl text-lg" id="editCategorieProduit"><option value="">Choisir catégorie</option></select>
+    <input class="w-full p-4 border-2 rounded-2xl text-lg" id="editPrixAchatProduit" placeholder="Prix achat (F CFA)" type="number"/>
+    <input class="w-full p-4 border-2 rounded-2xl text-lg" id="editPrixProduit" placeholder="Prix vente (F CFA)" type="number"/>
+    <input class="w-full p-4 border-2 rounded-2xl text-lg" id="editStockProduit" placeholder="Quantité en stock" type="number"/>
+    <textarea class="w-full p-4 border-2 rounded-2xl text-lg h-20" id="editDescriptionProduit" placeholder="Description (optionnel)"></textarea>
+    <div class="flex gap-3">
+      <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
+      <button class="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold" onclick="mettreAJourProduit()">Mettre à jour</button>
+    </div>
+  </div>
+</div>
 
     <!-- Modal Ajout Catégorie -->
     <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutCategorie">
@@ -367,22 +384,14 @@ async function syncFromServer() {
   const syncBanner = document.getElementById('syncBanner');
   if (syncBanner) syncBanner.style.display = 'block';
 
-  // Vérifier si offline
   if (!navigator.onLine) {
     console.warn('Mode hors ligne : données locales utilisées.');
-    const offlineBanner = document.createElement('div');
-    offlineBanner.style.background = '#f87171';
-    offlineBanner.style.color = 'white';
-    offlineBanner.style.padding = '8px';
-    offlineBanner.style.textAlign = 'center';
-    offlineBanner.textContent = '⚠️ Vous êtes hors ligne - affichage des données locales';
-    document.body.prepend(offlineBanner);
     if (syncBanner) syncBanner.style.display = 'none';
     return;
   }
 
   try {
-    // On récupère tout en parallèle
+    // Récupération en parallèle
     const [resCat, resProd, resStats, resSales] = await Promise.all([
       fetch(API_BASE + '/categories'),
       fetch(API_BASE + '/products'),
@@ -390,7 +399,7 @@ async function syncFromServer() {
       fetch(API_BASE + '/sales')
     ]);
 
-    // Récupération catégories
+    // --- Catégories ---
     if (resCat.ok) {
       const cats = await resCat.json();
       const defaultCategoryStyles = [
@@ -412,7 +421,7 @@ async function syncFromServer() {
       });
     }
 
-    // Récupération produits
+    // --- Produits ---
     if (resProd.ok) {
       const prods = await resProd.json();
       appData.produits = prods.map(p => ({
@@ -422,66 +431,71 @@ async function syncFromServer() {
         scent: p.scent,
         price: p.price,
         stock: p.stock,
-        vendu: p.vendu || 0,
+        vendu: 0, // sera recalculé après
         priceAchat: p.price_achat || 0,
         description: p.description || ''
       }));
     }
 
-    // Récupération stats
-    if (resStats.ok) {
-  const statsArray = await resStats.json();
-
-  // Trouver la date du jour
-  const today = new Date().toISOString().split('T')[0];
-  const todayStat = statsArray.find(s => s.date.startsWith(today));
-
-  appData.stats.ventesJour = todayStat ? parseInt(todayStat.total_montant, 10) : 0;
-  appData.stats.articlesVendus = todayStat ? parseInt(todayStat.total_quantite, 10) : 0;
-  
-  appData.stats.chiffreAffaires = appData.stats.ventesJour;
-
-document.getElementById('chiffreAffaires').textContent = appData.stats.ventesJour.toLocaleString() + ' F';
-document.getElementById('articlesVendus').textContent = appData.stats.articlesVendus;
-  
-  // Historique pour graphiques si besoin
-  appData.stats.historique = statsArray;
-  renderVentesChart();
-
-}
-
-    // Récupération ventes
+    // --- Ventes ---
+    let ventesAll = [];
     if (resSales.ok) {
-      appData.ventes = await resSales.json();
+      ventesAll = await resSales.json();
+      appData.ventes = ventesAll;
     }
 
+    // --- Stats ventes du jour ---
+    if (resStats.ok) {
+      const statsArray = await resStats.json();
+      const today = new Date().toISOString().split('T')[0];
+      const todayStat = statsArray.find(s => s.date.startsWith(today));
+
+      // Montant total du jour
+      appData.stats.ventesJour = todayStat ? parseInt(todayStat.total_montant, 10) : 0;
+      appData.stats.chiffreAffaires = appData.stats.ventesJour;
+
+      // Historique pour graphique
+      appData.stats.historique = statsArray;
+    }
+
+    // --- Recalcul vendu + articles vendus ---
+    const today = new Date().toISOString().split('T')[0];
+    appData.produits.forEach(prod => { prod.vendu = 0; });
+    let totalQteToday = 0;
+
+    ventesAll.forEach(v => {
+      const prodId = parseInt(v.product_id);
+      const qte = v.quantity || 0;
+
+      // Mettre à jour "vendu" du produit
+      const prod = appData.produits.find(p => p.id === prodId);
+      if (prod) prod.vendu += qte;
+
+      // Compter si vente du jour
+      const venteDate = new Date(v.date || v.created_at || v.timestamp);
+      if (!isNaN(venteDate) && venteDate.toISOString().split('T')[0] === today) {
+        totalQteToday += qte;
+      }
+    });
+
+    appData.stats.articlesVendus = totalQteToday;
+
+    // --- Mettre à jour graphique ---
+    renderVentesChart();
+
+    // --- Sauvegarde ---
     saveAppDataLocal();
     console.log('✅ Sync from server done');
+
   } catch (err) {
     console.warn('❌ Erreur lors de la synchronisation depuis le serveur', err);
     console.warn('⚠️ Impossible de contacter le serveur API. Vérifiez la connexion ou la configuration CORS.');
-
-// ✅ Option : afficher un bandeau non bloquant
-const errorBanner = document.createElement('div');
-errorBanner.textContent = '⚠️ Impossible de contacter le serveur API';
-errorBanner.style.background = '#f87171';
-errorBanner.style.color = 'white';
-errorBanner.style.padding = '8px';
-errorBanner.style.textAlign = 'center';
-errorBanner.style.position = 'fixed';
-errorBanner.style.top = '0';
-errorBanner.style.left = '0';
-errorBanner.style.right = '0';
-errorBanner.style.zIndex = '9999';
-
-document.body.appendChild(errorBanner);
-
-// Supprimer automatiquement après 5 secondes
-setTimeout(() => errorBanner.remove(), 5000);
   }
 
   if (syncBanner) syncBanner.style.display = 'none';
 }
+
+
 
 
 async function postCategoryServer(category) {
@@ -666,10 +680,11 @@ async function ajouterProduit(){
   const category_id = parseInt(document.getElementById('categorieProduit').value);
   const scentEl = document.getElementById('parfumProduit');
   const scent = scentEl ? scentEl.value : '';
+  const priceAchat = parseFloat(document.getElementById('prixAchatProduit').value); // ✅ nouveau
   const price = parseFloat(document.getElementById('prixProduit').value);
   const stock = parseInt(document.getElementById('stockProduit').value);
 
-  if (!name || !category_id || isNaN(price) || isNaN(stock)) {
+  if (!name || !category_id || isNaN(price) || isNaN(stock) || isNaN(priceAchat)) {
     alert('❌ Remplissez tous les champs correctement.');
     return;
   }
@@ -679,27 +694,28 @@ async function ajouterProduit(){
     category_id: category_id,
     scent: scent,
     price: price,
+    price_achat: priceAchat, // ✅ envoyer au backend avec le nom exact de la colonne
     stock: stock
   };
 
   const created = await postProductServer(produit);
   if (created) {
-  alert('✅ Produit ajouté (serveur).');
-  await syncFromServer();
-  updateStats();
-  verifierStockFaible();
-  afficherCategoriesVente();
-  afficherProduits();
-  afficherCategories();
-  afficherRapports();
-  afficherInventaire();
-  hideModal();
-}
-
+    alert('✅ Produit ajouté (serveur).');
+    await syncFromServer();
+    updateStats();
+    verifierStockFaible();
+    afficherCategoriesVente();
+    afficherProduits();
+    afficherCategories();
+    afficherRapports();
+    afficherInventaire();
+    hideModal();
+  }
   else {
     alert('❌ Erreur lors de l\'ajout du produit.');
   }
 }
+
 
 
 async function ajouterCategorie(){
@@ -803,12 +819,17 @@ function afficherProduits(categorieFilter) {
          </div>
        </div>
        <div class="flex gap-2">
+         <button class="btn-edit bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm font-bold">✏️ Éditer</button>
          <button class="btn-mod-stock-minus bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">- Stock</button>
          <button class="btn-mod-stock-plus bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold">+ Stock</button>
          <button class="btn-suppr bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">🗑️</button>
        </div>`;
     
     container.appendChild(div);
+
+    const btnEdit = div.querySelector('.btn-edit');
+    if (btnEdit) btnEdit.addEventListener('click', () => ouvrirModalEdit(produit));
+
     
     // Wire buttons
     const btnMinus = div.querySelector('.btn-mod-stock-minus');
@@ -822,9 +843,31 @@ function afficherProduits(categorieFilter) {
   });
 }
 
-function modifierStock(id, delta){ var produit = appData.produits.find(function(p){ return p.id === id; }); if(produit && produit.stock + delta >= 0){ produit.stock += delta; afficherProduits(); updateStats(); saveAppDataLocal(); // try update server
-  fetch(API_BASE + '/products/' + id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: produit.name, price: produit.price, prixAchat: produit.priceAchat||produit.price_achat||0, stock: produit.stock, description: produit.description }) }).then(function(r){ if(!r.ok) console.warn('update failed'); }).catch(function(){});
- } }
+function modifierStock(id, delta){
+  var produit = appData.produits.find(function(p){ return p.id === id; });
+  if(produit && produit.stock + delta >= 0){
+    produit.stock += delta;
+    afficherProduits();
+    updateStats();
+    saveAppDataLocal();
+
+    // ✅ on envoie bien "price_achat"
+    fetch(API_BASE + '/products/' + id, {
+      method:'PATCH', // PATCH plutôt que PUT pour ne mettre à jour que les champs modifiés
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name: produit.name,
+        price: produit.price,
+        price_achat: produit.priceAchat || produit.price_achat || 0,
+        stock: produit.stock,
+        description: produit.description
+      })
+    }).then(function(r){
+      if(!r.ok) console.warn('update failed');
+    }).catch(function(){});
+  }
+}
+
 
 function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appData.produits = appData.produits.filter(function(p){ return p.id !== id; }); afficherProduits(); updateStats(); saveAppDataLocal(); fetch(API_BASE + '/products/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Supprimé'); } }
 
@@ -991,24 +1034,87 @@ document.addEventListener('DOMContentLoaded', async function(){
 
 // Register service worker if supported
 if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('./pwa/sw.js').then(function(reg){ console.log('SW registered', reg); }).catch(function(err){ console.warn('SW failed', err); }); }); }
+
+function ouvrirModalEdit(produit) {
+  // Remplir le formulaire
+  document.getElementById('editNomProduit').value = produit.name;
+  document.getElementById('editCategorieProduit').innerHTML = '<option value="">Choisir catégorie</option>';
+  appData.categories.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = (c.emoji ? c.emoji + ' ' : '') + c.name;
+    if (c.id === produit.category_id) opt.selected = true;
+    document.getElementById('editCategorieProduit').appendChild(opt);
+  });
+  document.getElementById('editPrixAchatProduit').value = produit.priceAchat || produit.price_achat || 0;
+  document.getElementById('editPrixProduit').value = produit.price;
+  document.getElementById('editStockProduit').value = produit.stock;
+  document.getElementById('editDescriptionProduit').value = produit.description || '';
+
+  // Stocker l'ID du produit en cours d'édition
+  document.getElementById('modalEditProduit').dataset.id = produit.id;
+
+  // Afficher la modale
+  showModal('editProduit');
+}
+
+async function mettreAJourProduit() {
+  const id = document.getElementById('modalEditProduit').dataset.id;
+  const produit = {
+    name: document.getElementById('editNomProduit').value,
+    category_id: parseInt(document.getElementById('editCategorieProduit').value),
+    price_achat: parseFloat(document.getElementById('editPrixAchatProduit').value),
+    price: parseFloat(document.getElementById('editPrixProduit').value),
+    stock: parseInt(document.getElementById('editStockProduit').value),
+    description: document.getElementById('editDescriptionProduit').value
+  };
+
+  if (!produit.name || isNaN(produit.price) || isNaN(produit.price_achat) || isNaN(produit.stock)) {
+    alert('❌ Remplissez tous les champs correctement.');
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + '/products/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(produit)
+    });
+
+    if (!res.ok) {
+      alert('❌ Erreur lors de la mise à jour du produit.');
+      return;
+    }
+
+    alert('✅ Produit mis à jour.');
+    hideModal();
+    await syncFromServer();
+    afficherProduits();
+    afficherInventaire();
+    updateStats();
+  } catch (err) {
+    console.error(err);
+    alert('❌ Impossible de contacter le serveur.');
+  }
+}
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let chartVentesJourInstance = null;
 function renderVentesChart() {
-
   if (!appData.stats.historique || appData.stats.historique.length === 0) return;
-  
+
   if (chartVentesJourInstance) {
     chartVentesJourInstance.destroy();
   }
 
   const labels = appData.stats.historique.map(s => new Date(s.date).toLocaleDateString());
   const dataCA = appData.stats.historique.map(s => parseInt(s.total_montant, 10));
-  const dataQte = appData.stats.historique.map(s => parseInt(s.total_quantite, 10));
+  const dataQte = appData.stats.historique.map(s => parseInt(s.total_quantite || 0, 10));
 
   const ctx = document.getElementById('chartVentesJour').getContext('2d');
-  new Chart(ctx, {
+  chartVentesJourInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
@@ -1033,19 +1139,14 @@ function renderVentesChart() {
       responsive: true,
       interaction: { mode: 'index', intersect: false },
       stacked: false,
-      plugins: {
-        title: {
-          display: true,
-          text: 'Ventes par jour'
-        }
-      },
       scales: {
-        y: { type: 'linear', display: true, position: 'left' },
-        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+        y: { type: 'linear', position: 'left' },
+        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } }
       }
     }
   });
 }
+
 </script>
 
 
