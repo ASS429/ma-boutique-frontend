@@ -411,7 +411,7 @@ async function syncFromServer() {
     // 🔹 Récupération en parallèle avec authFetch
     const [resCat, resProd, resStats, resSales] = await Promise.all([
       authfetch(API_BASE + '/categories'),
-      authetch(API_BASE + '/products'),
+      authfetch(API_BASE + '/products'),
       authfetch(API_BASE + '/stats/ventes-par-jour'),
       authfetch(API_BASE + '/sales')
     ]);
