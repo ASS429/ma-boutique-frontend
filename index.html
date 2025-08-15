@@ -459,7 +459,25 @@ document.getElementById('articlesVendus').textContent = appData.stats.articlesVe
     console.log('✅ Sync from server done');
   } catch (err) {
     console.warn('❌ Erreur lors de la synchronisation depuis le serveur', err);
-    alert('⚠️ Impossible de contacter le serveur API. Vérifiez la connexion ou la configuration CORS.');
+    console.warn('⚠️ Impossible de contacter le serveur API. Vérifiez la connexion ou la configuration CORS.');
+
+// ✅ Option : afficher un bandeau non bloquant
+const errorBanner = document.createElement('div');
+errorBanner.textContent = '⚠️ Impossible de contacter le serveur API';
+errorBanner.style.background = '#f87171';
+errorBanner.style.color = 'white';
+errorBanner.style.padding = '8px';
+errorBanner.style.textAlign = 'center';
+errorBanner.style.position = 'fixed';
+errorBanner.style.top = '0';
+errorBanner.style.left = '0';
+errorBanner.style.right = '0';
+errorBanner.style.zIndex = '9999';
+
+document.body.appendChild(errorBanner);
+
+// Supprimer automatiquement après 5 secondes
+setTimeout(() => errorBanner.remove(), 5000);
   }
 
   if (syncBanner) syncBanner.style.display = 'none';
