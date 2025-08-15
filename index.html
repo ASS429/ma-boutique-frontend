@@ -1170,7 +1170,7 @@ function authfetch(url, options = {}) {
     'Authorization': 'Bearer ' + token
   };
 
-  return authfetch(url, { ...options, headers }).then(res => {
+  return fetch(url, { ...options, headers }).then(res => {
     if (res.status === 401) {
       alert('❌ Session expirée. Veuillez vous reconnecter.');
       localStorage.removeItem('authToken');
