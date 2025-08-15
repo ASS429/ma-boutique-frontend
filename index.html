@@ -981,24 +981,18 @@ function afficherRapports() {
 
   // --- Chiffre d’affaires filtré ---
   const caTotal = Object.values(paiementsMap).reduce((sum, val) => sum + val, 0);
-
-  var recettesJour = document.getElementById('recettesJour');
-  if (recettesJour) recettesJour.textContent = caTotal.toLocaleString() + ' F';
-
-  var recettesSemaine = document.getElementById('recettesSemaine');
-  if (recettesSemaine) recettesSemaine.textContent = caTotal.toLocaleString() + ' F';
+  document.getElementById('recettesJour').textContent = caTotal.toLocaleString() + ' F';
+  document.getElementById('recettesSemaine').textContent = caTotal.toLocaleString() + ' F';
 
   // --- Paiements ---
   var containerPaiements = document.getElementById('rapportsPaiements');
-  if (containerPaiements) containerPaiements.innerHTML = '';
-
+  containerPaiements.innerHTML = '';
   var methodesNoms = {
     especes: { name: 'Espèces', emoji: '💵', couleur: 'green' },
     wave: { name: 'Wave', emoji: '📱', couleur: 'blue' },
     orange: { name: 'Orange Money', emoji: '📞', couleur: 'orange' }
   };
   var totalPaiements = caTotal;
-
   Object.keys(paiementsMap).forEach(function(m) {
     var montant = paiementsMap[m] || 0;
     var info = methodesNoms[m] || { name: m, emoji: '', couleur: 'gray' };
@@ -1017,6 +1011,72 @@ function afficherRapports() {
     `;
     containerPaiements.appendChild(div);
   });
+
+  // --- Produits populaires ---
+  var cPop = document.getElementById('produitsPopulaires');
+  cPop.innerHTML = '';
+  var populaires = appData.produits.filter(p => p.vendu > 0)
+    .sort((a, b) => b.vendu - a.vendu)
+    .slice(0, 5);
+  if (!populaires.length) {
+    cPop.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune vente</div>';
+  } else {
+    populaires.forEach(function(p) {
+      var d = document.createElement('div');
+      d.className = 'flex justify-between items-center bg-gray-50 rounded-lg p-3';
+      d.innerHTML = `<div class="font-bold">${p.name}</div>
+                     <div class="text-blue-600 font-bold">${p.vendu} vendus</div>`;
+      cPop.appendChild(d);
+    });
+  }
+
+  // --- Graphiques filtrés ---
+  updateCharts(ventesFiltrees);
+
+  // --- Historique des ventes ---
+  let historiqueContainer = document.getElementById('historiqueVentesContainer');
+  if (!historiqueContainer) {
+    historiqueContainer = document.createElement('div');
+    historiqueContainer.id = 'historiqueVentesContainer';
+    document.getElementById('rapportsSection').appendChild(historiqueContainer);
+  }
+  historiqueContainer.innerHTML = `
+    <div class="bg-white rounded-3xl p-6 shadow-lg mt-6">
+      <h3 class="text-lg font-bold mb-4">📜 Historique des ventes</h3>
+      ${ventesFiltrees.length === 0
+        ? '<div class="text-gray-500 text-center py-4">Aucune vente</div>'
+        : `<table class="w-full table-sm">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="p-2 border">Date</th>
+                <th class="p-2 border">Produit</th>
+                <th class="p-2 border">Qté</th>
+                <th class="p-2 border">Montant</th>
+                <th class="p-2 border">Paiement</th>
+                <th class="p-2 border">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ventesFiltrees.map(v => {
+                const prod = appData.produits.find(p => p.id === v.product_id);
+                return `
+                  <tr>
+                    <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
+                    <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
+                    <td class="p-2 border">${v.quantity}</td>
+                    <td class="p-2 border">${((v.price || 0) * (v.quantity || 0)).toLocaleString()} F</td>
+                    <td class="p-2 border">${v.payment_method || ''}</td>
+                    <td class="p-2 border text-center">
+                      <button class="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onclick="modifierVente(${v.id})">✏️</button>
+                      <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="annulerVente(${v.id})">🗑️</button>
+                    </td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>`}
+    </div>
+  `;
+}
 
   // --- Produits populaires ---
   var cPop = document.getElementById('produitsPopulaires');
