@@ -1078,26 +1078,6 @@ function afficherRapports() {
   `;
 }
 
-  // --- Produits populaires ---
-  var cPop = document.getElementById('produitsPopulaires');
-  if (cPop) cPop.innerHTML = '';
-  var populaires = appData.produits.filter(function(p) { return p.vendu > 0; })
-    .sort(function(a, b) { return b.vendu - a.vendu; })
-    .slice(0, 5);
-  if (!populaires.length && cPop)
-    cPop.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune vente</div>';
-  else
-    populaires.forEach(function(p) {
-      var d = document.createElement('div');
-      d.className = 'flex justify-between items-center bg-gray-50 rounded-lg p-3';
-      d.innerHTML = '<div class="font-bold">' + p.name + '</div><div class="text-blue-600 font-bold">' + p.vendu + ' vendus</div>';
-      if (cPop) cPop.appendChild(d);
-    });
-
-  // --- Graphiques filtrés ---
-  updateCharts(ventesFiltrees);
-}
-
 
 function updateCharts(ventesFiltrees) {
   var ventes = ventesFiltrees || appData.ventes || [];
