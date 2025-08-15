@@ -202,6 +202,16 @@
   <!-- Section Rapports (CHIFFRES) -->
   <div class="hidden slide-in p-6" id="rapportsSection">
     <h2 class="text-2xl font-bold mb-6 text-center">📈 Chiffres</h2>
+    <div class="mb-4 text-center">
+  <label for="periodeRapports" class="mr-2 font-bold">Période :</label>
+  <select id="periodeRapports" class="p-2 border rounded">
+    <option value="jour">Aujourd'hui</option>
+    <option value="semaine">Cette semaine</option>
+    <option value="mois">Ce mois</option>
+    <option value="tout">Tout</option>
+  </select>
+</div>
+
     <div class="space-y-6">
       <div class="bg-white rounded-3xl p-6 shadow-lg">
         <h3 class="text-lg font-bold mb-4">💰 Résumé</h3>
@@ -957,12 +967,26 @@ async function supprimerCategorie(id) {
 
 // ---------- Rapports & charts ----------
 function afficherRapports() {
-  // --- Résumé ---
+  const periode = document.getElementById('periodeRapports')?.value || 'tout';
+  const ventesFiltrees = filtrerVentesParPeriode(appData.ventes || [], periode);
+
+  // --- Calcul paiements filtrés ---
+  const paiementsMap = {};
+  ventesFiltrees.forEach(v => {
+    const method = v.payment_method || 'inconnu';
+    const montant = parseFloat(v.total || (v.price || 0) * (v.quantity || 0)) || 0;
+    paiementsMap[method] = (paiementsMap[method] || 0) + montant;
+  });
+  appData.stats.paiements = paiementsMap;
+
+  // --- Chiffre d’affaires filtré ---
+  const caTotal = Object.values(paiementsMap).reduce((sum, val) => sum + val, 0);
+
   var recettesJour = document.getElementById('recettesJour');
-  if (recettesJour) recettesJour.textContent = (appData.stats.chiffreAffaires || 0).toLocaleString() + ' F';
+  if (recettesJour) recettesJour.textContent = caTotal.toLocaleString() + ' F';
 
   var recettesSemaine = document.getElementById('recettesSemaine');
-  if (recettesSemaine) recettesSemaine.textContent = (appData.stats.chiffreAffaires || 0).toLocaleString() + ' F';
+  if (recettesSemaine) recettesSemaine.textContent = caTotal.toLocaleString() + ' F';
 
   // --- Paiements ---
   var containerPaiements = document.getElementById('rapportsPaiements');
@@ -973,15 +997,12 @@ function afficherRapports() {
     wave: { name: 'Wave', emoji: '📱', couleur: 'blue' },
     orange: { name: 'Orange Money', emoji: '📞', couleur: 'orange' }
   };
+  var totalPaiements = caTotal;
 
-  var paiements = appData.stats.paiements || {};
-  var totalPaiements = Object.values(paiements).reduce((sum, val) => sum + val, 0);
-
-  Object.keys(paiements).forEach(function(m) {
-    var montant = paiements[m] || 0;
+  Object.keys(paiementsMap).forEach(function(m) {
+    var montant = paiementsMap[m] || 0;
     var info = methodesNoms[m] || { name: m, emoji: '', couleur: 'gray' };
     var pct = totalPaiements > 0 ? ((montant / totalPaiements) * 100).toFixed(1) : 0;
-
     var div = document.createElement('div');
     div.className = `bg-${info.couleur}-50 rounded-2xl p-3 flex justify-between items-center`;
     div.innerHTML = `
@@ -1013,12 +1034,13 @@ function afficherRapports() {
       if (cPop) cPop.appendChild(d);
     });
 
-  // --- Mettre à jour tous les graphiques ---
-  updateCharts();
+  // --- Graphiques filtrés ---
+  updateCharts(ventesFiltrees);
 }
 
-function updateCharts() {
-  var ventes = appData.ventes || [];
+
+function updateCharts(ventesFiltrees) {
+  var ventes = ventesFiltrees || appData.ventes || [];
 
   // --- Graphique ventes par jour ---
   var byDay = {};
@@ -1160,7 +1182,7 @@ document.addEventListener('DOMContentLoaded', async function(){
   afficherCategories();
   afficherRapports();
   afficherInventaire();
-
+  
   // 🔄 Rafraîchissement auto toutes les 30 secondes
   setInterval(async () => {
     await syncFromServer();
@@ -1172,6 +1194,9 @@ document.addEventListener('DOMContentLoaded', async function(){
     afficherRapports();
     afficherInventaire();
   }, 30000);
+
+  document.getElementById('periodeRapports').addEventListener('change', afficherRapports);
+
 });
 
 
@@ -1239,6 +1264,29 @@ async function mettreAJourProduit() {
     console.error(err);
     alert('❌ Impossible de contacter le serveur.');
   }
+}
+
+function filtrerVentesParPeriode(ventes, periode) {
+  const now = new Date();
+  return ventes.filter(v => {
+    const dateVente = new Date(v.date || v.created_at || v.timestamp);
+    if (isNaN(dateVente)) return false;
+
+    if (periode === 'jour') {
+      return dateVente.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
+    }
+    if (periode === 'semaine') {
+      const debutSemaine = new Date(now);
+      debutSemaine.setDate(now.getDate() - now.getDay()); // dimanche comme début
+      debutSemaine.setHours(0,0,0,0);
+      return dateVente >= debutSemaine && dateVente <= now;
+    }
+    if (periode === 'mois') {
+      return dateVente.getMonth() === now.getMonth() &&
+             dateVente.getFullYear() === now.getFullYear();
+    }
+    return true; // "tout"
+  });
 }
 
 </script>
