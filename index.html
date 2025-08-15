@@ -239,8 +239,27 @@
 <div class="chart-container"><canvas id="chartTopProduits"></canvas></div>
 <div class="chart-container"><canvas id="chartPaiements"></canvas></div>
 <div class="chart-container"><canvas id="chartStocksFaibles"></canvas></div>
-<h2 class="text-lg font-bold mt-6 mb-2">Historique des ventes</h2>
 <canvas id="chartVentesJour" height="100"></canvas>
+
+<div id="salesHistory" class="bg-white rounded-3xl p-6 shadow-lg mt-6">
+  <h3 class="text-lg font-bold mb-4">📜 Historique des ventes</h3>
+  <table class="w-full table-sm">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="p-2 border">Date</th>
+        <th class="p-2 border">Produit</th>
+        <th class="p-2 border">Qté</th>
+        <th class="p-2 border">Montant</th>
+        <th class="p-2 border">Paiement</th>
+        <th class="p-2 border">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="salesHistoryBody">
+      <!-- Les lignes seront ajoutées en JS -->
+    </tbody>
+  </table>
+</div>
+
 
 </div>
 
@@ -974,7 +993,7 @@ function afficherRapports() {
   const paiementsMap = {};
   ventesFiltrees.forEach(v => {
     const method = v.payment_method || 'inconnu';
-    const montant = parseFloat(v.total ?? ((v.price || 0) * (v.quantity || 0))) || 0;
+    const montant = parseFloat(v.total || (v.price || 0) * (v.quantity || 0)) || 0;
     paiementsMap[method] = (paiementsMap[method] || 0) + montant;
   });
   appData.stats.paiements = paiementsMap;
@@ -1033,65 +1052,15 @@ function afficherRapports() {
   // --- Graphiques filtrés ---
   updateCharts(ventesFiltrees);
 
-  // --- Historique des ventes ---
-  let historiqueContainer = document.getElementById('historiqueVentesContainer');
-  if (!historiqueContainer) {
-    historiqueContainer = document.createElement('div');
-    historiqueContainer.id = 'historiqueVentesContainer';
-    document.getElementById('rapportsSection').appendChild(historiqueContainer);
-  }
-
-  // ✅ On vide pour éviter toute duplication
-  historiqueContainer.innerHTML = '';
-
-  // ✅ On affiche seulement si données prêtes
-  if (!appData.produits?.length || ventesFiltrees.length === 0) {
-    historiqueContainer.innerHTML = `
-      <div class="bg-white rounded-3xl p-6 shadow-lg mt-6">
-        <h3 class="text-lg font-bold mb-4">📜 Historique des ventes</h3>
-        <div class="text-gray-500 text-center py-4">Aucune vente</div>
-      </div>
-    `;
-    return;
-  }
-
-  historiqueContainer.innerHTML = `
-    <div class="bg-white rounded-3xl p-6 shadow-lg mt-6">
-      <h3 class="text-lg font-bold mb-4">📜 Historique des ventes</h3>
-      <table class="w-full table-sm">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="p-2 border">Date</th>
-            <th class="p-2 border">Produit</th>
-            <th class="p-2 border">Qté</th>
-            <th class="p-2 border">Montant</th>
-            <th class="p-2 border">Paiement</th>
-            <th class="p-2 border">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${ventesFiltrees.map(v => {
-            const prod = appData.produits.find(p => p.id === v.product_id);
-            const montant = v.total ?? ((v.price || 0) * (v.quantity || 0));
-            return `
-              <tr>
-                <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
-                <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
-                <td class="p-2 border">${v.quantity}</td>
-                <td class="p-2 border">${montant.toLocaleString()} F</td>
-                <td class="p-2 border">${v.payment_method || ''}</td>
-                <td class="p-2 border text-center">
-                  <button class="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onclick="modifierVente(${v.id})">✏️</button>
-                  <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="annulerVente(${v.id})">🗑️</button>
-                </td>
-              </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
+  // ✅ On affiche l'historique seulement si les données sont prêtes
+if (!appData.ventes?.length || !appData.produits?.length) {
+  console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
+  return;
 }
 
+  renderSalesHistory(ventesFiltrees);
+
+}
 
 
 function updateCharts(ventesFiltrees) {
@@ -1509,6 +1478,37 @@ function authfetch(url, options = {}) {
     }
     return res;
   });
+}
+
+function renderSalesHistory(ventes) {
+  const tbody = document.getElementById('salesHistoryBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = ''; // vide toujours
+
+  if (!Array.isArray(ventes) || ventes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-4">Aucune vente</td></tr>`;
+    return;
+  }
+
+  for (const v of ventes) {
+    const prod = (appData.produits || []).find(p => p.id === v.product_id);
+    const montant = v.total != null ? parseFloat(v.total) : (parseFloat(v.price || 0) * parseFloat(v.quantity || 0));
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
+      <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
+      <td class="p-2 border">${v.quantity}</td>
+      <td class="p-2 border">${montant.toLocaleString()} F</td>
+      <td class="p-2 border">${v.payment_method || ''}</td>
+      <td class="p-2 border text-center">
+        <button class="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onclick="modifierVente(${v.id})">✏️</button>
+        <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="annulerVente(${v.id})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
 }
 
 
