@@ -1586,14 +1586,24 @@ function tryRenderSalesHistory(ventes) {
   }
 }
 
+let _isRenderingSalesHistory = false;
+
 function tryRenderSalesHistory(ventesFiltrees) {
-  if (!appData?.ventes?.length || !appData?.produits?.length) {
-    const tbody = document.getElementById('salesHistoryBody');
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-4">Chargement…</td></tr>`;
-    return;
+  if (_isRenderingSalesHistory) return; // stop si déjà en cours
+  _isRenderingSalesHistory = true;
+
+  try {
+    if (!appData?.ventes?.length || !appData?.produits?.length) {
+      const tbody = document.getElementById('salesHistoryBody');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-4">Chargement…</td></tr>`;
+    } else {
+      renderSalesHistory(ventesFiltrees);
+    }
+  } finally {
+    _isRenderingSalesHistory = false;
   }
-  tryRenderSalesHistory(ventesFiltrees);
 }
+
 // ==================== FIN PATCH ====================
 
 </script>
