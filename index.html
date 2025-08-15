@@ -421,21 +421,26 @@ async function syncFromServer() {
       });
     }
 
+
     // --- Produits ---
-    if (resProd.ok) {
-      const prods = await resProd.json();
-      appData.produits = prods.map(p => ({
-        id: parseInt(p.id),
-        name: p.name,
-        category_id: parseInt(p.category_id),
-        scent: p.scent,
-        price: p.price,
-        stock: p.stock,
-        vendu: 0, // sera recalculé après
-        priceAchat: p.price_achat || 0,
-        description: p.description || ''
-      }));
-    }
+if (resProd.ok) {
+  const prods = await resProd.json();
+  appData.produits = prods.map(p => {
+    return {
+      id: parseInt(p.id),
+      name: p.name,
+      category_id: p.category_id !== null ? parseInt(p.category_id) : null,
+      scent: p.scent || '',
+      price: Number(p.price) || 0,
+      stock: Number(p.stock) || 0,
+      vendu: 0, // sera recalculé après
+      // ✅ toujours définir priceAchat et garder compatibilité avec anciens champs
+      priceAchat: (typeof p.price_achat !== 'undefined' ? Number(p.price_achat) : (p.priceAchat || 0)) || 0,
+      description: p.description || ''
+    };
+  });
+}
+
 
     // --- Ventes ---
     let ventesAll = [];
