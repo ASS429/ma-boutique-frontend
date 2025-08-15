@@ -2,6 +2,94 @@
 <html lang="fr">
 <head>
  <script>
+
+// ==================== PATCH ANTI-DUPLICATION HISTORIQUE DES VENTES ====================
+let _lastSalesKey = "";
+let _isRenderingSalesHistory = false;
+
+// Supprime toute table "fantôme" créée ailleurs que #salesHistory
+function purgeSalesHistoryClones() {
+  const reports = document.getElementById('rapportsSection');
+  const keep = document.getElementById('salesHistory');
+  if (!reports || !keep) return;
+
+  reports.querySelectorAll('h1,h2,h3,h4').forEach(h => {
+    if (/Historique des ventes/i.test(h.textContent) && !keep.contains(h)) {
+      const box = h.closest('div');
+      if (box && box !== keep) box.remove();
+    }
+  });
+
+  reports.querySelectorAll('table').forEach(t => {
+    if (keep.contains(t)) return;
+    const headers = Array.from(t.querySelectorAll('th')).map(th => th.textContent.trim().toLowerCase());
+    const expected = ['date','produit','qté','montant','paiement','actions'];
+    if (expected.every(h => headers.includes(h))) {
+      const box = t.closest('div');
+      if (box && box !== keep) box.remove();
+      else t.remove();
+    }
+  });
+}
+
+// Remplit le tbody unique sans jamais créer de nouvelle table
+function renderSalesHistory(ventes) {
+  purgeSalesHistoryClones();
+
+  const tbody = document.getElementById('salesHistoryBody');
+  if (!tbody) return;
+
+  const periode = document.getElementById('periodeRapports')?.value || 'tout';
+  const key = `${periode}|${ventes?.length || 0}|${appData.produits?.length || 0}`;
+  if (key === _lastSalesKey) return;
+  _lastSalesKey = key;
+
+  tbody.innerHTML = '';
+
+  if (!Array.isArray(ventes) || ventes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-4">Aucune vente</td></tr>`;
+    return;
+  }
+
+  for (const v of ventes) {
+    const prod = (appData.produits || []).find(p => p.id === v.product_id);
+    const unit = Number(v.price ?? 0);
+    const qty  = Number(v.quantity ?? 0);
+    const montant = Number.isFinite(Number(v.total)) ? Number(v.total) : (unit * qty);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
+      <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
+      <td class="p-2 border">${v.quantity ?? 0}</td>
+      <td class="p-2 border">${(Number.isFinite(montant) ? montant : 0).toLocaleString()} F</td>
+      <td class="p-2 border">${v.payment_method || ''}</td>
+      <td class="p-2 border text-center">
+        <button class="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onclick="modifierVente(${v.id})">✏️</button>
+        <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="annulerVente(${v.id})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function tryRenderSalesHistory(ventesFiltrees) {
+  if (_isRenderingSalesHistory) return;
+  _isRenderingSalesHistory = true;
+  try {
+    if (!appData?.ventes?.length || !appData?.produits?.length) {
+      const tbody = document.getElementById('salesHistoryBody');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-4">Chargement…</td></tr>`;
+    } else {
+      renderSalesHistory(ventesFiltrees);
+    }
+  } finally {
+    _isRenderingSalesHistory = false;
+  }
+}
+// ==================== FIN PATCH ====================
+
+
   (function () {
     try {
       var token = localStorage.getItem('authToken');
@@ -1515,96 +1603,7 @@ function tryRenderSalesHistory(ventes) {
 
 
 
-// ==================== PATCH ANTI-DUPLICATION HISTORIQUE DES VENTES ====================
-let _lastSalesKey = "";
 
-// Supprime toute table "fantôme" créée ailleurs que #salesHistory
-function purgeSalesHistoryClones() {
-  const reports = document.getElementById('rapportsSection');
-  const keep = document.getElementById('salesHistory');
-  if (!reports || !keep) return;
-
-  // 1) Enlève tout bloc ayant un titre "Historique des ventes" hors #salesHistory
-  reports.querySelectorAll('h1,h2,h3,h4').forEach(h => {
-    if (/Historique des ventes/i.test(h.textContent) && !keep.contains(h)) {
-      const box = h.closest('div');
-      if (box && box !== keep) box.remove();
-    }
-  });
-
-  // 2) Enlève toute table avec les mêmes colonnes hors #salesHistory
-  reports.querySelectorAll('table').forEach(t => {
-    if (keep.contains(t)) return;
-    const headers = Array.from(t.querySelectorAll('th')).map(th => th.textContent.trim().toLowerCase());
-    const expected = ['date','produit','qté','montant','paiement','actions'];
-    if (expected.every(h => headers.includes(h))) {
-      const box = t.closest('div');
-      if (box && box !== keep) box.remove();
-      else t.remove();
-    }
-  });
-}
-
-// Remplit le tbody unique sans jamais créer de nouvelle table
-function tryRenderSalesHistory(ventes) {
-  purgeSalesHistoryClones();
-
-  const tbody = document.getElementById('salesHistoryBody');
-  if (!tbody) return;
-
-  const periode = document.getElementById('periodeRapports')?.value || 'tout';
-  const key = `${periode}|${ventes?.length || 0}|${appData.produits?.length || 0}`;
-  if (key === _lastSalesKey) return;
-  _lastSalesKey = key;
-
-  tbody.innerHTML = '';
-
-  if (!Array.isArray(ventes) || ventes.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-4">Aucune vente</td></tr>`;
-    return;
-  }
-
-  for (const v of ventes) {
-    const prod = (appData.produits || []).find(p => p.id === v.product_id);
-    const unit = Number(v.price ?? 0);
-    const qty  = Number(v.quantity ?? 0);
-    const montant = Number.isFinite(Number(v.total)) ? Number(v.total) : (unit * qty);
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
-      <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
-      <td class="p-2 border">${v.quantity ?? 0}</td>
-      <td class="p-2 border">${(Number.isFinite(montant) ? montant : 0).toLocaleString()} F</td>
-      <td class="p-2 border">${v.payment_method || ''}</td>
-      <td class="p-2 border text-center">
-        <button class="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onclick="modifierVente(${v.id})">✏️</button>
-        <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="annulerVente(${v.id})">🗑️</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  }
-}
-
-let _isRenderingSalesHistory = false;
-
-function tryRenderSalesHistory(ventesFiltrees) {
-  if (_isRenderingSalesHistory) return; // stop si déjà en cours
-  _isRenderingSalesHistory = true;
-
-  try {
-    if (!appData?.ventes?.length || !appData?.produits?.length) {
-      const tbody = document.getElementById('salesHistoryBody');
-      if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-4">Chargement…</td></tr>`;
-    } else {
-      renderSalesHistory(ventesFiltrees);
-    }
-  } finally {
-    _isRenderingSalesHistory = false;
-  }
-}
-
-// ==================== FIN PATCH ====================
 
 </script>
 
