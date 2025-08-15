@@ -1034,48 +1034,54 @@ function afficherRapports() {
   updateCharts(ventesFiltrees);
 
   // --- Historique des ventes ---
-  let historiqueContainer = document.getElementById('historiqueVentesContainer');
-  if (!historiqueContainer) {
-    historiqueContainer = document.createElement('div');
-    historiqueContainer.id = 'historiqueVentesContainer';
-    document.getElementById('rapportsSection').appendChild(historiqueContainer);
-  }
-  historiqueContainer.innerHTML = `
-    <div class="bg-white rounded-3xl p-6 shadow-lg mt-6">
-      <h3 class="text-lg font-bold mb-4">📜 Historique des ventes</h3>
-      ${ventesFiltrees.length === 0
-        ? '<div class="text-gray-500 text-center py-4">Aucune vente</div>'
-        : `<table class="w-full table-sm">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="p-2 border">Date</th>
-                <th class="p-2 border">Produit</th>
-                <th class="p-2 border">Qté</th>
-                <th class="p-2 border">Montant</th>
-                <th class="p-2 border">Paiement</th>
-                <th class="p-2 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${ventesFiltrees.map(v => {
-                const prod = appData.produits.find(p => p.id === v.product_id);
-                return `
-                  <tr>
-                    <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
-                    <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
-                    <td class="p-2 border">${v.quantity}</td>
-                    <td class="p-2 border">${((v.price || 0) * (v.quantity || 0)).toLocaleString()} F</td>
-                    <td class="p-2 border">${v.payment_method || ''}</td>
-                    <td class="p-2 border text-center">
-                      <button class="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onclick="modifierVente(${v.id})">✏️</button>
-                      <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="annulerVente(${v.id})">🗑️</button>
-                    </td>
-                  </tr>`;
-              }).join('')}
-            </tbody>
-          </table>`}
-    </div>
-  `;
+let historiqueContainer = document.getElementById('historiqueVentesContainer');
+if (!historiqueContainer) {
+  historiqueContainer = document.createElement('div');
+  historiqueContainer.id = 'historiqueVentesContainer';
+  document.getElementById('rapportsSection').appendChild(historiqueContainer);
+}
+
+// ✅ Vider le contenu pour éviter les doublons
+historiqueContainer.innerHTML = '';
+
+historiqueContainer.innerHTML = `
+  <div class="bg-white rounded-3xl p-6 shadow-lg mt-6">
+    <h3 class="text-lg font-bold mb-4">📜 Historique des ventes</h3>
+    ${ventesFiltrees.length === 0
+      ? '<div class="text-gray-500 text-center py-4">Aucune vente</div>'
+      : `<table class="w-full table-sm">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="p-2 border">Date</th>
+              <th class="p-2 border">Produit</th>
+              <th class="p-2 border">Qté</th>
+              <th class="p-2 border">Montant</th>
+              <th class="p-2 border">Paiement</th>
+              <th class="p-2 border">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ventesFiltrees.map(v => {
+              const prod = appData.produits.find(p => p.id === v.product_id);
+              // ✅ Calcul montant : prend total si dispo, sinon prix × quantité
+              const montant = v.total ?? ((v.price || 0) * (v.quantity || 0));
+              return `
+                <tr>
+                  <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
+                  <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
+                  <td class="p-2 border">${v.quantity}</td>
+                  <td class="p-2 border">${montant.toLocaleString()} F</td>
+                  <td class="p-2 border">${v.payment_method || ''}</td>
+                  <td class="p-2 border text-center">
+                    <button class="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onclick="modifierVente(${v.id})">✏️</button>
+                    <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="annulerVente(${v.id})">🗑️</button>
+                  </td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`}
+  </div>
+`;
 }
 
 
