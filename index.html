@@ -410,10 +410,10 @@ async function syncFromServer() {
   try {
     // 🔹 Récupération en parallèle avec authFetch
     const [resCat, resProd, resStats, resSales] = await Promise.all([
-      authFetch(API_BASE + '/categories'),
-      authFetch(API_BASE + '/products'),
-      authFetch(API_BASE + '/stats/ventes-par-jour'),
-      authFetch(API_BASE + '/sales')
+      authfetch(API_BASE + '/categories'),
+      authetch(API_BASE + '/products'),
+      authfetch(API_BASE + '/stats/ventes-par-jour'),
+      authfetch(API_BASE + '/sales')
     ]);
 
     // --- Catégories ---
@@ -1157,7 +1157,7 @@ function renderVentesChart() {
   });
 }
 
-function authFetch(url, options = {}) {
+function authfetch(url, options = {}) {
   const token = localStorage.getItem('authToken');
   if (!token) {
     // Pas connecté → on renvoie vers login
