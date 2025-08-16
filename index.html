@@ -1708,6 +1708,15 @@ function modifierVente(id) {
   </html>
 </template>
 
+ <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js")
+        .then(() => console.log("📦 Service Worker installé et ⚡ activé"))
+        .catch(err => console.error("❌ Erreur SW:", err));
+    });
+  }
+</script>
 
 </body>
 </html>
