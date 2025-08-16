@@ -1427,28 +1427,56 @@ async function modifierVente(id) {
     return;
   }
 
-  const nouvelleQuantite = parseInt(prompt('Nouvelle quantité :', vente.quantity));
-  if (isNaN(nouvelleQuantite) || nouvelleQuantite <= 0) return;
+  // Demande la nouvelle quantité (laisser vide = pas de changement)
+  let newQuantity = prompt(
+    `Quantité actuelle: ${vente.quantity}\n👉 Nouvelle quantité (laisser vide pour ne pas changer) :`
+  );
+
+  // Demande le nouveau mode de paiement
+  let newPayment = prompt(
+    `Paiement actuel: ${vente.payment_method}\n👉 Nouveau mode de paiement (especes, wave, orange...) (laisser vide pour ne pas changer) :`
+  );
+
+  // Préparer le corps de la requête
+  const body = {};
+  if (newQuantity && !isNaN(newQuantity)) {
+    body.quantity = Number(newQuantity);
+  }
+  if (newPayment && newPayment.trim() !== "") {
+    body.payment_method = newPayment.trim();
+  }
+
+  if (Object.keys(body).length === 0) {
+    alert("⚠️ Aucun changement effectué.");
+    return;
+  }
 
   try {
-    const res = await authfetch(API_BASE + '/sales/' + id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ quantity: nouvelleQuantite })
+    const res = await authfetch(API_BASE + "/sales/" + id, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
     });
+
     if (!res.ok) {
-      alert('❌ Erreur lors de la modification de la vente.');
+      const errData = await res.json();
+      alert("❌ Erreur lors de la modification : " + (errData.error || res.status));
       return;
     }
-    alert('✅ Vente modifiée.');
-    await syncFromServer();
-    afficherRapports();
-    updateStats();
-  } catch (err) {
-    console.error(err);
-    alert('❌ Impossible de contacter le serveur.');
+
+    const updated = await res.json();
+    alert("✅ Vente modifiée avec succès !");
+    console.log("Vente mise à jour :", updated);
+
+    // Recharge les données depuis le serveur
+    syncFromServer();
+
+  } catch (e) {
+    console.error("Erreur modifierVente:", e);
+    alert("❌ Erreur réseau ou serveur");
   }
 }
+
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
