@@ -1421,8 +1421,11 @@ async function annulerVente(id) {
 }
 
 async function modifierVente(id) {
-  const vente = appData.ventes.find(v => v.id === id);
-  if (!vente) return alert('Vente introuvable.');
+  const vente = appData.ventes.find(v => Number(v.id) === Number(id));
+  if (!vente) {
+    alert("❌ Vente introuvable");
+    return;
+  }
 
   const nouvelleQuantite = parseInt(prompt('Nouvelle quantité :', vente.quantity));
   if (isNaN(nouvelleQuantite) || nouvelleQuantite <= 0) return;
