@@ -331,7 +331,7 @@ function tryRenderSalesHistory(ventesFiltrees) {
 
 <div id="salesHistory" class="bg-white rounded-3xl p-6 shadow-lg mt-6">
   <h3 class="text-lg font-bold mb-4">📜 Historique des ventes</h3>
-  <table class="w-full table-sm">
+  <table class="w-full table-sm" class="overflow-x-auto">
     <thead class="bg-gray-100">
       <tr>
         <th class="p-2 border">Date</th>
@@ -359,7 +359,7 @@ function tryRenderSalesHistory(ventesFiltrees) {
     <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
     <input type="text" id="searchInventaire" placeholder="🔍 Rechercher un produit..." class="w-full p-2 border rounded mb-4">
     <div class="bg-white rounded-3xl p-4 shadow-lg">
-      <table class="w-full table-sm">
+      <table class="w-full table-sm" class="overflow-x-auto">
         <thead class="bg-gray-100"><tr><th class="p-2 border">Produit</th><th class="p-2 border">Achat</th><th class="p-2 border">Vente</th><th class="p-2 border">En stock</th><th class="p-2 border">Vendues</th><th class="p-2 border">Bénéfice réalisé</th></tr></thead>
         <tbody id="inventaireListe"></tbody>
       </table>
