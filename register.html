@@ -1,82 +1,84 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Inscription - Ma Boutique</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  body {
-    background: url('https://sainte-agathe.org/wp-content/uploads/2022/03/6075cf7578_50173490_e-shop.jpg') no-repeat center center fixed;
-    background-size: cover;
-  }
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inscription - Ma Boutique</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: url('https://sainte-agathe.org/wp-content/uploads/2022/03/6075cf7578_50173490_e-shop.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+  </style>
 </head>
-<body class="flex items-start justify-end min-h-screen font-sans pr-20 pt-20">
+<body class="flex min-h-screen font-sans 
+             items-center justify-center 
+             md:items-start md:justify-end 
+             p-6 md:pr-20 md:pt-20">
 
-<div class="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full max-w-md border border-purple-100">
-  <h1 class="text-2xl font-bold text-center mb-6">📝 Inscription</h1>
+  <div class="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-8 
+              w-full max-w-sm md:max-w-md border border-purple-100">
+    <h1 class="text-2xl font-bold text-center mb-6">📝 Inscription</h1>
 
-  <input type="email" id="email" placeholder="Email" class="w-full p-3 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-400 transition">
-  <input type="password" id="password" placeholder="Mot de passe" class="w-full p-3 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-400 transition">
+    <input type="email" id="email" placeholder="Email" class="w-full p-3 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-green-400 transition">
+    <input type="password" id="password" placeholder="Mot de passe" class="w-full p-3 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-green-400 transition">
 
-  <button id="registerBtn" class="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg font-bold shadow-md transition transform hover:scale-[1.02]">Créer un compte</button>
+    <button id="registerBtn" class="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg font-bold shadow-md transition transform hover:scale-[1.02]">
+      Créer un compte
+    </button>
 
-  <p class="text-center text-sm mt-4 text-gray-600">
-    Déjà inscrit ?
-    <a href="login.html" class="text-purple-600 font-bold hover:underline">Se connecter</a>
-  </p>
-</div>
+    <p class="text-center text-sm mt-4 text-gray-600">
+      Déjà inscrit ?
+      <a href="login.html" class="text-purple-600 font-bold hover:underline">Se connecter</a>
+    </p>
+  </div>
 
-<script>
-const API_BASE = "https://ma-boutique-backend-3.onrender.com";
+  <script>
+  (() => {
+    const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('authToken')) {
-    window.location.href = 'index.html';
-  }
-});
-
-document.getElementById('registerBtn').addEventListener('click', async () => {
-  const username = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
-
-  if (!username || !password) {
-    alert('Veuillez remplir tous les champs.');
-    return;
-  }
-
-  try {
-    const res = await fetch(API_BASE + '/auth/register', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ username, password })
+    document.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem('authToken')) {
+        window.location.href = 'index.html';
+      }
     });
 
-    console.log("Status HTTP:", res.status);
-    const rawText = await res.text();
-    console.log("Réponse brute du serveur:", rawText);
+    document.getElementById('registerBtn')?.addEventListener('click', async () => {
+      const username = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-    if (rawText.trim().startsWith("<")) {
-      alert("❌ Le serveur a renvoyé du HTML au lieu d'un JSON (voir console).");
-      return;
-    }
+      if (!username || !password) {
+        alert('Veuillez remplir tous les champs.');
+        return;
+      }
 
-    const data = JSON.parse(rawText);
+      try {
+        const res = await fetch(API_BASE + '/auth/register', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ username, password })
+        });
 
-    if (res.ok) {
-      alert('✅ Compte créé avec succès ! Connectez-vous.');
-      window.location.href = 'login.html';
-    } else {
-      alert('❌ Erreur : ' + (data.error || "Problème inconnu"));
-    }
+        const rawText = await res.text();
+        if (rawText.trim().startsWith("<")) {
+          alert("❌ Le serveur a renvoyé du HTML au lieu d'un JSON (voir console).");
+          return;
+        }
+        const data = JSON.parse(rawText);
 
-  } catch (err) {
-    console.error("Erreur lors de la requête:", err);
-    alert("❌ Erreur de connexion au serveur.");
-  }
-});
-</script>
-
+        if (res.ok) {
+          alert('✅ Compte créé avec succès ! Connectez-vous.');
+          window.location.href = 'login.html';
+        } else {
+          alert('❌ Erreur : ' + (data.error || "Problème inconnu"));
+        }
+      } catch (err) {
+        console.error("Erreur lors de la requête:", err);
+        alert("❌ Erreur de connexion au serveur.");
+      }
+    });
+  })();
+  </script>
 </body>
 </html>
