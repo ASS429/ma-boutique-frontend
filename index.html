@@ -1184,53 +1184,6 @@ function updateCharts(ventesFiltrees) {
       options: { responsive: true, maintainAspectRatio: false }
     });
   }
-  
-  // --- Historique des ventes ---
-var cHistorique = document.createElement('div');
-cHistorique.className = 'bg-white rounded-3xl p-6 shadow-lg mt-6';
-cHistorique.innerHTML = '<h3 class="text-lg font-bold mb-4">📜 Historique des ventes</h3>';
-
-if (ventesFiltrees.length === 0) {
-  cHistorique.innerHTML += '<div class="text-gray-500 text-center py-4">Aucune vente</div>';
-} else {
-  const table = document.createElement('table');
-  table.className = 'w-full table-sm';
-  table.innerHTML = `
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="p-2 border">Date</th>
-        <th class="p-2 border">Produit</th>
-        <th class="p-2 border">Qté</th>
-        <th class="p-2 border">Montant</th>
-        <th class="p-2 border">Paiement</th>
-        <th class="p-2 border">Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  `;
-  const tbody = table.querySelector('tbody');
-
-  ventesFiltrees.forEach(v => {
-    const prod = appData.produits.find(p => p.id === v.product_id);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
-      <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
-      <td class="p-2 border">${v.quantity}</td>
-      <td class="p-2 border">${((v.price || 0) * (v.quantity || 0)).toLocaleString()} F</td>
-      <td class="p-2 border">${v.payment_method || ''}</td>
-      <td class="p-2 border text-center">
-        <button class="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onclick="modifierVente(${v.id})">✏️</button>
-        <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="annulerVente(${v.id})">🗑️</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  cHistorique.appendChild(table);
-}
-
-document.getElementById('rapportsSection').appendChild(cHistorique);
 
   // --- Produits populaires ---
   var productsSorted = (appData.produits || []).slice().sort(function(a, b) {
