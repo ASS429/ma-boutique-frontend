@@ -1560,8 +1560,22 @@ function renderVentesChart() {
 function authfetch(url, options = {}) {
   const token = localStorage.getItem('authToken');
   if (!token) {
-    window.location.href = 'login.html';
+    window.location.href = 'login.html?expired=1';
     return Promise.reject(new Error('Token manquant'));
+  }
+
+  // ✅ Vérifier expiration du token avant d’envoyer
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      console.warn("⚠️ Token expiré, déconnexion auto");
+      localStorage.removeItem('authToken');
+      window.location.href = 'login.html?expired=1';
+      return Promise.reject(new Error('Token expiré'));
+    }
+  } catch (e) {
+    console.error("Erreur décodage token:", e);
   }
 
   const headers = {
@@ -1569,18 +1583,16 @@ function authfetch(url, options = {}) {
     'Authorization': 'Bearer ' + token
   };
 
-  console.log('📤 authfetch →', url, 'headers:', headers);
-
   return fetch(url, { ...options, headers }).then(res => {
     if (res.status === 401) {
-      alert('❌ Session expirée. Veuillez vous reconnecter.');
       localStorage.removeItem('authToken');
-      window.location.href = 'login.html';
+      window.location.href = 'login.html?expired=1';
       throw new Error('401 Unauthorized');
     }
     return res;
   });
 }
+
 
 function renderSalesHistory(ventes) {
   const tbody = document.getElementById('salesHistoryBody');
@@ -1663,6 +1675,16 @@ function modifierVente(id) {
   ouvrirModal(vente);
 }
 
+// Vérifie si l’URL contient ?expired=1
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('expired') === '1') {
+      const msg = document.createElement('div');
+      msg.className = "bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4";
+      msg.innerHTML = "⚠️ Votre session a expiré. Veuillez vous reconnecter.";
+      document.querySelector('.bg-white').prepend(msg);
+    }
+  });
 
 </script>
 
