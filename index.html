@@ -52,7 +52,7 @@ function renderSalesHistory(ventes) {
   }
 
   for (const v of ventes) {
-    const prod = (appData.produits || []).find(p => p.id === v.product_id);
+    const prod = (appData.produits || []).find(p => Number(p.id) === Number(v.product_id));
     const unit = Number(v.price ?? 0);
     const qty  = Number(v.quantity ?? 0);
     const montant = Number.isFinite(Number(v.total)) ? Number(v.total) : (unit * qty);
