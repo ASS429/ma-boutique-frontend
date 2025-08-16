@@ -355,16 +355,28 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
 
   <!-- Section Inventaire -->
-  <div id="inventaireSection" class="bg-white rounded-3xl p-6 shadow-lg mt-6 overflow-x-auto">
-    <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
-    <input type="text" id="searchInventaire" placeholder="🔍 Rechercher un produit..." class="w-full p-2 border rounded mb-4">
-    <div class="bg-white rounded-3xl p-4 shadow-lg">
-      <table class="w-full table-sm" class="overflow-x-auto">
-        <thead class="bg-gray-100"><tr><th class="p-2 border">Produit</th><th class="p-2 border">Achat</th><th class="p-2 border">Vente</th><th class="p-2 border">En stock</th><th class="p-2 border">Vendues</th><th class="p-2 border">Bénéfice réalisé</th></tr></thead>
-        <tbody id="inventaireListe"></tbody>
-      </table>
-    </div>
+  <div id="inventaireSection" class="hidden slide-in p-6">
+  <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
+  <input type="text" id="searchInventaire" placeholder="🔍 Rechercher un produit..." class="w-full p-2 border rounded mb-4">
+
+  <!-- 👉 le wrapper overflow-x-auto autour du tableau -->
+  <div class="bg-white rounded-3xl p-4 shadow-lg overflow-x-auto">
+    <table class="w-full table-sm min-w-[600px]">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 border">Produit</th>
+          <th class="p-2 border">Achat</th>
+          <th class="p-2 border">Vente</th>
+          <th class="p-2 border">En stock</th>
+          <th class="p-2 border">Vendues</th>
+          <th class="p-2 border">Bénéfice réalisé</th>
+        </tr>
+      </thead>
+      <tbody id="inventaireListe"></tbody>
+    </table>
   </div>
+</div>
+
 
   <!-- Modales -->
   <div class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" id="modalOverlay">
