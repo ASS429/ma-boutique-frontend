@@ -1521,21 +1521,20 @@ function authfetch(url, options = {}) {
   });
 }
 
-function tryRenderSalesHistory(ventes) {
+function renderSalesHistory(ventes) {
   const tbody = document.getElementById('salesHistoryBody');
-  if (!tbody) return;
+  tbody.innerHTML = ''; // Vider avant remplissage
 
-  tbody.innerHTML = ''; // vide toujours
+  ventes.forEach(v => {
+    // Trouver le produit correspondant
+    const prod = (appData.produits || []).find(
+      p => Number(p.id) === Number(v.product_id)
+    );
 
-  if (!Array.isArray(ventes) || ventes.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-4">Aucune vente</td></tr>`;
-    return;
-  }
+    // Calcul du montant
+    const montant = Number(v.total) || (Number(v.price) * Number(v.quantity));
 
-  for (const v of ventes) {
-    const prod = (appData.produits || []).find(p => p.id === v.product_id);
-    const montant = v.total != null ? parseFloat(v.total) : (parseFloat(v.price || 0) * parseFloat(v.quantity || 0));
-
+    // Créer ligne
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
@@ -1549,12 +1548,8 @@ function tryRenderSalesHistory(ventes) {
       </td>
     `;
     tbody.appendChild(tr);
-  }
+  });
 }
-
-
-
-
 
 
 </script>
