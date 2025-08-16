@@ -437,6 +437,36 @@ function tryRenderSalesHistory(ventesFiltrees) {
       </div>
     </div>
   </div>
+          <!-- Modal Méthodes de modification vente -->
+  <div id="modalModifierVente" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
+  <div class="bg-white rounded-xl p-6 w-96 shadow-lg">
+    <h2 class="text-lg font-bold mb-4">✏️ Modifier la vente</h2>
+    
+    <form id="formModifierVente" class="space-y-3">
+      <input type="hidden" id="venteId">
+      
+      <div>
+        <label class="block text-sm">Quantité</label>
+        <input type="number" id="venteQuantite" class="w-full border rounded p-2" required>
+      </div>
+      
+      <div>
+        <label class="block text-sm">Méthode de paiement</label>
+        <select id="ventePaiement" class="w-full border rounded p-2">
+          <option value="especes">Espèces</option>
+          <option value="wave">Wave</option>
+          <option value="orange">Orange Money</option>
+        </select>
+      </div>
+      
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="fermerModal()" class="px-3 py-2 bg-gray-300 rounded">Annuler</button>
+        <button type="submit" class="px-3 py-2 bg-blue-600 text-white rounded">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
 </div>
 
@@ -1580,6 +1610,57 @@ function renderSalesHistory(ventes) {
     `;
     tbody.appendChild(tr);
   });
+}
+
+function ouvrirModal(vente) {
+  document.getElementById("venteId").value = vente.id;
+  document.getElementById("venteQuantite").value = vente.quantity;
+  document.getElementById("ventePaiement").value = vente.payment_method;
+  
+  document.getElementById("modalModifierVente").classList.remove("hidden");
+  document.getElementById("modalModifierVente").classList.add("flex");
+}
+
+function fermerModal() {
+  document.getElementById("modalModifierVente").classList.add("hidden");
+  document.getElementById("modalModifierVente").classList.remove("flex");
+}
+
+// Quand on soumet le formulaire
+document.getElementById("formModifierVente").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
+  const id = document.getElementById("venteId").value;
+  const quantity = parseInt(document.getElementById("venteQuantite").value, 10);
+  const payment_method = document.getElementById("ventePaiement").value;
+
+  try {
+    const res = await authfetch(`${API_BASE}/sales/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quantity, payment_method })
+    });
+
+    if (!res.ok) throw new Error("Erreur lors de la modification");
+
+    alert("✅ Vente modifiée avec succès");
+    fermerModal();
+    syncFromServer(); // recharge les données
+
+  } catch (err) {
+    console.error("Erreur modifierVente:", err);
+    alert("❌ Erreur lors de la modification de la vente");
+  }
+});
+
+// Quand on clique sur ✏️ dans le tableau
+function modifierVente(id) {
+  const vente = appData.ventes.find(v => Number(v.id) === Number(id));
+  if (!vente) {
+    alert("❌ Vente introuvable");
+    return;
+  }
+  ouvrirModal(vente);
 }
 
 
