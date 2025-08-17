@@ -302,12 +302,34 @@ function tryRenderSalesHistory(ventesFiltrees) {
 
     <div class="space-y-6">
       <div class="bg-white rounded-3xl p-6 shadow-lg">
-        <h3 class="text-lg font-bold mb-4">💰 Résumé</h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-green-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-green-600" id="recettesJour">0 F</div><div class="text-sm text-green-700">Aujourd'hui</div></div>
-          <div class="bg-blue-50 rounded-2xl p-4 text-center"><div class="text-3xl font-bold text-blue-600" id="recettesSemaine">0 F</div><div class="text-sm text-blue-700">Cette semaine</div></div>
-        </div>
-      </div>
+  <h3 class="text-lg font-bold mb-4">💰 Résumé</h3>
+  <div class="grid grid-cols-2 gap-4">
+    <!-- Aujourd'hui -->
+    <div class="bg-green-50 rounded-2xl p-4 text-center">
+      <div class="text-3xl font-bold text-green-600" id="recettesJour">0 F</div>
+      <div class="text-sm text-green-700">Aujourd'hui</div>
+    </div>
+
+    <!-- Cette semaine -->
+    <div class="bg-blue-50 rounded-2xl p-4 text-center">
+      <div class="text-3xl font-bold text-blue-600" id="recettesSemaine">0 F</div>
+      <div class="text-sm text-blue-700">Cette semaine</div>
+    </div>
+
+    <!-- Ce mois -->
+    <div class="bg-yellow-50 rounded-2xl p-4 text-center">
+      <div class="text-3xl font-bold text-yellow-600" id="recettesMois">0 F</div>
+      <div class="text-sm text-yellow-700">Ce mois</div>
+    </div>
+
+    <!-- Tout -->
+    <div class="bg-purple-50 rounded-2xl p-4 text-center">
+      <div class="text-3xl font-bold text-purple-600" id="recettesTout">0 F</div>
+      <div class="text-sm text-purple-700">Tout</div>
+    </div>
+  </div>
+</div>
+
 
       <div class="bg-white rounded-3xl p-6 shadow-lg">
         <h3 class="text-lg font-bold mb-4">💳 Paiements</h3>
@@ -1128,10 +1150,24 @@ function afficherRapports() {
   });
   appData.stats.paiements = paiementsMap;
 
-  // --- Chiffre d’affaires filtré ---
-  const caTotal = Object.values(paiementsMap).reduce((sum, val) => sum + val, 0);
-  document.getElementById('recettesJour').textContent = caTotal.toLocaleString() + ' F';
-  document.getElementById('recettesSemaine').textContent = caTotal.toLocaleString() + ' F';
+  // --- Calcul chiffre d’affaires par période ---
+  const ventesJour = filtrerVentesParPeriode(appData.ventes || [], 'jour');
+  const ventesSemaine = filtrerVentesParPeriode(appData.ventes || [], 'semaine');
+  const ventesMois = filtrerVentesParPeriode(appData.ventes || [], 'mois');
+  const ventesTout = filtrerVentesParPeriode(appData.ventes || [], 'tout');
+
+  const totalJour = ventesJour.reduce((sum, v) => sum + (v.total || (v.price||0) * (v.quantity||0)), 0);
+  const totalSemaine = ventesSemaine.reduce((sum, v) => sum + (v.total || (v.price||0) * (v.quantity||0)), 0);
+  const totalMois = ventesMois.reduce((sum, v) => sum + (v.total || (v.price||0) * (v.quantity||0)), 0);
+  const totalTout = ventesTout.reduce((sum, v) => sum + (v.total || (v.price||0) * (v.quantity||0)), 0);
+
+  // --- Injection dans le DOM ---
+  document.getElementById('recettesJour').textContent = totalJour.toLocaleString() + ' F';
+  document.getElementById('recettesSemaine').textContent = totalSemaine.toLocaleString() + ' F';
+  document.getElementById('recettesMois').textContent = totalMois.toLocaleString() + ' F';
+  if (document.getElementById('recettesTout')) {
+    document.getElementById('recettesTout').textContent = totalTout.toLocaleString() + ' F';
+  }
 
   // --- Paiements ---
   var containerPaiements = document.getElementById('rapportsPaiements');
@@ -1141,7 +1177,8 @@ function afficherRapports() {
     wave: { name: 'Wave', emoji: '📱', couleur: 'blue' },
     orange: { name: 'Orange Money', emoji: '📞', couleur: 'orange' }
   };
-  var totalPaiements = caTotal;
+  var totalPaiements = Object.values(paiementsMap).reduce((sum, val) => sum + val, 0);
+
   Object.keys(paiementsMap).forEach(function(m) {
     var montant = paiementsMap[m] || 0;
     var info = methodesNoms[m] || { name: m, emoji: '', couleur: 'gray' };
@@ -1183,14 +1220,14 @@ function afficherRapports() {
   updateCharts(ventesFiltrees);
 
   // ✅ On affiche l'historique seulement si les données sont prêtes
-if (!appData.ventes?.length || !appData.produits?.length) {
-  console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
-  return;
-}
+  if (!appData.ventes?.length || !appData.produits?.length) {
+    console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
+    return;
+  }
 
   tryRenderSalesHistory(ventesFiltrees);
-
 }
+
 
 
 function updateCharts(ventesFiltrees) {
