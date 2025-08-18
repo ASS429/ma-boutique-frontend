@@ -2232,7 +2232,8 @@ async function finaliserVenteCredit() {
   // Récupérer les infos du formulaire crédit
   const clientName = document.getElementById('creditClientName')?.value.trim();
   const clientPhone = document.getElementById('creditClientPhone')?.value.trim();
-  const dueDate = document.getElementById('creditDueDate')?.value;
+  const dueDateInput = document.getElementById('creditDueDate');
+  const dueDate = dueDateInput?.value || null; // ⚠️ éviter undefined
 
   if (!clientName || !clientPhone || !dueDate) {
     alert('⚠️ Merci de remplir toutes les informations du crédit.');
@@ -2274,12 +2275,13 @@ async function finaliserVenteCredit() {
   afficherCategories();
   afficherRapports();
   afficherInventaire();
-  afficherCredits(); // ✅ nouvelle fonction pour rafraîchir la liste des crédits
+  afficherCredits(); // ✅ rafraîchir crédits
   verifierStockFaible();
 
-  hideModal(); // refermer modal Paiement
-  hideModalCredit(); // refermer modal Crédit
+  // Ne ferme QUE le modal crédit
+  hideModalCredit();
 }
+
 
 function afficherCredits() {
   const tbody = document.getElementById("creditsListe");
