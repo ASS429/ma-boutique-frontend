@@ -241,6 +241,13 @@ function tryRenderSalesHistory(ventesFiltrees) {
         <div class="font-bold text-xl">INVENTAIRE</div>
         <div class="text-sm opacity-90">Voir bénéfices</div>
       </button>
+
+      <button class="big-button bg-gradient-to-br from-purple-400 to-purple-600 text-white p-8 rounded-3xl text-center shadow-lg" onclick="showSection('credits')">
+  <div class="text-6xl mb-3">📝</div>
+  <div class="font-bold text-xl">CRÉDITS</div>
+  <div class="text-sm opacity-90">Gérer dettes clients</div>
+</button>
+
     </div>
 
     <!-- Alertes stock faible -->
@@ -949,7 +956,7 @@ async function postSaleServer(sale) {
 // ---------- Navigation & UI helpers (structure kept) ----------
 let currentSection = 'menu';
 function showSection(section){
-  const sections = ['menu','vente','stock','categories','rapports','inventaire'];
+  const sections = ['menu','vente','stock','categories','rapports','inventaire','credits'];
   sections.forEach(function(s){ const el = document.getElementById(s+'Section'); if(el) el.classList.add('hidden'); });
   const target = document.getElementById(section+'Section'); if(target) target.classList.remove('hidden');
   const backBtn = document.getElementById('backBtn'); if(backBtn) backBtn.style.display = (section==='menu') ? 'none' : 'block';
@@ -960,6 +967,10 @@ function showSection(section){
   else if(section==='rapports'){ afficherRapports(); }
   else if(section==='inventaire'){ afficherInventaire(); }
   else if(section==='menu'){ updateStats(); verifierStockFaible(); }
+  else if(section==='credits'){
+  afficherCredits(); // ta fonction qui remplit le tableau
+}
+
 }
 
 function showModal(modalName){
