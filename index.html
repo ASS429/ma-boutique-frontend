@@ -613,6 +613,8 @@ function tryRenderSalesHistory(ventesFiltrees) {
   <div class="space-y-4">
     <input type="text" id="creditClientName" placeholder="👤 Nom du client" class="w-full p-3 border rounded-lg">
     <input type="tel" id="creditClientPhone" placeholder="📞 Téléphone du client" class="w-full p-3 border rounded-lg">
+    
+    <!-- ✅ Champ date corrigé -->
     <input type="date" id="creditDueDate" class="w-full p-3 border rounded-lg">
   </div>
 
@@ -1584,7 +1586,15 @@ document.addEventListener('DOMContentLoaded', async function(){
 
   document.getElementById('periodeRapports').addEventListener('change', afficherRapports);
 
+  // ✅ Mise à jour automatique du champ date crédit
+  const dateInput = document.getElementById("creditDueDate");
+  if (dateInput) {
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.value = today;   // Valeur par défaut = aujourd'hui
+    dateInput.min = today;     // Empêche de choisir une date passée
+  }
 });
+
 
 
 // Register service worker if supported
@@ -2076,9 +2086,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function showModalCredit() {
-  document.getElementById("modalPaiement").classList.add("hidden");
-  document.getElementById("modalCredit").classList.remove("hidden");
+  const modal = document.getElementById("modalCredit");
+  if (modal) {
+    modal.classList.remove("hidden");
+
+    // ✅ Mettre à jour la date à chaque ouverture
+    const dateInput = document.getElementById("creditDueDate");
+    if (dateInput) {
+      const today = new Date().toISOString().split("T")[0];
+      dateInput.value = today;   // Valeur par défaut = aujourd'hui
+      dateInput.min = today;     // Empêche de choisir une date passée
+    }
+  }
 }
+
 
 function hideModalCredit() {
   document.getElementById("modalCredit").classList.add("hidden");
