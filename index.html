@@ -398,33 +398,39 @@ function tryRenderSalesHistory(ventesFiltrees) {
   <h2 class="text-2xl font-bold mb-6 text-center">💳 Ventes à Crédit</h2>
 
   <!-- Formulaire enregistrement crédit -->
-  <div class="bg-white rounded-3xl p-6 shadow-lg mb-6">
-    <h3 class="text-lg font-bold mb-4">➕ Nouvelle vente à crédit</h3>
-    <form id="creditForm" class="space-y-4">
-      <div>
-        <label class="block text-sm font-bold mb-1">Client</label>
-        <input type="text" id="creditClient" placeholder="Nom du client"
-          class="w-full p-2 border rounded">
-      </div>
-      <div>
-        <label class="block text-sm font-bold mb-1">Produit</label>
-        <select id="creditProduct" class="w-full p-2 border rounded"></select>
-      </div>
-      <div>
-        <label class="block text-sm font-bold mb-1">Quantité</label>
-        <input type="number" id="creditQuantity" min="1" value="1"
-          class="w-full p-2 border rounded">
-      </div>
-      <div>
-        <label class="block text-sm font-bold mb-1">Échéance</label>
-        <input type="date" id="creditDueDate" class="w-full p-2 border rounded">
-      </div>
-      <button type="submit"
-        class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
-        Enregistrer à crédit
-      </button>
-    </form>
-  </div>
+<div class="bg-white rounded-3xl p-6 shadow-lg mb-6">
+  <h3 class="text-lg font-bold mb-4">➕ Nouvelle vente à crédit</h3>
+  <form id="creditForm" class="space-y-4">
+    <div>
+      <label class="block text-sm font-bold mb-1">Client</label>
+      <input type="text" id="creditClient" placeholder="Nom du client"
+        class="w-full p-2 border rounded">
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Téléphone</label>
+      <input type="tel" id="creditPhone" placeholder="Téléphone du client"
+        class="w-full p-2 border rounded">
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Produit</label>
+      <select id="creditProduct" class="w-full p-2 border rounded"></select>
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Quantité</label>
+      <input type="number" id="creditQuantity" min="1" value="1"
+        class="w-full p-2 border rounded">
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Échéance</label>
+      <input type="date" id="creditDueDate" class="w-full p-2 border rounded">
+    </div>
+    <button type="submit"
+      class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
+      Enregistrer à crédit
+    </button>
+  </form>
+</div>
+
 
   <!-- Résumé crédits -->
 <div id="creditsResume" class="mb-4 bg-purple-50 rounded-xl p-4 flex flex-col md:flex-row justify-around gap-3 text-center">
@@ -1563,7 +1569,7 @@ function setupSearchInputs(){ var inv = document.getElementById('searchInventair
 }
 
 // ---------- Init ----------
-document.addEventListener('DOMContentLoaded', async function(){
+document.addEventListener('DOMContentLoaded', async function () {
   loadAppDataLocal();
   updateStats();
   verifierStockFaible();
@@ -1583,7 +1589,7 @@ document.addEventListener('DOMContentLoaded', async function(){
   afficherCategories();
   afficherRapports();
   afficherInventaire();
-  
+
   // 🔄 Rafraîchissement auto toutes les 30 secondes
   setInterval(async () => {
     await syncFromServer();
@@ -1598,15 +1604,90 @@ document.addEventListener('DOMContentLoaded', async function(){
 
   document.getElementById('periodeRapports').addEventListener('change', afficherRapports);
 
-  // ✅ Mise à jour automatique du champ date crédit
-  const dateInput = document.getElementById("creditDueDate");
-  if (dateInput) {
-    const today = new Date().toISOString().split("T")[0];
-    dateInput.value = today;   // Valeur par défaut = aujourd'hui
-    dateInput.min = today;     // Empêche de choisir une date passée
+  // 📅 Fonction pour définir la date par défaut (aujourd’hui + 30 jours) 
+  // et bloquer les dates passées
+  function setDefaultCreditDate() {
+    const dueInput = document.getElementById('creditDueDate');
+    if (dueInput) {
+      const today = new Date();
+
+      // Format pour "min" (aujourd’hui)
+      const todayStr = today.toISOString().split("T")[0];
+      dueInput.min = todayStr;
+
+      // Date par défaut = aujourd’hui + 30 jours
+      const defaultDate = new Date();
+      defaultDate.setDate(defaultDate.getDate() + 30);
+      const defaultStr = defaultDate.toISOString().split("T")[0];
+      dueInput.value = defaultStr;
+    }
+  }
+
+  // Mettre la date par défaut dès le chargement
+  setDefaultCreditDate();
+
+  // Remettre la date par défaut à chaque ouverture de la section crédits
+  const creditsBtn = document.querySelector("button[onclick=\"showSection('credits')\"]");
+  if (creditsBtn) {
+    creditsBtn.addEventListener("click", setDefaultCreditDate);
   }
 });
 
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const creditForm = document.getElementById('creditForm');
+  if (creditForm) {
+    creditForm.addEventListener('submit', async function(e) {
+      e.preventDefault(); // 🚫 empêche le rechargement
+
+      // Récupérer les valeurs
+      const clientName = document.getElementById('creditClient')?.value.trim();
+      const clientPhone = document.getElementById('creditPhone')?.value.trim();
+      const productId = parseInt(document.getElementById('creditProduct')?.value);
+      const quantity = parseInt(document.getElementById('creditQuantity')?.value) || 1;
+      const dueDate = document.getElementById('creditDueDate')?.value;
+
+      if (!clientName || !clientPhone || !productId || !dueDate) {
+        alert("⚠️ Merci de remplir toutes les informations du crédit.");
+        return;
+      }
+
+      const produit = appData.produits.find(p => p.id === productId);
+      if (!produit) {
+        alert("❌ Produit introuvable.");
+        return;
+      }
+
+      const venteCredit = {
+        product_id: productId,
+        quantity: quantity,
+        payment_method: "credit",
+        client_name: clientName,
+        client_phone: clientPhone,
+        due_date: dueDate,
+        paid: false
+      };
+
+      const created = await postSaleServer(venteCredit);
+      if (!created) {
+        alert("❌ Erreur lors de l'enregistrement de la vente à crédit.");
+        return;
+      }
+
+      alert("✅ Vente à crédit enregistrée !");
+      
+      // Mise à jour des données
+      await syncFromServer();
+      afficherCredits();
+      afficherRapports();
+      afficherInventaire();
+
+      // Reset du formulaire
+      creditForm.reset();
+    });
+  }
+});
 
 
 // Register service worker if supported
