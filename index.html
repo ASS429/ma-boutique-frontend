@@ -831,31 +831,17 @@ async function syncFromServer() {
     let ventesAll = [];
     if (resSales.ok) {
       ventesAll = await resSales.json();
-      appData.ventes = ventesAll;
+
+      // ⚡ Normalisation des ventes/crédits
+      appData.ventes = ventesAll.map(v => ({
+        ...v,
+        created_at: v.created_at ? new Date(v.created_at) : null,
+        due_date: v.due_date ? new Date(v.due_date) : null,
+        paid: v.paid === true || v.paid === "true" // si string "true" => bool
+      }));
 
       // ✅ filtre les crédits
-      appData.credits = ventesAll.filter(v => v.payment_method === "credit");
-
-      // ✅ calcule les stats crédits
-      let totalDu = 0, totalRembourse = 0, totalImpayes = 0;
-
-      appData.credits.forEach(c => {
-        const montant = parseFloat(c.total) || 0;
-        totalDu += montant;
-
-        if (c.paid) {
-          totalRembourse += montant;
-        } else {
-          totalImpayes += montant;
-        }
-      });
-
-      appData.stats.credits = {
-        totalDu,
-        totalRembourse,
-        totalImpayes,
-        restant: totalDu - totalRembourse
-      };
+      appData.credits = appData.ventes.filter(v => v.payment_method === "credit");
     }
 
     // --- Calcul répartition paiements ---
@@ -890,7 +876,7 @@ async function syncFromServer() {
       const prod = appData.produits.find(p => p.id === prodId);
       if (prod) prod.vendu += qte;
 
-      const venteDate = new Date(v.date || v.created_at || v.timestamp);
+      const venteDate = new Date(v.created_at);
       if (!isNaN(venteDate) && venteDate.toISOString().split('T')[0] === today) {
         totalQteToday += qte;
       }
@@ -909,7 +895,6 @@ async function syncFromServer() {
 
   if (syncBanner) syncBanner.style.display = 'none';
 
-  // ✅ rafraîchir l'affichage crédits
   afficherCredits();
 }
 
@@ -2239,22 +2224,40 @@ let chartCredits; // global
 function afficherCredits() {
   console.log("📊 Credits récupérés:", appData.credits);
 
-  const stats = appData.stats.credits || { totalDu: 0, totalRembourse: 0, totalImpayes: 0, restant: 0 };
+  // Calculer les stats à partir des crédits
+  let totalDu = 0;
+  let totalRembourse = 0;
+  let totalImpaye = 0;
 
-  // --- Mise à jour des compteurs ---
-  const elEncours = document.getElementById("creditsTotalEncours");
-  if (elEncours) elEncours.textContent = stats.restant.toLocaleString() + " F";
+  appData.credits.forEach(c => {
+    const montant = parseFloat(c.total || 0);
+    if (c.paid) {
+      totalRembourse += montant;
+    } else {
+      totalDu += montant;
+      // Impayé = échéance dépassée
+      if (c.due_date && new Date(c.due_date) < new Date()) {
+        totalImpaye += montant;
+      }
+    }
+  });
+
+  const restant = totalDu;
+
+  // Mise à jour des compteurs
+  const elDu = document.getElementById("creditsTotalEncours");
+  if (elDu) elDu.textContent = totalDu.toLocaleString() + " F";
 
   const elR = document.getElementById("creditsTotalRembourses");
-  if (elR) elR.textContent = stats.totalRembourse.toLocaleString() + " F";
+  if (elR) elR.textContent = totalRembourse.toLocaleString() + " F";
 
   const elI = document.getElementById("creditsTotalImpaye");
-  if (elI) elI.textContent = stats.totalImpayes.toLocaleString() + " F";
+  if (elI) elI.textContent = totalImpaye.toLocaleString() + " F";
 
-  const elMontant = document.getElementById("creditsMontant");
-  if (elMontant) elMontant.textContent = "Montant total dû : " + stats.totalDu.toLocaleString() + " F";
+  const elRestant = document.getElementById("creditsMontant");
+  if (elRestant) elRestant.textContent = "Montant total dû : " + restant.toLocaleString() + " F";
 
-  // --- Remplir le tableau historique ---
+  // Remplir le tableau historique
   const body = document.getElementById("creditsHistoryBody");
   if (body) {
     body.innerHTML = "";
@@ -2271,49 +2274,24 @@ function afficherCredits() {
           ${c.paid ? 'Payé' : 'Non payé'}
         </td>
         <td class="p-2 border">
-          ${c.paid 
-            ? '✔️' 
-            : `<button onclick="ouvrirModalRemboursement(${c.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Rembourser</button>`}
+          ${c.paid ? '✔️' : `<button onclick="ouvrirModalRemboursement(${c.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Rembourser</button>`}
         </td>
       `;
       body.appendChild(tr);
     });
   }
 
-  // --- Mettre à jour le graphique crédits ---
+  // Mettre à jour le graphique crédits
   if (window.creditChart) {
     creditChart.data.datasets[0].data = [
-      stats.restant,
-      stats.totalRembourse,
-      stats.totalImpayes
+      totalDu,
+      totalRembourse,
+      totalImpaye
     ];
     creditChart.update();
   }
 }
 
-async function marquerCreditPaye(id) {
-  const method = prompt("Par quel moyen le client a remboursé ? (especes, wave, orange)");
-
-  if (!method) return;
-
-  try {
-    const res = await authfetch(API_BASE + "/sales/" + id, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ paid: true, payment_method: method })
-    });
-
-    if (res.ok) {
-      alert("✅ Crédit marqué comme payé.");
-      await syncFromServer();
-      afficherCredits();
-    } else {
-      alert("❌ Erreur lors de la mise à jour du crédit.");
-    }
-  } catch (err) {
-    console.error("Erreur marquerCreditPaye:", err);
-  }
-}
 
 async function finaliserVenteCredit() {
   if (!appData.panier.length) {
