@@ -2493,6 +2493,11 @@ function remplirSelectProduitsCredit() {
   });
 }
 
+function ouvrirModalRemboursement(saleId) {
+  document.getElementById("remboursementVenteId").value = saleId;
+  document.getElementById("modalRemboursement").classList.remove("hidden");
+}
+
 
 </script>
 
