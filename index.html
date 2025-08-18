@@ -640,9 +640,10 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
 </div>
 
-<!-- Modal Remboursement Crédit -->
-<div id="modalRemboursement" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-  <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+<!-- ✅ Modal Remboursement Crédit -->
+<div id="modalRemboursement" 
+     class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
     <h3 class="text-xl font-bold mb-4 text-center">💰 Remboursement Crédit</h3>
     <input type="hidden" id="remboursementVenteId">
 
@@ -657,10 +658,11 @@ function tryRenderSalesHistory(ventesFiltrees) {
         onclick="confirmerRemboursement('orange')">📞 Orange Money</button>
 
       <button class="w-full bg-gray-400 text-white p-3 rounded-xl font-bold"
-        onclick="hideModalRemboursement()">Annuler</button>
+        onclick="hideModalRemboursement()">❌ Annuler</button>
     </div>
   </div>
 </div>
+
 
 
           <!-- Modal Méthodes de modification vente -->
@@ -2378,18 +2380,24 @@ async function marquerCreditPaye(id) {
 
 // 👉 Ouvrir le modal remboursement
 function ouvrirModalRemboursement(saleId) {
-  console.log("🟣 ouvrirModalRemboursement appelé avec saleId =", saleId); // ✅ Debug
+  console.log("🟣 ouvrirModalRemboursement appelé avec saleId =", saleId);
+  const modal = document.getElementById("modalRemboursement");
   document.getElementById("remboursementVenteId").value = saleId;
-  document.getElementById("modalRemboursement").classList.remove("hidden");
+
+  modal.classList.remove("hidden");
+  modal.style.display = "flex"; // ✅ force affichage en mode flex
 }
+
 window.ouvrirModalRemboursement = ouvrirModalRemboursement; // ✅ rendre global
 
 // 👉 Fermer le modal
 function hideModalRemboursement() {
-  console.log("🔴 Fermeture du modal remboursement"); // ✅ Debug
-  document.getElementById("modalRemboursement").classList.add("hidden");
+  const modal = document.getElementById("modalRemboursement");
+  modal.classList.add("hidden");
+  modal.style.display = "none"; // ✅ force fermeture
   document.getElementById("remboursementVenteId").value = "";
 }
+
 window.hideModalRemboursement = hideModalRemboursement; // ✅ rendre global
 
 // 👉 Confirmer le remboursement avec un mode de paiement choisi
