@@ -2179,11 +2179,6 @@ function showModalCredit() {
   }
 }
 
-function ouvrirModalRemboursement(saleId) {
-  document.getElementById("remboursementVenteId").value = saleId;
-  document.getElementById("modalRemboursement").classList.remove("hidden");
-}
-
 
 function hideModalCredit() {
   document.getElementById("modalCredit").classList.add("hidden");
@@ -2381,16 +2376,26 @@ async function marquerCreditPaye(id) {
   }
 }
 
+// 👉 Ouvrir le modal remboursement
+function ouvrirModalRemboursement(saleId) {
+  console.log("🟣 ouvrirModalRemboursement appelé avec saleId =", saleId); // ✅ Debug
+  document.getElementById("remboursementVenteId").value = saleId;
+  document.getElementById("modalRemboursement").classList.remove("hidden");
+}
+window.ouvrirModalRemboursement = ouvrirModalRemboursement; // ✅ rendre global
 
 // 👉 Fermer le modal
 function hideModalRemboursement() {
+  console.log("🔴 Fermeture du modal remboursement"); // ✅ Debug
   document.getElementById("modalRemboursement").classList.add("hidden");
   document.getElementById("remboursementVenteId").value = "";
 }
+window.hideModalRemboursement = hideModalRemboursement; // ✅ rendre global
 
 // 👉 Confirmer le remboursement avec un mode de paiement choisi
 async function confirmerRemboursement(method) {
   const id = document.getElementById("remboursementVenteId").value;
+  console.log("🟢 confirmerRemboursement avec ID =", id, "méthode =", method); // ✅ Debug
   if (!id) return;
 
   try {
@@ -2410,7 +2415,7 @@ async function confirmerRemboursement(method) {
     alert("✅ Crédit remboursé avec succès !");
     hideModalRemboursement();
 
-    // Recharger les données à jour
+    // 🔄 Recharger les données à jour
     await syncFromServer();
     afficherCredits();
     afficherRapports();
@@ -2420,6 +2425,8 @@ async function confirmerRemboursement(method) {
     alert("❌ Erreur réseau lors du remboursement");
   }
 }
+window.confirmerRemboursement = confirmerRemboursement; // ✅ rendre global
+
 
 
 function afficherStatsCredits() {
