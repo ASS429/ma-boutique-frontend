@@ -2179,6 +2179,11 @@ function showModalCredit() {
   }
 }
 
+function ouvrirModalRemboursement(saleId) {
+  document.getElementById("remboursementVenteId").value = saleId;
+  document.getElementById("modalRemboursement").classList.remove("hidden");
+}
+
 
 function hideModalCredit() {
   document.getElementById("modalCredit").classList.add("hidden");
@@ -2482,12 +2487,6 @@ function remplirSelectProduitsCredit() {
     select.appendChild(opt);
   });
 }
-
-function ouvrirModalRemboursement(saleId) {
-  document.getElementById("remboursementVenteId").value = saleId;
-  document.getElementById("modalRemboursement").classList.remove("hidden");
-}
-
 
 </script>
 
