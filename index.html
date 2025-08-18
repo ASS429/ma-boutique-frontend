@@ -2233,7 +2233,10 @@ async function finaliserVenteCredit() {
   const clientName = document.getElementById('creditClientName')?.value.trim();
   const clientPhone = document.getElementById('creditClientPhone')?.value.trim();
   const dueDateInput = document.getElementById('creditDueDate');
-  const dueDate = dueDateInput?.value || null; // ⚠️ éviter undefined
+  const dueDate = dueDateInput?.value || null;
+
+  // 🔍 Debug
+  console.log("Infos crédit saisies :", { clientName, clientPhone, dueDate });
 
   if (!clientName || !clientPhone || !dueDate) {
     alert('⚠️ Merci de remplir toutes les informations du crédit.');
@@ -2275,7 +2278,7 @@ async function finaliserVenteCredit() {
   afficherCategories();
   afficherRapports();
   afficherInventaire();
-  afficherCredits(); // ✅ rafraîchir crédits
+  afficherCredits();
   verifierStockFaible();
 
   // Ne ferme QUE le modal crédit
