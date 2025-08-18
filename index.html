@@ -2202,36 +2202,37 @@ let chartCredits; // global
 function afficherCredits() {
   console.log("📊 Credits récupérés:", appData.credits);
 
-  let totalDu = 0;
-  let totalRembourse = 0;
-  let totalImpayes = 0;
-
+  // --- Calcul des stats crédits ---
+  let totalDu = 0, totalRembourse = 0, totalImpaye = 0;
   appData.credits.forEach(c => {
-    const montant = parseFloat(c.total || 0);
-
+    const montant = parseFloat(c.total) || 0;
     if (c.paid) {
       totalRembourse += montant;
     } else {
-      totalImpayes += montant;
+      totalDu += montant;
+      totalImpaye += montant;
     }
-
-    totalDu += montant;
   });
 
-  const restant = totalDu - totalRembourse;
+  appData.stats.credits = {
+    totalDu,
+    totalRembourse,
+    totalImpayes: totalImpaye,
+    restant: totalDu - totalRembourse
+  };
 
   // --- Mise à jour des compteurs ---
   const elEncours = document.getElementById("creditsTotalEncours");
   if (elEncours) elEncours.textContent = totalDu.toLocaleString() + " F";
 
-  const elR = document.getElementById("creditsTotalRembourses");
-  if (elR) elR.textContent = totalRembourse.toLocaleString() + " F";
+  const elRemb = document.getElementById("creditsTotalRembourses");
+  if (elRemb) elRemb.textContent = totalRembourse.toLocaleString() + " F";
 
-  const elI = document.getElementById("creditsTotalImpaye");
-  if (elI) elI.textContent = totalImpayes.toLocaleString() + " F";
+  const elImp = document.getElementById("creditsTotalImpaye");
+  if (elImp) elImp.textContent = totalImpaye.toLocaleString() + " F";
 
   const elMontant = document.getElementById("creditsMontant");
-  if (elMontant) elMontant.textContent = "Montant total dû : " + totalDu.toLocaleString() + " F";
+  if (elMontant) elMontant.textContent = "Montant total dû : " + (totalDu + totalRembourse).toLocaleString() + " F";
 
   // --- Remplir le tableau historique ---
   const body = document.getElementById("creditsHistoryBody");
@@ -2239,6 +2240,26 @@ function afficherCredits() {
     body.innerHTML = "";
     appData.credits.forEach(c => {
       const tr = document.createElement("tr");
+
+      // statut + méthode de remboursement
+      let statutHtml = "";
+      if (c.paid) {
+        const method = c.repayment_method || "inconnu";
+        const icons = {
+          especes: "💵 Espèces",
+          wave: "📱 Wave",
+          orange: "📞 Orange Money",
+        };
+        statutHtml = `<span class="text-green-600">Payé (${icons[method] || method})</span>`;
+      } else {
+        statutHtml = `<span class="text-red-600">Non payé</span>`;
+      }
+
+      // bouton remboursement
+      const actionHtml = c.paid
+        ? "✔️"
+        : `<button onclick="ouvrirModalRemboursement(${c.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Rembourser</button>`;
+
       tr.innerHTML = `
         <td class="p-2 border">${new Date(c.created_at).toLocaleDateString()}</td>
         <td class="p-2 border">${c.client_name || '-'}</td>
@@ -2246,54 +2267,23 @@ function afficherCredits() {
         <td class="p-2 border">${c.quantity}</td>
         <td class="p-2 border">${(c.total || 0).toLocaleString()} F</td>
         <td class="p-2 border">${c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}</td>
-        <td class="p-2 border ${c.paid ? 'text-green-600' : 'text-red-600'}">
-          ${c.paid ? 'Payé' : 'Non payé'}
-        </td>
-        <td class="p-2 border">
-          ${c.paid ? '✔️' : `<button onclick="ouvrirModalRemboursement(${c.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Rembourser</button>`}
-        </td>
+        <td class="p-2 border">${statutHtml}</td>
+        <td class="p-2 border">${actionHtml}</td>
       `;
       body.appendChild(tr);
     });
   }
 
-  // --- Graphique Chart.js ---
-  const ctx = document.getElementById("chartCredits");
-  if (ctx) {
-    if (!window.creditChart) {
-      window.creditChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ["Total dû", "Remboursé", "Impayés"],
-          datasets: [{
-            label: "Montants (F)",
-            data: [totalDu, totalRembourse, totalImpayes],
-            backgroundColor: ["#7e3af2", "#10b981", "#ef4444"]
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: "Résumé des crédits" }
-          },
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    } else {
-      // ✅ Mise à jour si déjà créé
-      window.creditChart.data.datasets[0].data = [
-        totalDu,
-        totalRembourse,
-        totalImpayes
-      ];
-      window.creditChart.update();
-    }
+  // --- Graphique crédits ---
+  if (window.creditChart) {
+    creditChart.data.datasets[0].data = [
+      appData.stats.credits.totalDu,
+      appData.stats.credits.totalRembourse,
+      appData.stats.credits.totalImpayes
+    ];
+    creditChart.update();
   }
 }
-
 
 
 async function finaliserVenteCredit() {
