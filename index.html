@@ -370,6 +370,16 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </table>
 </div>
 
+<!-- Bloc suivi des crédits -->
+<div id="creditsStats" class="bg-white rounded-3xl p-4 shadow-lg mt-6">
+  <h3 class="text-lg font-bold mb-3">📊 Suivi des Crédits</h3>
+  <div id="creditsStatsContent" class="space-y-2">
+    <p class="text-gray-700">🔴 Montant dû : <span id="totalCreditsDue">0 F</span></p>
+    <p class="text-gray-700">🟢 Montant remboursé : <span id="totalCreditsPaid">0 F</span></p>
+  </div>
+  <canvas id="chartCredits" class="mt-4" height="150"></canvas>
+</div>
+
 
 </div>
 
@@ -409,29 +419,60 @@ function tryRenderSalesHistory(ventesFiltrees) {
     </form>
   </div>
 
-  <!-- Liste crédits -->
-  <div class="bg-white rounded-3xl p-6 shadow-lg">
-    <h3 class="text-lg font-bold mb-4">📜 Historique des crédits</h3>
-    <div class="overflow-x-auto">
-      <table class="w-full table-sm">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="p-2 border">Date</th>
-            <th class="p-2 border">Client</th>
-            <th class="p-2 border">Produit</th>
-            <th class="p-2 border">Qté</th>
-            <th class="p-2 border">Montant</th>
-            <th class="p-2 border">Échéance</th>
-            <th class="p-2 border">Statut</th>
-            <th class="p-2 border">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="creditsHistoryBody">
-          <!-- Rempli par JS -->
-        </tbody>
-      </table>
-    </div>
+  <!-- Résumé crédits -->
+<div id="creditsResume" class="mb-4 bg-purple-50 rounded-xl p-4 flex flex-col md:flex-row justify-around gap-3 text-center">
+  <div>
+    <div class="text-lg font-bold text-purple-700" id="creditsTotalEncours">0 F</div>
+    <div class="text-sm text-gray-600">Total en cours</div>
   </div>
+  <div>
+    <div class="text-lg font-bold text-green-700" id="creditsTotalRembourses">0 F</div>
+    <div class="text-sm text-gray-600">Total remboursé</div>
+  </div>
+  <div>
+    <div class="text-lg font-bold text-red-700" id="creditsTotalImpaye">0 F</div>
+    <div class="text-sm text-gray-600">Impayés restants</div>
+  </div>
+</div>
+
+<!-- Graphique crédits -->
+<div class="bg-white rounded-3xl p-4 shadow-lg mb-6">
+  <canvas id="chartCredits"></canvas>
+</div>
+
+<p id="creditsResume" class="text-center mb-4 text-sm text-gray-600">Chargement…</p>
+<p id="creditsMontant" class="text-center mb-4 text-sm font-semibold text-gray-800">Montant total dû : 0 F</p>
+<div class="h-48">
+  <canvas id="chartCredits"></canvas>
+</div>
+
+
+<!-- Liste crédits -->
+<div class="bg-white rounded-3xl p-6 shadow-lg">
+  <h3 class="text-lg font-bold mb-2">📜 Historique des crédits</h3>
+  <p id="creditsResume" class="text-sm text-center text-gray-600 mb-4"></p> <!-- ✅ compteur ici -->
+
+  <div class="overflow-x-auto">
+    <table class="w-full table-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 border">Date</th>
+          <th class="p-2 border">Client</th>
+          <th class="p-2 border">Produit</th>
+          <th class="p-2 border">Qté</th>
+          <th class="p-2 border">Montant</th>
+          <th class="p-2 border">Échéance</th>
+          <th class="p-2 border">Statut</th>
+          <th class="p-2 border">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="creditsHistoryBody">
+        <!-- Rempli par JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
 </div>
 
 
@@ -458,6 +499,28 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
 </div>
 
+<div id="creditsSection" class="hidden slide-in p-6 overflow-x-auto">
+  <h2 class="text-2xl font-bold mb-6 text-center">📝 Ventes à Crédit</h2>
+  
+  <div class="bg-white rounded-3xl p-4 shadow-lg overflow-x-auto">
+    <table class="w-full table-sm min-w-[700px]">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 border">Client</th>
+          <th class="p-2 border">Téléphone</th>
+          <th class="p-2 border">Produit</th>
+          <th class="p-2 border">Montant dû</th>
+          <th class="p-2 border">Échéance</th>
+          <th class="p-2 border">Statut</th>
+          <th class="p-2 border">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="creditsListe">
+        <!-- Lignes ajoutées en JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
 
   <!-- Modales -->
   <div class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" id="modalOverlay">
@@ -534,13 +597,57 @@ function tryRenderSalesHistory(ventesFiltrees) {
     </button>
 
     <!-- ✅ Nouveau bouton Crédit -->
-    <button class="w-full bg-purple-600 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('credit')">
-      <span class="text-2xl">💳</span> Crédit
-    </button>
+    <button class="w-full bg-purple-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="showModalCredit()">
+  <span class="text-2xl">📝</span> Crédit
+</button>
+
 
     <button class="w-full bg-gray-300 text-gray-700 p-4 rounded-2xl text-lg font-bold" onclick="hideModal()">Annuler</button>
   </div>
 </div>
+
+<!-- ✅ Modal Vente à Crédit -->
+<div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalCredit">
+  <h3 class="text-2xl font-bold mb-6 text-center">📝 Vente à Crédit</h3>
+  
+  <div class="space-y-4">
+    <input type="text" id="creditClientName" placeholder="👤 Nom du client" class="w-full p-3 border rounded-lg">
+    <input type="tel" id="creditClientPhone" placeholder="📞 Téléphone du client" class="w-full p-3 border rounded-lg">
+    <input type="date" id="creditDueDate" class="w-full p-3 border rounded-lg">
+  </div>
+
+  <div class="mt-6 space-y-3">
+    <button class="w-full bg-purple-600 text-white p-3 rounded-2xl font-bold" onclick="finaliserVenteCredit()">
+      ✅ Enregistrer à Crédit
+    </button>
+    <button class="w-full bg-gray-300 text-gray-700 p-3 rounded-2xl font-bold" onclick="hideModalCredit()">
+      ❌ Annuler
+    </button>
+  </div>
+</div>
+
+<!-- Modal Remboursement Crédit -->
+<div id="modalRemboursement" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+    <h3 class="text-xl font-bold mb-4 text-center">💰 Remboursement Crédit</h3>
+    <input type="hidden" id="remboursementVenteId">
+
+    <div class="space-y-3">
+      <button class="w-full bg-green-500 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-3"
+        onclick="confirmerRemboursement('especes')">💵 Espèces</button>
+
+      <button class="w-full bg-blue-500 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-3"
+        onclick="confirmerRemboursement('wave')">📱 Wave</button>
+
+      <button class="w-full bg-orange-500 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-3"
+        onclick="confirmerRemboursement('orange')">📞 Orange Money</button>
+
+      <button class="w-full bg-gray-400 text-white p-3 rounded-xl font-bold"
+        onclick="hideModalRemboursement()">Annuler</button>
+    </div>
+  </div>
+</div>
+
 
           <!-- Modal Méthodes de modification vente -->
   <div id="modalModifierVente" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
@@ -711,6 +818,9 @@ async function syncFromServer() {
     if (resSales.ok) {
       ventesAll = await resSales.json();
       appData.ventes = ventesAll;
+
+      // ✅ Séparer directement les ventes à crédit
+      appData.credits = ventesAll.filter(v => v.payment_method === "credit");
     }
 
     // --- Calcul répartition paiements ---
@@ -809,24 +919,29 @@ async function postProductServer(product) {
 
 async function postSaleServer(sale) {
   try {
+    // sale peut contenir : product_id, quantity, payment_method
+    // et éventuellement client_name, client_phone, due_date, paid
     const res = await authfetch(API_BASE + '/sales', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(sale) // { product_id, quantity, payment_method }
+      body: JSON.stringify(sale)
     });
 
     if (!res.ok) {
       const errorMsg = await res.text();
-      console.warn('Sale post failed', errorMsg);
+      console.warn('❌ Échec enregistrement vente :', errorMsg);
       return null;
     }
 
-    return await res.json();
+    const data = await res.json();
+    console.log('✅ Vente enregistrée sur serveur :', data);
+    return data;
   } catch (e) {
-    console.warn('Network error posting sale', e);
+    console.warn('🌐 Erreur réseau lors du POST /sales', e);
     return null;
   }
 }
+
 
 
 // ---------- Navigation & UI helpers (structure kept) ----------
@@ -899,44 +1014,24 @@ function afficherPanier(){ const c=document.getElementById('panierItems'); const
 function modifierQuantitePanier(id, delta){ if(!appData) return; const item = appData.panier.find(function(i){ return i.id===id; }); const produit = appData.produits.find(function(p){ return p.id===id; }); if(item){ item.quantite += delta; if(item.quantite <= 0) appData.panier = appData.panier.filter(function(i){ return i.id !== id; }); else if(produit && item.quantite > produit.stock){ item.quantite = produit.stock; alert('❌ Stock insuffisant!'); } afficherPanier(); saveAppDataLocal(); } }
 
 async function finaliserVente(paymentMethod) {
+  if (paymentMethod === "credit") {
+    // ⚡ On ne passe plus ici, on ouvre le formulaire Crédit
+    showModalCredit();
+    return;
+  }
+
   if (!appData.panier.length) {
     alert('❌ Panier vide.');
     return;
   }
 
-  // Si c'est un paiement à crédit → demander infos client
-  let clientNom = null, clientTel = null, echeance = null;
-  if (paymentMethod === "credit") {
-    clientNom = prompt("Nom du client (obligatoire) :");
-    if (!clientNom) {
-      alert("❌ Nom requis pour une vente à crédit.");
-      return;
-    }
-
-    clientTel = prompt("Téléphone du client (facultatif mais conseillé) :");
-
-    echeance = prompt("Date d’échéance (AAAA-MM-JJ) :");
-    if (!echeance) {
-      alert("❌ Date d’échéance requise.");
-      return;
-    }
-  }
-
-  // Envoi des ventes une par une
+  // ✅ Envoi des ventes une par une au backend
   for (const item of appData.panier) {
     const vente = {
       product_id: item.id,
       quantity: item.quantite,
-      payment_method: paymentMethod,
+      payment_method: paymentMethod
     };
-
-    if (paymentMethod === "credit") {
-      vente.client_name = clientNom;
-      vente.client_phone = clientTel;
-      vente.due_date = echeance;
-      vente.paid = false; // non remboursé
-    }
-
     const created = await postSaleServer(vente);
     if (!created) {
       alert('❌ Erreur lors de l\'enregistrement de la vente.');
@@ -944,19 +1039,24 @@ async function finaliserVente(paymentMethod) {
     }
   }
 
-  alert(paymentMethod === "credit" ? '✅ Vente à crédit enregistrée.' : '✅ Vente enregistrée.');
+  alert('✅ Vente enregistrée.');
 
-  // Nettoyage + mise à jour UI
+  // 🔄 Vider le panier local
   appData.panier = [];
   saveAppDataLocal();
+
+  // 🔄 Recharger toutes les données depuis le serveur
   await syncFromServer();
+
+  // 🔄 Rafraîchir toute l'UI
   updateStats();
   afficherCategoriesVente();
   afficherProduits();
   afficherCategories();
   afficherRapports();
   afficherInventaire();
-  verifierStockFaible();
+  afficherCredits(); // ⚡ Ajout pour que la section crédits soit à jour
+
   hideModal();
 }
 
@@ -1319,6 +1419,9 @@ function afficherRapports() {
   }
 
   tryRenderSalesHistory(ventesFiltrees);
+
+  afficherStatsCredits();
+
 }
 
 
@@ -1934,19 +2037,22 @@ function renderCreditsHistory() {
   appData.credits.forEach(c => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="p-2 border">${new Date(c.date).toLocaleString()}</td>
-      <td class="p-2 border">${c.client}</td>
-      <td class="p-2 border">${c.product_name}</td>
-      <td class="p-2 border">${c.quantity}</td>
-      <td class="p-2 border">${c.montant.toLocaleString()} F</td>
-      <td class="p-2 border">${c.due_date || "-"}</td>
-      <td class="p-2 border">${c.status}</td>
-      <td class="p-2 border text-center">
-        ${c.status === "non payé" ? 
-          `<button class="bg-green-500 text-white px-2 py-1 rounded text-xs" onclick="marquerCreditPaye(${c.id})">💰 Marquer payé</button>` 
-          : "✅ Payé"}
-      </td>
-    `;
+  <td class="p-2 border">${c.client_name || '-'}</td>
+  <td class="p-2 border">${c.client_phone || '-'}</td>
+  <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
+  <td class="p-2 border">${c.total.toLocaleString()} F</td>
+  <td class="p-2 border">${c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}</td>
+  <td class="p-2 border">
+    ${c.paid ? '<span class="text-green-600 font-bold">✅ Payé</span>' : '<span class="text-red-600 font-bold">❌ Non payé</span>'}
+  </td>
+  <td class="p-2 border text-center">
+    ${c.paid ? '' : `
+      <button class="bg-green-500 text-white px-2 py-1 rounded text-xs" 
+        onclick="marquerRembourse(${c.id})">💰 Marquer comme payé</button>
+    `}
+  </td>
+`;
+
     tbody.appendChild(tr);
   });
 }
@@ -1968,6 +2074,364 @@ document.addEventListener("DOMContentLoaded", () => {
   remplirProduitsCredit();
   renderCreditsHistory();
 });
+
+function showModalCredit() {
+  document.getElementById("modalPaiement").classList.add("hidden");
+  document.getElementById("modalCredit").classList.remove("hidden");
+}
+
+function hideModalCredit() {
+  document.getElementById("modalCredit").classList.add("hidden");
+  document.getElementById("modalPaiement").classList.remove("hidden");
+}
+
+document.getElementById("formCredit").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const creditData = {
+    client_name: document.getElementById("creditClientName").value,
+    client_phone: document.getElementById("creditClientPhone").value,
+    due_date: document.getElementById("creditDueDate").value
+  };
+
+  await finaliserVente("credit", creditData);
+});
+
+let chartCredits; // global
+
+function afficherCredits() {
+  const tbody = document.getElementById("creditsHistoryBody");
+  const resume = document.getElementById("creditsResume");
+  const resumeMontant = document.getElementById("creditsMontant");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const credits = (appData.ventes || []).filter(v => v.payment_method === "credit");
+
+  if (credits.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500 p-4">Aucun crédit enregistré</td></tr>`;
+    if (resume) resume.textContent = "Aucun crédit enregistré";
+    if (resumeMontant) resumeMontant.textContent = "Montant total dû : 0 F";
+
+    if (chartCredits) chartCredits.destroy();
+    return;
+  }
+
+  let totalCredits = 0;
+  let totalRetards = 0;
+  let totalPayes = 0;
+  let totalEnAttente = 0;
+
+  let montantPayes = 0;
+  let montantEnAttente = 0;
+  let montantRetards = 0;
+
+  credits.forEach(v => {
+    const prod = appData.produits.find(p => p.id === v.product_id);
+    const montant = v.total || ((v.price || 0) * (v.quantity || 0));
+    const dueDate = v.due_date ? new Date(v.due_date) : null;
+    const isLate = dueDate && dueDate < new Date() && !v.paid;
+
+    totalCredits++;
+    if (v.paid) {
+      totalPayes++;
+      montantPayes += montant;
+    } else if (isLate) {
+      totalRetards++;
+      montantRetards += montant;
+    } else {
+      totalEnAttente++;
+      montantEnAttente += montant;
+    }
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleDateString()}</td>
+      <td class="p-2 border">${v.client_name || "-"}</td>
+      <td class="p-2 border">${prod ? prod.name : "Inconnu"}</td>
+      <td class="p-2 border">${v.quantity}</td>
+      <td class="p-2 border">${montant.toLocaleString()} F</td>
+      <td class="p-2 border">${dueDate ? dueDate.toLocaleDateString() : "-"}</td>
+      <td class="p-2 border ${v.paid ? "text-green-600" : isLate ? "text-red-600" : "text-yellow-600"}">
+        ${v.paid ? "Payé" : isLate ? "En retard" : "En attente"}
+      </td>
+      <td class="p-2 border text-center">
+        ${!v.paid ? 
+          `<button class="bg-blue-500 text-white px-2 py-1 rounded text-xs" 
+              onclick="openModalRemboursement(${v.id})">💰 Rembourser</button>` 
+          : "—"}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // ✅ Résumés
+  if (resume) {
+    resume.textContent = `Total crédits : ${totalCredits} | ⚠ Retards : ${totalRetards} | ⏳ En attente : ${totalEnAttente} | ✅ Payés : ${totalPayes}`;
+  }
+  if (resumeMontant) {
+    const totalDu = montantRetards + montantEnAttente;
+    resumeMontant.textContent = `Montant dû : ${totalDu.toLocaleString()} F | (✅ ${montantPayes.toLocaleString()} F payés)`;
+  }
+
+  // ✅ Graphique barres
+  const ctx = document.getElementById("chartCredits").getContext("2d");
+  if (chartCredits) chartCredits.destroy();
+  chartCredits = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Payés", "En attente", "En retard"],
+      datasets: [{
+        label: "Montant (F CFA)",
+        data: [montantPayes, montantEnAttente, montantRetards],
+        backgroundColor: ["#10b981", "#fbbf24", "#ef4444"]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: "y",
+      scales: {
+        x: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+async function marquerCreditPaye(id) {
+  const method = prompt("Par quel moyen le client a remboursé ? (especes, wave, orange)");
+
+  if (!method) return;
+
+  try {
+    const res = await authfetch(API_BASE + "/sales/" + id, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paid: true, payment_method: method })
+    });
+
+    if (res.ok) {
+      alert("✅ Crédit marqué comme payé.");
+      await syncFromServer();
+      afficherCredits();
+    } else {
+      alert("❌ Erreur lors de la mise à jour du crédit.");
+    }
+  } catch (err) {
+    console.error("Erreur marquerCreditPaye:", err);
+  }
+}
+
+async function finaliserVenteCredit() {
+  if (!appData.panier.length) {
+    alert('❌ Panier vide.');
+    return;
+  }
+
+  // Récupérer les infos du formulaire crédit
+  const clientName = document.getElementById('creditClientName')?.value.trim();
+  const clientPhone = document.getElementById('creditClientPhone')?.value.trim();
+  const dueDate = document.getElementById('creditDueDate')?.value;
+
+  if (!clientName || !clientPhone || !dueDate) {
+    alert('⚠️ Merci de remplir toutes les informations du crédit.');
+    return;
+  }
+
+  // Envoyer les ventes une par une
+  for (const item of appData.panier) {
+    const venteCredit = {
+      product_id: item.id,
+      quantity: item.quantite,
+      payment_method: "credit", // ✅ On marque comme crédit
+      client_name: clientName,
+      client_phone: clientPhone,
+      due_date: dueDate,
+      paid: false // ✅ Par défaut non payé
+    };
+
+    const created = await postSaleServer(venteCredit);
+    if (!created) {
+      alert('❌ Erreur lors de l\'enregistrement de la vente à crédit.');
+      return;
+    }
+  }
+
+  alert('✅ Vente à crédit enregistrée.');
+
+  // Vider le panier local
+  appData.panier = [];
+  saveAppDataLocal();
+
+  // Recharger toutes les données depuis le serveur
+  await syncFromServer();
+
+  // Rafraîchir toute l'UI
+  updateStats();
+  afficherCategoriesVente();
+  afficherProduits();
+  afficherCategories();
+  afficherRapports();
+  afficherInventaire();
+  afficherCredits(); // ✅ nouvelle fonction pour rafraîchir la liste des crédits
+  verifierStockFaible();
+
+  hideModal(); // refermer modal Paiement
+  hideModalCredit(); // refermer modal Crédit
+}
+
+function afficherCredits() {
+  const tbody = document.getElementById("creditsListe");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const credits = (appData.ventes || []).filter(v => v.payment_method === "credit");
+
+  if (!credits.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">Aucun crédit enregistré</td></tr>`;
+    return;
+  }
+
+  credits.forEach(v => {
+    const prod = appData.produits.find(p => p.id === parseInt(v.product_id));
+    const montant = v.total || ((v.price || 0) * (v.quantity || 0));
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2 border">${v.client_name || "-"}</td>
+      <td class="p-2 border">${v.client_phone || "-"}</td>
+      <td class="p-2 border">${prod ? prod.name : "Inconnu"}</td>
+      <td class="p-2 border">${montant.toLocaleString()} F</td>
+      <td class="p-2 border">${v.due_date ? new Date(v.due_date).toLocaleDateString() : "-"}</td>
+      <td class="p-2 border font-bold ${v.paid ? "text-green-600" : "text-red-600"}">
+        ${v.paid ? "Payé" : "Non payé"}
+      </td>
+      <td class="p-2 border text-center">
+        ${v.paid ? 
+          `<button class="bg-gray-400 text-white px-2 py-1 rounded text-xs" disabled>✔️ Réglé</button>` 
+          : 
+          `<button class="bg-green-500 text-white px-2 py-1 rounded text-xs" onclick="marquerCreditPaye(${v.id})">💰 Marquer payé</button>`
+        }
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 👉 Ouvrir le modal pour un crédit donné
+async function marquerCreditPaye(id) {
+  if (!confirm("Confirmer que ce crédit a été payé ?")) return;
+
+  try {
+    const res = await authfetch(`${API_BASE}/sales/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paid: true })
+    });
+
+    if (!res.ok) {
+      const errMsg = await res.text();
+      alert("❌ Erreur lors de la mise à jour du crédit : " + errMsg);
+      return;
+    }
+
+    alert("✅ Crédit marqué comme payé.");
+    await syncFromServer();   // recharge les ventes + crédits
+    afficherStatsCredits();   // rafraîchit uniquement le tableau crédits
+
+  } catch (e) {
+    console.error("Erreur réseau marquerCreditPaye:", e);
+    alert("❌ Impossible de contacter le serveur.");
+  }
+}
+
+
+// 👉 Fermer le modal
+function hideModalRemboursement() {
+  document.getElementById("modalRemboursement").classList.add("hidden");
+  document.getElementById("remboursementVenteId").value = "";
+}
+
+// 👉 Confirmer le remboursement avec un mode de paiement choisi
+async function confirmerRemboursement(method) {
+  const id = document.getElementById("remboursementVenteId").value;
+  if (!id) return;
+
+  try {
+    const res = await authfetch(API_BASE + "/sales/" + id, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paid: true, repayment_method: method })
+    });
+
+    if (!res.ok) {
+      const errorMsg = await res.text();
+      console.error("Erreur remboursement:", errorMsg);
+      alert("❌ Erreur lors du remboursement");
+      return;
+    }
+
+    alert("✅ Crédit remboursé avec succès !");
+    hideModalRemboursement();
+
+    // Recharger les données à jour
+    await syncFromServer();
+    afficherCredits();
+    afficherRapports();
+
+  } catch (err) {
+    console.error("Erreur confirmerRemboursement:", err);
+    alert("❌ Erreur réseau lors du remboursement");
+  }
+}
+
+
+function afficherStatsCredits() {
+  const container = document.getElementById("creditsListe");
+  container.innerHTML = "";
+
+  const credits = appData.credits || [];
+
+  if (!credits.length) {
+    container.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">Aucun crédit enregistré</td></tr>`;
+    return;
+  }
+
+  credits.forEach(c => {
+    const produit = appData.produits.find(p => p.id === parseInt(c.product_id));
+    const produitName = produit ? produit.name : "Inconnu";
+
+    const statut = c.paid ? 
+      `<span class="text-green-600 font-bold">Payé</span>` : 
+      `<span class="text-red-600 font-bold">Impayé</span>`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2 border">${c.client_name || "-"}</td>
+      <td class="p-2 border">${c.client_phone || "-"}</td>
+      <td class="p-2 border">${produitName}</td>
+      <td class="p-2 border">${(c.total || 0).toLocaleString()} F</td>
+      <td class="p-2 border">${c.due_date ? new Date(c.due_date).toLocaleDateString() : "-"}</td>
+      <td class="p-2 border">${statut}</td>
+      <td class="p-2 border text-center">
+        ${!c.paid ? `
+          <button class="bg-green-500 text-white px-2 py-1 rounded text-xs"
+            onclick="marquerCreditPaye(${c.id})">✅ Marquer payé</button>
+        ` : ""}
+      </td>
+    `;
+    container.appendChild(tr);
+  });
+}
+
+function marquerRembourse(venteId) {
+  document.getElementById("remboursementVenteId").value = venteId;
+  document.getElementById("modalRemboursement").classList.remove("hidden");
+}
+
+
 
 </script>
 
