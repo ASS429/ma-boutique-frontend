@@ -450,14 +450,13 @@ function tryRenderSalesHistory(ventesFiltrees) {
 
 <!-- Graphique crédits -->
 <div class="bg-white rounded-3xl p-4 shadow-lg mb-6">
-  <canvas id="chartCredits"></canvas>
+  <canvas id="chartCredits" height="100"></canvas>
 </div>
 
-<p id="creditsResume" class="text-center mb-4 text-sm text-gray-600">Chargement…</p>
+<!-- Montant total dû -->
+<p id="creditsStatus" class="text-center mb-4 text-sm text-gray-600">Chargement…</p>
 <p id="creditsMontant" class="text-center mb-4 text-sm font-semibold text-gray-800">Montant total dû : 0 F</p>
-<div class="h-48">
-  <canvas id="chartCredits"></canvas>
-</div>
+
 
 
 <!-- Liste crédits -->
@@ -831,13 +830,33 @@ async function syncFromServer() {
     // --- Ventes ---
     let ventesAll = [];
     if (resSales.ok) {
-  ventesAll = await resSales.json();
-  appData.ventes = ventesAll;
+      ventesAll = await resSales.json();
+      appData.ventes = ventesAll;
 
-  // ✅ filtre les crédits
-  appData.credits = ventesAll.filter(v => v.payment_method === "credit");
-}
+      // ✅ filtre les crédits
+      appData.credits = ventesAll.filter(v => v.payment_method === "credit");
 
+      // ✅ calcule les stats crédits
+      let totalDu = 0, totalRembourse = 0, totalImpayes = 0;
+
+      appData.credits.forEach(c => {
+        const montant = parseFloat(c.total) || 0;
+        totalDu += montant;
+
+        if (c.paid) {
+          totalRembourse += montant;
+        } else {
+          totalImpayes += montant;
+        }
+      });
+
+      appData.stats.credits = {
+        totalDu,
+        totalRembourse,
+        totalImpayes,
+        restant: totalDu - totalRembourse
+      };
+    }
 
     // --- Calcul répartition paiements ---
     const paiementsMap = {};
@@ -890,9 +909,8 @@ async function syncFromServer() {
 
   if (syncBanner) syncBanner.style.display = 'none';
 
+  // ✅ rafraîchir l'affichage crédits
   afficherCredits();
-
-
 }
 
 
@@ -2219,25 +2237,24 @@ document.getElementById("formCredit").addEventListener("submit", async (e) => {
 let chartCredits; // global
 
 function afficherCredits() {
-
   console.log("📊 Credits récupérés:", appData.credits);
 
   const stats = appData.stats.credits || { totalDu: 0, totalRembourse: 0, totalImpayes: 0, restant: 0 };
 
-  // Mise à jour des compteurs
-  const elDu = document.getElementById("totalCreditsEnCours");
-  if (elDu) elDu.textContent = stats.totalDu.toLocaleString() + " F";
+  // --- Mise à jour des compteurs ---
+  const elEncours = document.getElementById("creditsTotalEncours");
+  if (elEncours) elEncours.textContent = stats.restant.toLocaleString() + " F";
 
-  const elR = document.getElementById("totalCreditsRembourses");
+  const elR = document.getElementById("creditsTotalRembourses");
   if (elR) elR.textContent = stats.totalRembourse.toLocaleString() + " F";
 
-  const elI = document.getElementById("creditsImpayes");
+  const elI = document.getElementById("creditsTotalImpaye");
   if (elI) elI.textContent = stats.totalImpayes.toLocaleString() + " F";
 
-  const elRestant = document.getElementById("creditsRestants");
-  if (elRestant) elRestant.textContent = stats.restant.toLocaleString() + " F";
+  const elMontant = document.getElementById("creditsMontant");
+  if (elMontant) elMontant.textContent = "Montant total dû : " + stats.totalDu.toLocaleString() + " F";
 
-  // Remplir le tableau historique
+  // --- Remplir le tableau historique ---
   const body = document.getElementById("creditsHistoryBody");
   if (body) {
     body.innerHTML = "";
@@ -2254,24 +2271,25 @@ function afficherCredits() {
           ${c.paid ? 'Payé' : 'Non payé'}
         </td>
         <td class="p-2 border">
-          ${c.paid ? '✔️' : `<button onclick="ouvrirModalRemboursement(${c.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Rembourser</button>`}
+          ${c.paid 
+            ? '✔️' 
+            : `<button onclick="ouvrirModalRemboursement(${c.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Rembourser</button>`}
         </td>
       `;
       body.appendChild(tr);
     });
   }
 
-  // Mettre à jour le graphique crédits
+  // --- Mettre à jour le graphique crédits ---
   if (window.creditChart) {
     creditChart.data.datasets[0].data = [
-      stats.totalDu,
+      stats.restant,
       stats.totalRembourse,
       stats.totalImpayes
     ];
     creditChart.update();
   }
 }
-
 
 async function marquerCreditPaye(id) {
   const method = prompt("Par quel moyen le client a remboursé ? (especes, wave, orange)");
