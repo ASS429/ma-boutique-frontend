@@ -969,6 +969,7 @@ function showSection(section){
   else if(section==='menu'){ updateStats(); verifierStockFaible(); }
   else if(section==='credits'){
   afficherCredits(); // ta fonction qui remplit le tableau
+  remplirSelectProduitsCredit();
 }
 
 }
@@ -2468,6 +2469,28 @@ function marquerRembourse(venteId) {
   document.getElementById("modalRemboursement").classList.remove("hidden");
 }
 
+function remplirSelectProduitsCredit() {
+  const select = document.getElementById('creditProduct');
+  if (!select) return;
+
+  // vider avant de recharger
+  select.innerHTML = '';
+
+  if (!appData.produits || appData.produits.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'Aucun produit disponible';
+    select.appendChild(opt);
+    return;
+  }
+
+  appData.produits.forEach(prod => {
+    const opt = document.createElement('option');
+    opt.value = prod.id;
+    opt.textContent = `${prod.name} (${prod.stock} dispo - ${prod.price}F)`;
+    select.appendChild(opt);
+  });
+}
 
 
 </script>
