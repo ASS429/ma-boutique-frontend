@@ -398,38 +398,56 @@ function tryRenderSalesHistory(ventesFiltrees) {
   <h2 class="text-2xl font-bold mb-6 text-center">💳 Ventes à Crédit</h2>
 
   <!-- Formulaire enregistrement crédit -->
-<div class="bg-white rounded-3xl p-6 shadow-lg mb-6">
-  <h3 class="text-lg font-bold mb-4">➕ Nouvelle vente à crédit</h3>
-  <form id="creditForm" class="space-y-4">
+<div class="bg-white rounded-3xl p-8 shadow-xl mb-8 border border-gray-100">
+  <h3 class="text-xl font-bold mb-6 flex items-center gap-2 text-purple-700">
+    <span class="text-2xl">➕</span> Nouvelle vente à crédit
+  </h3>
+
+  <form id="creditForm" class="space-y-5">
+    <!-- Client -->
     <div>
-      <label class="block text-sm font-bold mb-1">Client</label>
+      <label class="block text-sm font-semibold mb-1 text-gray-700">👤 Client</label>
       <input type="text" id="creditClient" placeholder="Nom du client"
-        class="w-full p-2 border rounded">
+        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-purple-500 transition">
     </div>
+
+    <!-- Téléphone -->
     <div>
-      <label class="block text-sm font-bold mb-1">Téléphone</label>
+      <label class="block text-sm font-semibold mb-1 text-gray-700">📞 Téléphone</label>
       <input type="tel" id="creditPhone" placeholder="Téléphone du client"
-        class="w-full p-2 border rounded">
+        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-purple-500 transition">
     </div>
+
+    <!-- Produit -->
     <div>
-      <label class="block text-sm font-bold mb-1">Produit</label>
-      <select id="creditProduct" class="w-full p-2 border rounded"></select>
+      <label class="block text-sm font-semibold mb-1 text-gray-700">📦 Produit</label>
+      <select id="creditProduct"
+        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-purple-500 transition bg-white">
+      </select>
     </div>
+
+    <!-- Quantité -->
     <div>
-      <label class="block text-sm font-bold mb-1">Quantité</label>
+      <label class="block text-sm font-semibold mb-1 text-gray-700">🔢 Quantité</label>
       <input type="number" id="creditQuantity" min="1" value="1"
-        class="w-full p-2 border rounded">
+        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-purple-500 transition">
     </div>
+
+    <!-- Échéance -->
     <div>
-      <label class="block text-sm font-bold mb-1">Échéance</label>
-      <input type="date" id="creditDueDate" class="w-full p-2 border rounded">
+      <label class="block text-sm font-semibold mb-1 text-gray-700">📅 Échéance</label>
+      <input type="date" id="creditDueDate"
+        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-purple-500 transition">
     </div>
+
+    <!-- Bouton -->
     <button type="submit"
-      class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
-      Enregistrer à crédit
+      class="w-full bg-gradient-to-r from-purple-600 to-purple-800 text-white py-3 rounded-xl font-semibold text-lg shadow-md hover:scale-[1.02] hover:shadow-lg transition">
+      💾 Enregistrer à crédit
     </button>
   </form>
 </div>
+
 
 
   <!-- Résumé crédits -->
