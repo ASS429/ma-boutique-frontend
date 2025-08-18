@@ -831,150 +831,13 @@ async function syncFromServer() {
     // --- Ventes ---
     let ventesAll = [];
     if (resSales.ok) {
-      ventesAll = await resSales.json();
-      appData.ventes = ventesAll;
+  ventesAll = await resSales.json();
+  appData.ventes = ventesAll;
 
-      // ✅ Séparer directement les ventes à crédit
-      appData.credits = ventesAll.filter(v => v.payment_method === "credit");
-    }
-
-    // --- Calcul répartition paiements ---
-    const paiementsMap = {};
-    ventesAll.forEach(v => {
-      const method = v.payment_method || 'inconnu';
-      const montant = parseFloat(v.total || (v.price || 0) * (v.quantity || 0)) || 0;
-      paiementsMap[method] = (paiementsMap[method] || 0) + montant;
-    });
-    appData.stats.paiements = paiementsMap;
-
-    // --- Stats ventes du jour ---
-    if (resStats.ok) {
-      const statsArray = await resStats.json();
-      const today = new Date().toISOString().split('T')[0];
-      const todayStat = statsArray.find(s => s.date.startsWith(today));
-
-      appData.stats.ventesJour = todayStat ? parseInt(todayStat.total_montant, 10) : 0;
-      appData.stats.chiffreAffaires = appData.stats.ventesJour;
-      appData.stats.historique = statsArray;
-    }
-
-    // --- Recalcul vendu + articles vendus ---
-    const today = new Date().toISOString().split('T')[0];
-    appData.produits.forEach(prod => { prod.vendu = 0; });
-    let totalQteToday = 0;
-
-    ventesAll.forEach(v => {
-      const prodId = parseInt(v.product_id);
-      const qte = v.quantity || 0;
-
-      const prod = appData.produits.find(p => p.id === prodId);
-      if (prod) prod.vendu += qte;
-
-      const venteDate = new Date(v.date || v.created_at || v.timestamp);
-      if (!isNaN(venteDate) && venteDate.toISOString().split('T')[0] === today) {
-        totalQteToday += qte;
-      }
-    });
-
-    appData.stats.articlesVendus = totalQteToday;
-
-    // --- Sauvegarde ---
-    saveAppDataLocal();
-    console.log('✅ Sync from server done');
-
-  } catch (err) {
-    console.warn('❌ Erreur lors de la synchronisation depuis le serveur', err);
-    console.warn('⚠️ Impossible de contacter le serveur API. Vérifiez la connexion ou la configuration CORS.');
-  }
-
-  if (syncBanner) syncBanner.style.display = 'none';
+  // ✅ filtre les crédits
+  appData.credits = ventesAll.filter(v => v.payment_method === "credit");
 }
-async function syncFromServer() {
-  const syncBanner = document.getElementById('syncBanner');
-  if (syncBanner) syncBanner.style.display = 'block';
 
-  if (!navigator.onLine) {
-    console.warn('Mode hors ligne : données locales utilisées.');
-    if (syncBanner) syncBanner.style.display = 'none';
-    return;
-  }
-
-  try {
-    // Récupération en parallèle avec authFetch
-    const [resCat, resProd, resStats, resSales] = await Promise.all([
-      authfetch(API_BASE + '/categories'),
-      authfetch(API_BASE + '/products'),
-      authfetch(API_BASE + '/stats/ventes-par-jour'),
-      authfetch(API_BASE + '/sales'),
-    ]);
-
-    // --- Catégories ---
-    if (resCat.ok) {
-      const cats = await resCat.json();
-      const defaultCategoryStyles = [
-        { emoji: '👕', couleur: 'category-habits' },
-        { emoji: '💄', couleur: 'category-cosmetiques' },
-        { emoji: '👠', couleur: 'category-chaussures' },
-        { emoji: '💍', couleur: 'category-accessoires' },
-        { emoji: '🧴', couleur: 'bg-blue-400' },
-        { emoji: '✨', couleur: 'bg-yellow-400' }
-      ];
-      appData.categories = cats.map((c, index) => {
-        const style = defaultCategoryStyles[index % defaultCategoryStyles.length];
-        return {
-          id: parseInt(c.id),
-          name: c.name,
-          emoji: c.emoji || style.emoji,
-          couleur: c.couleur || style.couleur
-        };
-      });
-    }
-
-    // --- Produits ---
-    if (resProd.ok) {
-      const prods = await resProd.json();
-      appData.produits = prods.map(p => ({
-        id: parseInt(p.id),
-        name: p.name,
-        category_id: parseInt(p.category_id),
-        scent: p.scent,
-        price: p.price,
-        stock: p.stock,
-        vendu: 0,
-        priceAchat: p.price_achat || 0,
-        description: p.description || ''
-      }));
-    }
-
-    // --- Ventes ---
-    let ventesAll = [];
-    if (resSales.ok) {
-      ventesAll = await resSales.json();
-      appData.ventes = ventesAll;
-    }
-
-    // --- Crédits (ventes à crédit) ---
-    appData.credits = ventesAll.filter(v => v.payment_method === 'credit');
-
-    // Calcul des totaux crédits
-    let totalDu = 0, totalRembourse = 0, totalImpayes = 0;
-    appData.credits.forEach(c => {
-      const montant = parseFloat(c.total) || 0;
-      if (c.paid) {
-        totalRembourse += montant;
-      } else {
-        totalDu += montant;
-        if (c.due_date && new Date(c.due_date) < new Date()) {
-          totalImpayes += montant;
-        }
-      }
-    });
-    appData.stats.credits = {
-      totalDu,
-      totalRembourse,
-      totalImpayes,
-      restant: totalDu - totalImpayes
-    };
 
     // --- Calcul répartition paiements ---
     const paiementsMap = {};
@@ -1026,6 +889,10 @@ async function syncFromServer() {
   }
 
   if (syncBanner) syncBanner.style.display = 'none';
+
+  afficherCredits();
+
+
 }
 
 
@@ -2352,6 +2219,9 @@ document.getElementById("formCredit").addEventListener("submit", async (e) => {
 let chartCredits; // global
 
 function afficherCredits() {
+
+  console.log("📊 Credits récupérés:", appData.credits);
+
   const stats = appData.stats.credits || { totalDu: 0, totalRembourse: 0, totalImpayes: 0, restant: 0 };
 
   // Mise à jour des compteurs
