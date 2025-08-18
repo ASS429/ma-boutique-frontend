@@ -376,6 +376,65 @@ function tryRenderSalesHistory(ventesFiltrees) {
     </div>
   </div>
 
+  <!-- Section Ventes à Crédit -->
+<div class="hidden slide-in p-6" id="creditsSection">
+  <h2 class="text-2xl font-bold mb-6 text-center">💳 Ventes à Crédit</h2>
+
+  <!-- Formulaire enregistrement crédit -->
+  <div class="bg-white rounded-3xl p-6 shadow-lg mb-6">
+    <h3 class="text-lg font-bold mb-4">➕ Nouvelle vente à crédit</h3>
+    <form id="creditForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Client</label>
+        <input type="text" id="creditClient" placeholder="Nom du client"
+          class="w-full p-2 border rounded">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Produit</label>
+        <select id="creditProduct" class="w-full p-2 border rounded"></select>
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Quantité</label>
+        <input type="number" id="creditQuantity" min="1" value="1"
+          class="w-full p-2 border rounded">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Échéance</label>
+        <input type="date" id="creditDueDate" class="w-full p-2 border rounded">
+      </div>
+      <button type="submit"
+        class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
+        Enregistrer à crédit
+      </button>
+    </form>
+  </div>
+
+  <!-- Liste crédits -->
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+    <h3 class="text-lg font-bold mb-4">📜 Historique des crédits</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full table-sm">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-2 border">Date</th>
+            <th class="p-2 border">Client</th>
+            <th class="p-2 border">Produit</th>
+            <th class="p-2 border">Qté</th>
+            <th class="p-2 border">Montant</th>
+            <th class="p-2 border">Échéance</th>
+            <th class="p-2 border">Statut</th>
+            <th class="p-2 border">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="creditsHistoryBody">
+          <!-- Rempli par JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
   <!-- Section Inventaire -->
   <div id="inventaireSection" class="hidden slide-in p-6">
   <h2 class="text-2xl font-bold mb-6 text-center">📋 Inventaire & Bénéfices</h2>
@@ -461,16 +520,28 @@ function tryRenderSalesHistory(ventesFiltrees) {
     </div>
 
     <!-- Modal Méthodes de Paiement -->
-    <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalPaiement">
-      <h3 class="text-2xl font-bold mb-6 text-center">💳 Choisir Paiement</h3>
-      <div class="space-y-4">
-        <button class="w-full bg-green-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('especes')"><span class="text-2xl">💵</span> Espèces</button>
-        <button class="w-full bg-blue-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('wave')"><span class="text-2xl">📱</span> Wave</button>
-        <button class="w-full bg-orange-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('orange')"><span class="text-2xl">📞</span> Orange Money</button>
-        <button class="w-full bg-gray-300 text-gray-700 p-4 rounded-2xl text-lg font-bold" onclick="hideModal()">Annuler</button>
-      </div>
-    </div>
+<div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalPaiement">
+  <h3 class="text-2xl font-bold mb-6 text-center">💳 Choisir Paiement</h3>
+  <div class="space-y-4">
+    <button class="w-full bg-green-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('especes')">
+      <span class="text-2xl">💵</span> Espèces
+    </button>
+    <button class="w-full bg-blue-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('wave')">
+      <span class="text-2xl">📱</span> Wave
+    </button>
+    <button class="w-full bg-orange-500 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('orange')">
+      <span class="text-2xl">📞</span> Orange Money
+    </button>
+
+    <!-- ✅ Nouveau bouton Crédit -->
+    <button class="w-full bg-purple-600 text-white p-4 rounded-2xl text-lg font-bold flex items-center justify-center gap-3" onclick="finaliserVente('credit')">
+      <span class="text-2xl">💳</span> Crédit
+    </button>
+
+    <button class="w-full bg-gray-300 text-gray-700 p-4 rounded-2xl text-lg font-bold" onclick="hideModal()">Annuler</button>
   </div>
+</div>
+
           <!-- Modal Méthodes de modification vente -->
   <div id="modalModifierVente" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
   <div class="bg-white rounded-xl p-6 w-96 shadow-lg">
@@ -833,13 +904,39 @@ async function finaliserVente(paymentMethod) {
     return;
   }
 
-  // Envoi des ventes une par une au backend
+  // Si c'est un paiement à crédit → demander infos client
+  let clientNom = null, clientTel = null, echeance = null;
+  if (paymentMethod === "credit") {
+    clientNom = prompt("Nom du client (obligatoire) :");
+    if (!clientNom) {
+      alert("❌ Nom requis pour une vente à crédit.");
+      return;
+    }
+
+    clientTel = prompt("Téléphone du client (facultatif mais conseillé) :");
+
+    echeance = prompt("Date d’échéance (AAAA-MM-JJ) :");
+    if (!echeance) {
+      alert("❌ Date d’échéance requise.");
+      return;
+    }
+  }
+
+  // Envoi des ventes une par une
   for (const item of appData.panier) {
     const vente = {
       product_id: item.id,
       quantity: item.quantite,
-      payment_method: paymentMethod
+      payment_method: paymentMethod,
     };
+
+    if (paymentMethod === "credit") {
+      vente.client_name = clientNom;
+      vente.client_phone = clientTel;
+      vente.due_date = echeance;
+      vente.paid = false; // non remboursé
+    }
+
     const created = await postSaleServer(vente);
     if (!created) {
       alert('❌ Erreur lors de l\'enregistrement de la vente.');
@@ -847,16 +944,12 @@ async function finaliserVente(paymentMethod) {
     }
   }
 
-  alert('✅ Vente enregistrée.');
+  alert(paymentMethod === "credit" ? '✅ Vente à crédit enregistrée.' : '✅ Vente enregistrée.');
 
-  // Vider le panier local
+  // Nettoyage + mise à jour UI
   appData.panier = [];
   saveAppDataLocal();
-
-  // Recharger toutes les données depuis le serveur (stats, ventes, produits, etc.)
   await syncFromServer();
-
-  // Rafraîchir toute l'UI avec les données à jour
   updateStats();
   afficherCategoriesVente();
   afficherProduits();
@@ -864,9 +957,9 @@ async function finaliserVente(paymentMethod) {
   afficherRapports();
   afficherInventaire();
   verifierStockFaible();
-
   hideModal();
 }
+
 
 
 // ---------- Produits / catégories gestion (avec POST) ----------
@@ -1765,6 +1858,117 @@ function modifierVente(id) {
         .catch(err => console.error("❌ Erreur SW:", err));
     });
   }
+
+  // --- Données locales pour les crédits ---
+if (!appData.credits) appData.credits = [];
+
+// Remplit la liste des produits dans le formulaire crédit
+function remplirProduitsCredit() {
+  const select = document.getElementById("creditProduct");
+  if (!select) return;
+  select.innerHTML = "";
+  (appData.produits || []).forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.name} (${p.price} F)`;
+    select.appendChild(opt);
+  });
+}
+
+// Soumission formulaire crédit
+document.getElementById("creditForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const client = document.getElementById("creditClient").value.trim();
+  const product_id = document.getElementById("creditProduct").value;
+  const quantity = parseInt(document.getElementById("creditQuantity").value, 10);
+  const due_date = document.getElementById("creditDueDate").value;
+
+  if (!client || !product_id || !quantity || quantity <= 0) {
+    alert("❌ Veuillez remplir tous les champs correctement.");
+    return;
+  }
+
+  // Trouver le produit
+  const produit = appData.produits.find(p => p.id == product_id);
+  if (!produit) {
+    alert("❌ Produit introuvable.");
+    return;
+  }
+
+  const montant = (produit.price || 0) * quantity;
+  const credit = {
+    id: Date.now(), // id local pour le moment
+    date: new Date().toISOString(),
+    client,
+    product_id,
+    product_name: produit.name,
+    quantity,
+    montant,
+    due_date,
+    status: "non payé"
+  };
+
+  // Sauvegarde locale (plus tard on connectera au backend)
+  appData.credits.push(credit);
+
+  // Rafraîchir le tableau
+  renderCreditsHistory();
+
+  // Réinitialiser le formulaire
+  document.getElementById("creditForm").reset();
+  alert("✅ Vente à crédit enregistrée !");
+});
+
+// Afficher l’historique des crédits
+function renderCreditsHistory() {
+  const tbody = document.getElementById("creditsHistoryBody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  if (!appData.credits.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500 py-4">Aucun crédit enregistré</td></tr>`;
+    return;
+  }
+
+  appData.credits.forEach(c => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2 border">${new Date(c.date).toLocaleString()}</td>
+      <td class="p-2 border">${c.client}</td>
+      <td class="p-2 border">${c.product_name}</td>
+      <td class="p-2 border">${c.quantity}</td>
+      <td class="p-2 border">${c.montant.toLocaleString()} F</td>
+      <td class="p-2 border">${c.due_date || "-"}</td>
+      <td class="p-2 border">${c.status}</td>
+      <td class="p-2 border text-center">
+        ${c.status === "non payé" ? 
+          `<button class="bg-green-500 text-white px-2 py-1 rounded text-xs" onclick="marquerCreditPaye(${c.id})">💰 Marquer payé</button>` 
+          : "✅ Payé"}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Marquer un crédit comme payé
+function marquerCreditPaye(id) {
+  const credit = appData.credits.find(c => c.id == id);
+  if (!credit) {
+    alert("❌ Crédit introuvable.");
+    return;
+  }
+  credit.status = "payé";
+  renderCreditsHistory();
+  alert("✅ Crédit marqué comme payé !");
+}
+
+// --- Initialisation ---
+document.addEventListener("DOMContentLoaded", () => {
+  remplirProduitsCredit();
+  renderCreditsHistory();
+});
+
 </script>
 
 </body>
