@@ -827,31 +827,32 @@ async function syncFromServer() {
       }));
     }
 
-    // --- Ventes ---
-    let ventesAll = [];
-    if (resSales.ok) {
-      ventesAll = await resSales.json();
+// --- Ventes ---
+let ventesAll = [];
+if (resSales.ok) {
+  ventesAll = await resSales.json();
 
-      // ⚡ Normalisation des ventes/crédits
-      appData.ventes = ventesAll.map(v => ({
-        ...v,
-        created_at: v.created_at ? new Date(v.created_at) : null,
-        due_date: v.due_date ? new Date(v.due_date) : null,
-        paid: v.paid === true || v.paid === "true" // si string "true" => bool
-      }));
+  // ⚡ Normalisation des ventes/crédits
+  appData.ventes = ventesAll.map(v => ({
+    ...v,
+    created_at: v.created_at ? new Date(v.created_at) : null,
+    due_date: v.due_date ? new Date(v.due_date) : null,
+    paid: v.paid === true || v.paid === "true" // si string "true" => bool
+  }));
 
-      // ✅ filtre les crédits
-      appData.credits = appData.ventes.filter(v => v.payment_method === "credit");
-    }
+  // ✅ filtre les crédits (tolère casse + accents + espaces)
+  appData.credits = appData.ventes.filter(v => {
+    const pm = (v.payment_method || "").toLowerCase().trim();
+    return pm === "credit" || pm === "crédit";
+  });
 
-    // --- Calcul répartition paiements ---
-    const paiementsMap = {};
-    ventesAll.forEach(v => {
-      const method = v.payment_method || 'inconnu';
-      const montant = parseFloat(v.total || (v.price || 0) * (v.quantity || 0)) || 0;
-      paiementsMap[method] = (paiementsMap[method] || 0) + montant;
-    });
-    appData.stats.paiements = paiementsMap;
+  // ✅ Debug complet
+  console.log("🛒 Toutes les ventes normalisées :", appData.ventes);
+  console.log("📦 Crédits filtrés :", appData.credits);
+  console.log("💳 Méthodes de paiement distinctes :", 
+    [...new Set(appData.ventes.map(v => (v.payment_method || '').trim()))]);
+}
+
 
     // --- Stats ventes du jour ---
     if (resStats.ok) {
@@ -1588,7 +1589,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   afficherInventaire();
   setupSearchInputs();
 
-  // Première synchro serveur
+  // ✅ Première synchro serveur
   await syncFromServer();
   updateStats();
   verifierStockFaible();
@@ -1597,6 +1598,9 @@ document.addEventListener('DOMContentLoaded', async function () {
   afficherCategories();
   afficherRapports();
   afficherInventaire();
+
+  // ✅ Vérifier crédits récupérés
+  console.log("📦 Crédits après sync :", appData.credits);
 
   // 🔄 Rafraîchissement auto toutes les 30 secondes
   setInterval(async () => {
@@ -1608,39 +1612,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     afficherCategories();
     afficherRapports();
     afficherInventaire();
+
+    // ✅ Vérification aussi lors du refresh auto
+    console.log("♻️ Crédits après refresh auto :", appData.credits);
   }, 30000);
 
   document.getElementById('periodeRapports').addEventListener('change', afficherRapports);
-
-  // 📅 Fonction pour définir la date par défaut (aujourd’hui + 30 jours) 
-  // et bloquer les dates passées
-  function setDefaultCreditDate() {
-    const dueInput = document.getElementById('creditDueDate');
-    if (dueInput) {
-      const today = new Date();
-
-      // Format pour "min" (aujourd’hui)
-      const todayStr = today.toISOString().split("T")[0];
-      dueInput.min = todayStr;
-
-      // Date par défaut = aujourd’hui + 30 jours
-      const defaultDate = new Date();
-      defaultDate.setDate(defaultDate.getDate() + 30);
-      const defaultStr = defaultDate.toISOString().split("T")[0];
-      dueInput.value = defaultStr;
-    }
-  }
-
-  // Mettre la date par défaut dès le chargement
-  setDefaultCreditDate();
-
-  // Remettre la date par défaut à chaque ouverture de la section crédits
-  const creditsBtn = document.querySelector("button[onclick=\"showSection('credits')\"]");
-  if (creditsBtn) {
-    creditsBtn.addEventListener("click", setDefaultCreditDate);
-  }
 });
-
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2224,40 +2202,38 @@ let chartCredits; // global
 function afficherCredits() {
   console.log("📊 Credits récupérés:", appData.credits);
 
-  // Calculer les stats à partir des crédits
   let totalDu = 0;
   let totalRembourse = 0;
-  let totalImpaye = 0;
+  let totalImpayes = 0;
 
   appData.credits.forEach(c => {
     const montant = parseFloat(c.total || 0);
+
     if (c.paid) {
       totalRembourse += montant;
     } else {
-      totalDu += montant;
-      // Impayé = échéance dépassée
-      if (c.due_date && new Date(c.due_date) < new Date()) {
-        totalImpaye += montant;
-      }
+      totalImpayes += montant;
     }
+
+    totalDu += montant;
   });
 
-  const restant = totalDu;
+  const restant = totalDu - totalRembourse;
 
-  // Mise à jour des compteurs
-  const elDu = document.getElementById("creditsTotalEncours");
-  if (elDu) elDu.textContent = totalDu.toLocaleString() + " F";
+  // --- Mise à jour des compteurs ---
+  const elEncours = document.getElementById("creditsTotalEncours");
+  if (elEncours) elEncours.textContent = totalDu.toLocaleString() + " F";
 
   const elR = document.getElementById("creditsTotalRembourses");
   if (elR) elR.textContent = totalRembourse.toLocaleString() + " F";
 
   const elI = document.getElementById("creditsTotalImpaye");
-  if (elI) elI.textContent = totalImpaye.toLocaleString() + " F";
+  if (elI) elI.textContent = totalImpayes.toLocaleString() + " F";
 
-  const elRestant = document.getElementById("creditsMontant");
-  if (elRestant) elRestant.textContent = "Montant total dû : " + restant.toLocaleString() + " F";
+  const elMontant = document.getElementById("creditsMontant");
+  if (elMontant) elMontant.textContent = "Montant total dû : " + totalDu.toLocaleString() + " F";
 
-  // Remplir le tableau historique
+  // --- Remplir le tableau historique ---
   const body = document.getElementById("creditsHistoryBody");
   if (body) {
     body.innerHTML = "";
@@ -2281,16 +2257,43 @@ function afficherCredits() {
     });
   }
 
-  // Mettre à jour le graphique crédits
-  if (window.creditChart) {
-    creditChart.data.datasets[0].data = [
-      totalDu,
-      totalRembourse,
-      totalImpaye
-    ];
-    creditChart.update();
+  // --- Graphique Chart.js ---
+  const ctx = document.getElementById("chartCredits");
+  if (ctx) {
+    if (!window.creditChart) {
+      window.creditChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ["Total dû", "Remboursé", "Impayés"],
+          datasets: [{
+            label: "Montants (F)",
+            data: [totalDu, totalRembourse, totalImpayes],
+            backgroundColor: ["#7e3af2", "#10b981", "#ef4444"]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: "Résumé des crédits" }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    } else {
+      // ✅ Mise à jour si déjà créé
+      window.creditChart.data.datasets[0].data = [
+        totalDu,
+        totalRembourse,
+        totalImpayes
+      ];
+      window.creditChart.update();
+    }
   }
 }
+
 
 
 async function finaliserVenteCredit() {
@@ -2355,45 +2358,6 @@ async function finaliserVenteCredit() {
   hideModalCredit();
 }
 
-
-function afficherCredits() {
-  const tbody = document.getElementById("creditsListe");
-  if (!tbody) return;
-
-  tbody.innerHTML = "";
-
-  const credits = (appData.ventes || []).filter(v => v.payment_method === "credit");
-
-  if (!credits.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">Aucun crédit enregistré</td></tr>`;
-    return;
-  }
-
-  credits.forEach(v => {
-    const prod = appData.produits.find(p => p.id === parseInt(v.product_id));
-    const montant = v.total || ((v.price || 0) * (v.quantity || 0));
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="p-2 border">${v.client_name || "-"}</td>
-      <td class="p-2 border">${v.client_phone || "-"}</td>
-      <td class="p-2 border">${prod ? prod.name : "Inconnu"}</td>
-      <td class="p-2 border">${montant.toLocaleString()} F</td>
-      <td class="p-2 border">${v.due_date ? new Date(v.due_date).toLocaleDateString() : "-"}</td>
-      <td class="p-2 border font-bold ${v.paid ? "text-green-600" : "text-red-600"}">
-        ${v.paid ? "Payé" : "Non payé"}
-      </td>
-      <td class="p-2 border text-center">
-        ${v.paid ? 
-          `<button class="bg-gray-400 text-white px-2 py-1 rounded text-xs" disabled>✔️ Réglé</button>` 
-          : 
-          `<button class="bg-green-500 text-white px-2 py-1 rounded text-xs" onclick="marquerCreditPaye(${v.id})">💰 Marquer payé</button>`
-        }
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
 
 // 👉 Ouvrir le modal pour un crédit donné
 async function marquerCreditPaye(id) {
