@@ -1706,9 +1706,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Register service worker if supported
-if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('./pwa/sw.js').then(function(reg){ console.log('SW registered', reg); }).catch(function(err){ console.warn('SW failed', err); }); }); }
-
 function ouvrirModalEdit(produit) {
   // Remplir le formulaire
   document.getElementById('editNomProduit').value = produit.name;
