@@ -2636,19 +2636,20 @@ let deferredPrompt;
 const installBtn = document.getElementById('installBtn');
 
 window.addEventListener('beforeinstallprompt', (e) => {
+  console.log("📲 Événement beforeinstallprompt déclenché !");
   e.preventDefault();
   deferredPrompt = e;
   installBtn.classList.remove('hidden'); // Afficher le bouton
 });
 
 installBtn?.addEventListener('click', async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`Install outcome: ${outcome}`);
-    deferredPrompt = null;
-    installBtn.classList.add('hidden'); // Cacher après installation
-  }
+  if (!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`✅ Résultat installation: ${outcome}`);
+  deferredPrompt = null;
+  installBtn.classList.add('hidden'); // Cacher après installation
 });
 
 </script>
