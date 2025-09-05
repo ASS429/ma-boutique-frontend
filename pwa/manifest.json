@@ -1,7 +1,7 @@
 {
   "name": "Ma Boutique",
   "short_name": "Boutique",
-  "start_url": "/?source=pwa",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#6D28D9",
