@@ -2640,7 +2640,10 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 installBtn?.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
+  if (!deferredPrompt) {
+    console.log("⚠️ Aucun prompt disponible (app peut déjà être installée)");
+    return;
+  }
 
   deferredPrompt.prompt();
   const { outcome } = await deferredPrompt.userChoice;
@@ -2648,6 +2651,10 @@ installBtn?.addEventListener('click', async () => {
   deferredPrompt = null;
   installBtn.classList.add('hidden'); // Cacher après installation
 });
+
+// Juste pour debug
+console.log("🔎 Script bouton d’installation chargé !");
+
 
 </script>
 
