@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -48,39 +49,36 @@
     });
 
     document.getElementById('registerBtn')?.addEventListener('click', async () => {
-      const username = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
+  const username = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const company_name = document.getElementById('companyName').value.trim();
 
-      if (!username || !password) {
-        alert('Veuillez remplir tous les champs.');
-        return;
-      }
+  if (!username || !password || !company_name) {
+    alert('Veuillez remplir tous les champs.');
+    return;
+  }
 
-      try {
-        const res = await fetch(API_BASE + '/auth/register', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ username, password })
-        });
-
-        const rawText = await res.text();
-        if (rawText.trim().startsWith("<")) {
-          alert("❌ Le serveur a renvoyé du HTML au lieu d'un JSON (voir console).");
-          return;
-        }
-        const data = JSON.parse(rawText);
-
-        if (res.ok) {
-          alert('✅ Compte créé avec succès ! Connectez-vous.');
-          window.location.href = 'login.html';
-        } else {
-          alert('❌ Erreur : ' + (data.error || "Problème inconnu"));
-        }
-      } catch (err) {
-        console.error("Erreur lors de la requête:", err);
-        alert("❌ Erreur de connexion au serveur.");
-      }
+  try {
+    const res = await fetch(API_BASE + '/auth/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username, password, company_name })
     });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert('✅ Compte créé avec succès ! Connectez-vous.');
+      window.location.href = 'login.html';
+    } else {
+      alert('❌ Erreur : ' + (data.error || "Problème inconnu"));
+    }
+  } catch (err) {
+    console.error("Erreur lors de la requête:", err);
+    alert("❌ Erreur de connexion au serveur.");
+  }
+});
+
   })();
   </script>
 </body>
