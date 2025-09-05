@@ -1479,11 +1479,13 @@ function afficherRapports() {
 
   tryRenderSalesHistory(ventesFiltrees);
 
-  afficherStatsCredits();
-
+  // --- Sécuriser l'affichage crédits ---
+  if (appData?.credits?.length) {
+    afficherStatsCredits();
+  } else {
+    console.warn("⏳ Données crédits pas encore prêtes ou vides");
+  }
 }
-
-
 
 function updateCharts(ventesFiltrees) {
   var ventes = ventesFiltrees || appData.ventes || [];
@@ -2560,9 +2562,11 @@ window.confirmerRemboursement = confirmerRemboursement; // ✅ rendre global
 
 function afficherStatsCredits() {
   const container = document.getElementById("creditsListe");
+  if (!container) return;
+
   container.innerHTML = "";
 
-  const credits = appData.credits || [];
+  const credits = appData?.credits || [];
 
   if (!credits.length) {
     container.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">Aucun crédit enregistré</td></tr>`;
@@ -2570,7 +2574,7 @@ function afficherStatsCredits() {
   }
 
   credits.forEach(c => {
-    const produit = appData.produits.find(p => p.id === parseInt(c.product_id));
+    const produit = appData.produits?.find(p => p.id === parseInt(c.product_id));
     const produitName = produit ? produit.name : "Inconnu";
 
     const statut = c.paid ? 
