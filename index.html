@@ -179,19 +179,16 @@ function tryRenderSalesHistory(ventesFiltrees) {
     <div class="flex items-center justify-between">
       <button class="text-3xl" id="backBtn" onclick="showSection('menu')" style="display: none;">←</button>
       <div class="text-center flex-1">
-        <h1 id="appHeader" class="text-2xl font-bold">🏪 Ma Boutique</h1>
+        <h1 class="text-2xl font-bold">🏪 Ma Boutique</h1>
         <div class="text-sm opacity-90">Ventes aujourd'hui: <span class="pulse" id="ventesToday">0</span></div>
       </div>
-      <div class="flex items-center gap-3">
-        <div class="text-3xl pulse">💰</div>
-      </div>  
+      <div class="text-3xl pulse">💰</div>
     </div>
   </div>
 
   <!-- Menu Principal -->
   <div class="p-6 space-y-6" id="menuSection">
-    <button onclick="logout()" class="bg-red-600 px-3 py-1 rounded text-white text-sm">🔓 Déconnexion</button>
-    <button id="installBtn" class="hidden bg-green-600 px-3 py-1 rounded text-white text-sm"> 📲 Installer</button>
+
     <!-- Résumé du jour -->
     <div class="bg-white rounded-3xl p-6 shadow-lg">
       <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
@@ -912,21 +909,6 @@ if (resSales.ok) {
   if (syncBanner) syncBanner.style.display = 'none';
 
   afficherCredits();
-
-  await updateHeader();
-
-}
-
-async function updateHeader() {
-  try {
-    const res = await authfetch(API_BASE + '/auth/me');
-    if (res.ok) {
-      const user = await res.json();
-      document.getElementById("appHeader").textContent = "🏪 " + (user.company_name || "Ma Boutique");
-    }
-  } catch (err) {
-    console.warn("Impossible de récupérer le nom de l’entreprise :", err);
-  }
 }
 
 
@@ -1388,17 +1370,8 @@ async function supprimerCategorie(id) {
   }
 }
 
+// ---------- Rapports & charts ----------
 function afficherRapports() {
-  // Vérification si les données sont prêtes
-  if (!appData.ventes?.length || !appData.produits?.length) {
-    console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
-    document.getElementById('rapportLoading').style.display = 'block'; // Affiche un message d'attente sur l'UI
-    return; // Retourner avant d'essayer d'afficher les rapports
-  }
-
-  // Si les données sont prêtes, masquer le message de chargement
-  document.getElementById('rapportLoading').style.display = 'none'; // Masquer le message d'attente
-
   const periode = document.getElementById('periodeRapports')?.value || 'tout';
   const ventesFiltrees = filtrerVentesParPeriode(appData.ventes || [], periode);
 
@@ -1480,16 +1453,19 @@ function afficherRapports() {
   // --- Graphiques filtrés ---
   updateCharts(ventesFiltrees);
 
-  // --- Historique des ventes --- 
+  // ✅ On affiche l'historique seulement si les données sont prêtes
+  if (!appData.ventes?.length || !appData.produits?.length) {
+    console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
+    return;
+  }
+
   tryRenderSalesHistory(ventesFiltrees);
 
-  // --- Sécuriser l'affichage crédits ---
-  if (appData?.credits?.length) {
-    afficherStatsCredits();
-  } else {
-    console.warn("⏳ Données crédits pas encore prêtes ou vides");
-  }
+  afficherStatsCredits();
+
 }
+
+
 
 function updateCharts(ventesFiltrees) {
   var ventes = ventesFiltrees || appData.ventes || [];
@@ -1615,7 +1591,6 @@ function setupSearchInputs(){ var inv = document.getElementById('searchInventair
 
 // ---------- Init ----------
 document.addEventListener('DOMContentLoaded', async function () {
-  // Chargement et initialisation des données
   loadAppDataLocal();
   updateStats();
   verifierStockFaible();
@@ -1625,8 +1600,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   afficherRapports();
   afficherInventaire();
   setupSearchInputs();
-  
-  // Premier synchronisation avec le serveur
+
+  // ✅ Première synchro serveur
   await syncFromServer();
   updateStats();
   verifierStockFaible();
@@ -1636,10 +1611,10 @@ document.addEventListener('DOMContentLoaded', async function () {
   afficherRapports();
   afficherInventaire();
 
-  // Vérification des crédits après la synchro
+  // ✅ Vérifier crédits récupérés
   console.log("📦 Crédits après sync :", appData.credits);
 
-  // Rafraîchissement automatique toutes les 30 secondes
+  // 🔄 Rafraîchissement auto toutes les 30 secondes
   setInterval(async () => {
     await syncFromServer();
     updateStats();
@@ -1650,21 +1625,21 @@ document.addEventListener('DOMContentLoaded', async function () {
     afficherRapports();
     afficherInventaire();
 
+    // ✅ Vérification aussi lors du refresh auto
     console.log("♻️ Crédits après refresh auto :", appData.credits);
   }, 30000);
 
-  // Ajout de l'écouteur d'événement pour la sélection de période des rapports
-  const periodeRapports = document.getElementById('periodeRapports');
-  if (periodeRapports) {
-    periodeRapports.addEventListener('change', afficherRapports);
-  }
+  document.getElementById('periodeRapports').addEventListener('change', afficherRapports);
+});
 
-  // Gestion du formulaire de vente à crédit
+
+document.addEventListener('DOMContentLoaded', () => {
   const creditForm = document.getElementById('creditForm');
   if (creditForm) {
     creditForm.addEventListener('submit', async function(e) {
-      e.preventDefault(); // Empêche le rechargement de la page
+      e.preventDefault(); // 🚫 empêche le rechargement
 
+      // Récupérer les valeurs
       const clientName = document.getElementById('creditClient')?.value.trim();
       const clientPhone = document.getElementById('creditPhone')?.value.trim();
       const productId = parseInt(document.getElementById('creditProduct')?.value);
@@ -1700,7 +1675,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       alert("✅ Vente à crédit enregistrée !");
       
-      // Mise à jour des données après création de la vente à crédit
+      // Mise à jour des données
       await syncFromServer();
       afficherCredits();
       afficherRapports();
@@ -1710,21 +1685,11 @@ document.addEventListener('DOMContentLoaded', async function () {
       creditForm.reset();
     });
   }
-
-  // Gestion du message d'expiration de session (si nécessaire)
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('expired') === '1') {
-    const msg = document.createElement('div');
-    msg.className = "bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4";
-    msg.innerHTML = "⚠️ Votre session a expiré. Veuillez vous reconnecter.";
-    document.querySelector('.bg-white').prepend(msg);
-  }
-
-  // Initialisation de la page pour les crédits
-  remplirProduitsCredit();
-  renderCreditsHistory();
 });
 
+
+// Register service worker if supported
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('./pwa/sw.js').then(function(reg){ console.log('SW registered', reg); }).catch(function(err){ console.warn('SW failed', err); }); }); }
 
 function ouvrirModalEdit(produit) {
   // Remplir le formulaire
@@ -1981,12 +1946,14 @@ function renderSalesHistory(ventes) {
 
   ventes.forEach(v => {
     // Trouver le produit correspondant
-    const prod = appData.produits.find(p => Number(p.id) === Number(v.product_id));
+    const prod = (appData.produits || []).find(
+      p => Number(p.id) === Number(v.product_id)
+    );
 
     // Calcul du montant
     const montant = Number(v.total) || (Number(v.price) * Number(v.quantity));
 
-    // Créer la ligne de la vente
+    // Créer ligne
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
@@ -2054,6 +2021,17 @@ function modifierVente(id) {
   ouvrirModal(vente);
 }
 
+// Vérifie si l’URL contient ?expired=1
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('expired') === '1') {
+      const msg = document.createElement('div');
+      msg.className = "bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4";
+      msg.innerHTML = "⚠️ Votre session a expiré. Veuillez vous reconnecter.";
+      document.querySelector('.bg-white').prepend(msg);
+    }
+  });
+
 </script>
 
 <template id="offline-page">
@@ -2086,7 +2064,6 @@ function modifierVente(id) {
   }
 
   // --- Données locales pour les crédits ---
-if (!appData || typeof appData !== "object") appData = {};
 if (!appData.credits) appData.credits = [];
 
 // Remplit la liste des produits dans le formulaire crédit
@@ -2193,6 +2170,11 @@ function marquerCreditPaye(id) {
   alert("✅ Crédit marqué comme payé !");
 }
 
+// --- Initialisation ---
+document.addEventListener("DOMContentLoaded", () => {
+  remplirProduitsCredit();
+  renderCreditsHistory();
+});
 
 function showModalCredit() {
   const modal = document.getElementById("modalCredit");
@@ -2563,11 +2545,9 @@ window.confirmerRemboursement = confirmerRemboursement; // ✅ rendre global
 
 function afficherStatsCredits() {
   const container = document.getElementById("creditsListe");
-  if (!container) return;
-
   container.innerHTML = "";
 
-  const credits = appData?.credits || [];
+  const credits = appData.credits || [];
 
   if (!credits.length) {
     container.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">Aucun crédit enregistré</td></tr>`;
@@ -2575,7 +2555,7 @@ function afficherStatsCredits() {
   }
 
   credits.forEach(c => {
-    const produit = appData.produits?.find(p => p.id === parseInt(c.product_id));
+    const produit = appData.produits.find(p => p.id === parseInt(c.product_id));
     const produitName = produit ? produit.name : "Inconnu";
 
     const statut = c.paid ? 
@@ -2628,38 +2608,6 @@ function remplirSelectProduitsCredit() {
     select.appendChild(opt);
   });
 }
-
-function logout() {
-  localStorage.removeItem('authToken');
-  window.location.replace('login.html');
-}
-
-let deferredPrompt;
-const installBtn = document.getElementById('installBtn');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  console.log("📲 Événement beforeinstallprompt déclenché !");
-  e.preventDefault();
-  deferredPrompt = e;
-  installBtn.classList.remove('hidden'); // Afficher le bouton
-});
-
-installBtn?.addEventListener('click', async () => {
-  if (!deferredPrompt) {
-    console.log("⚠️ Aucun prompt disponible (app peut déjà être installée)");
-    return;
-  }
-
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  console.log(`✅ Résultat installation: ${outcome}`);
-  deferredPrompt = null;
-  installBtn.classList.add('hidden'); // Cacher après installation
-});
-
-// Juste pour debug
-console.log("🔎 Script bouton d’installation chargé !");
-
 
 </script>
 
