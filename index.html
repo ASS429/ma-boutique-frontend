@@ -1388,8 +1388,17 @@ async function supprimerCategorie(id) {
   }
 }
 
-// ---------- Rapports & charts ----------
 function afficherRapports() {
+  // Vérification si les données sont prêtes
+  if (!appData.ventes?.length || !appData.produits?.length) {
+    console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
+    document.getElementById('rapportLoading').style.display = 'block'; // Affiche un message d'attente sur l'UI
+    return; // Retourner avant d'essayer d'afficher les rapports
+  }
+
+  // Si les données sont prêtes, masquer le message de chargement
+  document.getElementById('rapportLoading').style.display = 'none'; // Masquer le message d'attente
+
   const periode = document.getElementById('periodeRapports')?.value || 'tout';
   const ventesFiltrees = filtrerVentesParPeriode(appData.ventes || [], periode);
 
@@ -1471,12 +1480,7 @@ function afficherRapports() {
   // --- Graphiques filtrés ---
   updateCharts(ventesFiltrees);
 
-  // ✅ On affiche l'historique seulement si les données sont prêtes
-  if (!appData.ventes?.length || !appData.produits?.length) {
-    console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
-    return;
-  }
-
+  // --- Historique des ventes --- 
   tryRenderSalesHistory(ventesFiltrees);
 
   // --- Sécuriser l'affichage crédits ---
@@ -1611,6 +1615,7 @@ function setupSearchInputs(){ var inv = document.getElementById('searchInventair
 
 // ---------- Init ----------
 document.addEventListener('DOMContentLoaded', async function () {
+  // Chargement et initialisation des données
   loadAppDataLocal();
   updateStats();
   verifierStockFaible();
@@ -1620,8 +1625,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   afficherRapports();
   afficherInventaire();
   setupSearchInputs();
-
-  // ✅ Première synchro serveur
+  
+  // Premier synchronisation avec le serveur
   await syncFromServer();
   updateStats();
   verifierStockFaible();
@@ -1631,10 +1636,10 @@ document.addEventListener('DOMContentLoaded', async function () {
   afficherRapports();
   afficherInventaire();
 
-  // ✅ Vérifier crédits récupérés
+  // Vérification des crédits après la synchro
   console.log("📦 Crédits après sync :", appData.credits);
 
-  // 🔄 Rafraîchissement auto toutes les 30 secondes
+  // Rafraîchissement automatique toutes les 30 secondes
   setInterval(async () => {
     await syncFromServer();
     updateStats();
@@ -1645,21 +1650,21 @@ document.addEventListener('DOMContentLoaded', async function () {
     afficherRapports();
     afficherInventaire();
 
-    // ✅ Vérification aussi lors du refresh auto
     console.log("♻️ Crédits après refresh auto :", appData.credits);
   }, 30000);
 
-  document.getElementById('periodeRapports').addEventListener('change', afficherRapports);
-});
+  // Ajout de l'écouteur d'événement pour la sélection de période des rapports
+  const periodeRapports = document.getElementById('periodeRapports');
+  if (periodeRapports) {
+    periodeRapports.addEventListener('change', afficherRapports);
+  }
 
-
-document.addEventListener('DOMContentLoaded', () => {
+  // Gestion du formulaire de vente à crédit
   const creditForm = document.getElementById('creditForm');
   if (creditForm) {
     creditForm.addEventListener('submit', async function(e) {
-      e.preventDefault(); // 🚫 empêche le rechargement
+      e.preventDefault(); // Empêche le rechargement de la page
 
-      // Récupérer les valeurs
       const clientName = document.getElementById('creditClient')?.value.trim();
       const clientPhone = document.getElementById('creditPhone')?.value.trim();
       const productId = parseInt(document.getElementById('creditProduct')?.value);
@@ -1695,7 +1700,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       alert("✅ Vente à crédit enregistrée !");
       
-      // Mise à jour des données
+      // Mise à jour des données après création de la vente à crédit
       await syncFromServer();
       afficherCredits();
       afficherRapports();
@@ -1705,6 +1710,19 @@ document.addEventListener('DOMContentLoaded', () => {
       creditForm.reset();
     });
   }
+
+  // Gestion du message d'expiration de session (si nécessaire)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('expired') === '1') {
+    const msg = document.createElement('div');
+    msg.className = "bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4";
+    msg.innerHTML = "⚠️ Votre session a expiré. Veuillez vous reconnecter.";
+    document.querySelector('.bg-white').prepend(msg);
+  }
+
+  // Initialisation de la page pour les crédits
+  remplirProduitsCredit();
+  renderCreditsHistory();
 });
 
 
@@ -1963,14 +1981,12 @@ function renderSalesHistory(ventes) {
 
   ventes.forEach(v => {
     // Trouver le produit correspondant
-    const prod = (appData.produits || []).find(
-      p => Number(p.id) === Number(v.product_id)
-    );
+    const prod = appData.produits.find(p => Number(p.id) === Number(v.product_id));
 
     // Calcul du montant
     const montant = Number(v.total) || (Number(v.price) * Number(v.quantity));
 
-    // Créer ligne
+    // Créer la ligne de la vente
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="p-2 border">${new Date(v.date || v.created_at).toLocaleString()}</td>
@@ -2037,17 +2053,6 @@ function modifierVente(id) {
   }
   ouvrirModal(vente);
 }
-
-// Vérifie si l’URL contient ?expired=1
-  document.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('expired') === '1') {
-      const msg = document.createElement('div');
-      msg.className = "bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4";
-      msg.innerHTML = "⚠️ Votre session a expiré. Veuillez vous reconnecter.";
-      document.querySelector('.bg-white').prepend(msg);
-    }
-  });
 
 </script>
 
@@ -2188,11 +2193,6 @@ function marquerCreditPaye(id) {
   alert("✅ Crédit marqué comme payé !");
 }
 
-// --- Initialisation ---
-document.addEventListener("DOMContentLoaded", () => {
-  remplirProduitsCredit();
-  renderCreditsHistory();
-});
 
 function showModalCredit() {
   const modal = document.getElementById("modalCredit");
