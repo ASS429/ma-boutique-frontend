@@ -1008,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   afficherRapports();
   afficherInventaire();
   setupSearchInputs();
-  
+
   // Premier synchronisation avec le serveur
   await syncFromServer();
   updateStats();
@@ -1040,6 +1040,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   const periodeRapports = document.getElementById('periodeRapports');
   if (periodeRapports) {
     periodeRapports.addEventListener('change', afficherRapports);
+  } else {
+    console.warn("L'élément #periodeRapports n'a pas été trouvé.");
   }
 
   // Gestion du formulaire de vente à crédit
@@ -1092,6 +1094,8 @@ document.addEventListener('DOMContentLoaded', async function () {
       // Reset du formulaire
       creditForm.reset();
     });
+  } else {
+    console.warn("L'élément #creditForm n'a pas été trouvé.");
   }
 
   // Gestion du message d'expiration de session (si nécessaire)
@@ -1100,13 +1104,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     const msg = document.createElement('div');
     msg.className = "bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4";
     msg.innerHTML = "⚠️ Votre session a expiré. Veuillez vous reconnecter.";
-    document.querySelector('.bg-white').prepend(msg);
+    
+    const bgWhiteElement = document.querySelector('.bg-white');
+    if (bgWhiteElement) {
+      bgWhiteElement.prepend(msg);
+    } else {
+      console.warn("L'élément .bg-white n'a pas été trouvé.");
+    }
   }
 
   // Initialisation de la page pour les crédits
   remplirProduitsCredit();
   renderCreditsHistory();
 });
+
 
 // ---------- Navigation & UI helpers (structure kept) ----------
 let currentSection = 'menu';
