@@ -1513,12 +1513,23 @@ function afficherRapports() {
   // Vérification si les données sont prêtes
   if (!appData.ventes?.length || !appData.produits?.length) {
     console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
-    document.getElementById('rapportLoading').style.display = 'block'; // Affiche un message d'attente sur l'UI
+    
+    const rapportLoading = document.getElementById('rapportLoading');
+    if (rapportLoading) {
+      rapportLoading.style.display = 'block'; // Affiche un message d'attente sur l'UI
+    } else {
+      console.warn("L'élément #rapportLoading n'a pas été trouvé.");
+    }
     return; // Retourner avant d'essayer d'afficher les rapports
   }
 
   // Si les données sont prêtes, masquer le message de chargement
-  document.getElementById('rapportLoading').style.display = 'none'; // Masquer le message d'attente
+  const rapportLoading = document.getElementById('rapportLoading');
+  if (rapportLoading) {
+    rapportLoading.style.display = 'none'; // Masquer le message d'attente
+  } else {
+    console.warn("L'élément #rapportLoading n'a pas été trouvé.");
+  }
 
   const periode = document.getElementById('periodeRapports')?.value || 'tout';
   const ventesFiltrees = filtrerVentesParPeriode(appData.ventes || [], periode);
@@ -1604,13 +1615,14 @@ function afficherRapports() {
   // --- Historique des ventes --- 
   tryRenderSalesHistory(ventesFiltrees);
 
-  // --- Sécuriser l'affichage crédits ---
+  // --- Sécuriser l'affichage crédits --- 
   if (appData?.credits?.length) {
     afficherStatsCredits();
   } else {
     console.warn("⏳ Données crédits pas encore prêtes ou vides");
   }
 }
+
 
 function updateCharts(ventesFiltrees) {
   var ventes = ventesFiltrees || appData.ventes || [];
