@@ -1045,33 +1045,39 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // Gestion du bouton "Enregistrer à Crédit" dans le modal
-  const enregistrerCreditBtn = document.querySelector('#modalCredit button.bg-purple-600');
-  if (enregistrerCreditBtn) {
-    enregistrerCreditBtn.addEventListener('click', async function () {
-      const clientName = document.getElementById('creditClientName')?.value.trim();
-      const clientPhone = document.getElementById('creditClientPhone')?.value.trim();
-      const dueDate = document.getElementById('creditDueDate')?.value;
+  const enregistrerCreditBtnObserver = new MutationObserver(() => {
+    const enregistrerCreditBtn = document.querySelector('#modalCredit button.bg-purple-600');
+    if (enregistrerCreditBtn) {
+      enregistrerCreditBtn.addEventListener('click', async function () {
+        const clientName = document.getElementById('creditClientName')?.value.trim();
+        const clientPhone = document.getElementById('creditClientPhone')?.value.trim();
+        const dueDate = document.getElementById('creditDueDate')?.value;
 
-      if (!clientName || !clientPhone || !dueDate) {
-        alert("⚠️ Merci de remplir toutes les informations du crédit.");
-        return;
-      }
+        if (!clientName || !clientPhone || !dueDate) {
+          alert("⚠️ Merci de remplir toutes les informations du crédit.");
+          return;
+        }
 
-      const creditData = {
-        client_name: clientName,
-        client_phone: clientPhone,
-        due_date: dueDate,
-      };
+        const creditData = {
+          client_name: clientName,
+          client_phone: clientPhone,
+          due_date: dueDate,
+        };
 
-      // Appeler la fonction pour finaliser la vente à crédit
-      await finaliserVente("credit", creditData);
+        // Finaliser la vente à crédit
+        await finaliserVente("credit", creditData);
 
-      // Fermer le modal après l'enregistrement
-      hideModalCredit(); // Assurez-vous que cette fonction cache bien votre modal
-    });
-  } else {
-    console.warn("Le bouton 'Enregistrer à Crédit' n'a pas été trouvé.");
-  }
+        // Fermer le modal après l'enregistrement
+        hideModalCredit(); // Assurez-vous que cette fonction cache bien votre modal
+      });
+
+      // Arrêter l'observation une fois l'événement ajouté
+      enregistrerCreditBtnObserver.disconnect();
+    }
+  });
+
+  // Démarrer l'observation sur le body pour détecter l'ajout du bouton
+  enregistrerCreditBtnObserver.observe(document.body, { childList: true, subtree: true });
 
   // Gestion du message d'expiration de session (si nécessaire)
   const params = new URLSearchParams(window.location.search);
@@ -1600,7 +1606,6 @@ function afficherRapports() {
     console.warn("⏳ Données crédits pas encore prêtes ou vides");
   }
 }
-
 
 
 function updateCharts(ventesFiltrees) {
