@@ -1045,61 +1045,32 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // Gestion du formulaire de vente à crédit
-  const creditFormObserver = new MutationObserver(() => {
-    const creditForm = document.getElementById('formCredit');
-    if (creditForm) {
-      creditForm.addEventListener('submit', async function(e) {
-        e.preventDefault(); // Empêche le rechargement de la page
+  const enregistrerCreditBtn = document.querySelector('#modalCredit button.bg-purple-600');
+  if (enregistrerCreditBtn) {
+    enregistrerCreditBtn.addEventListener('click', async function () {
+      const clientName = document.getElementById('creditClientName')?.value.trim();
+      const clientPhone = document.getElementById('creditClientPhone')?.value.trim();
+      const dueDate = document.getElementById('creditDueDate')?.value;
 
-        const clientName = document.getElementById('creditClient')?.value.trim();
-        const clientPhone = document.getElementById('creditPhone')?.value.trim();
-        const productId = parseInt(document.getElementById('creditProduct')?.value);
-        const quantity = parseInt(document.getElementById('creditQuantity')?.value) || 1;
-        const dueDate = document.getElementById('creditDueDate')?.value;
+      if (!clientName || !clientPhone || !dueDate) {
+        alert("⚠️ Merci de remplir toutes les informations du crédit.");
+        return;
+      }
 
-        if (!clientName || !clientPhone || !productId || !dueDate) {
-          alert("⚠️ Merci de remplir toutes les informations du crédit.");
-          return;
-        }
+      const creditData = {
+        client_name: clientName,
+        client_phone: clientPhone,
+        due_date: dueDate,
+      };
 
-        const produit = appData.produits.find(p => p.id === productId);
-        if (!produit) {
-          alert("❌ Produit introuvable.");
-          return;
-        }
+      await finaliserVente("credit", creditData); // Remplacez cette fonction par la vôtre
 
-        const venteCredit = {
-          product_id: productId,
-          quantity: quantity,
-          payment_method: "credit",
-          client_name: clientName,
-          client_phone: clientPhone,
-          due_date: dueDate,
-          paid: false
-        };
-
-        const created = await postSaleServer(venteCredit);
-        if (!created) {
-          alert("❌ Erreur lors de l'enregistrement de la vente à crédit.");
-          return;
-        }
-
-        alert("✅ Vente à crédit enregistrée !");
-        
-        // Mise à jour des données après création de la vente à crédit
-        await syncFromServer();
-        afficherCredits();
-        afficherRapports();
-        afficherInventaire();
-
-        // Reset du formulaire
-        creditForm.reset();
-      });
-      creditFormObserver.disconnect(); // Arrêter l'observation une fois que l'élément est trouvé et l'événement attaché
-    }
-  });
-
-  creditFormObserver.observe(document.body, { childList: true, subtree: true });
+      // Vous pouvez fermer le modal ici si nécessaire
+      hideModalCredit(); // Définir cette fonction pour masquer le modal si nécessaire
+    });
+  } else {
+    console.warn("Le bouton 'Enregistrer à Crédit' n'a pas été trouvé.");
+  }
 
   // Gestion du message d'expiration de session (si nécessaire)
   const params = new URLSearchParams(window.location.search);
@@ -1120,7 +1091,6 @@ document.addEventListener('DOMContentLoaded', async function () {
   remplirProduitsCredit();
   renderCreditsHistory();
 });
-
 
 // ---------- Navigation & UI helpers (structure kept) ----------
 let currentSection = 'menu';
@@ -1516,12 +1486,15 @@ function afficherRapports() {
   // Vérification si les données sont prêtes
   if (!appData.ventes?.length || !appData.produits?.length) {
     console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
-    
-    const rapportLoading = document.getElementById('rapportLoading');
-    if (rapportLoading) {
-      rapportLoading.style.display = 'block'; // Affiche un message d'attente sur l'UI
-    } else {
-      console.warn("L'élément #rapportLoading n'a pas été trouvé.");
+
+    // Vérifiez si l'élément #rapportLoading existe, sinon créez-le
+    let rapportLoading = document.getElementById('rapportLoading');
+    if (!rapportLoading) {
+      rapportLoading = document.createElement('div');
+      rapportLoading.id = 'rapportLoading';
+      rapportLoading.style.display = 'block';
+      rapportLoading.innerHTML = "Chargement des rapports...";
+      document.body.appendChild(rapportLoading); // Ajoute l'élément au body ou une autre section
     }
     return; // Retourner avant d'essayer d'afficher les rapports
   }
