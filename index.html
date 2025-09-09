@@ -711,6 +711,9 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
 </div>
 
+<div id="rapportLoading" style="display:none;">Chargement des rapports...</div>
+
+
 <script>
 
 // ---------- CONFIG & DATA ----------
@@ -1494,26 +1497,12 @@ function afficherRapports() {
   // Vérification si les données sont prêtes
   if (!appData.ventes?.length || !appData.produits?.length) {
     console.warn("⏳ Données ventes/produits pas encore prêtes, on attend...");
-
-    // Créer l'élément #rapportLoading si nécessaire
-    let rapportLoading = document.getElementById('rapportLoading');
-    if (!rapportLoading) {
-      rapportLoading = document.createElement('div');
-      rapportLoading.id = 'rapportLoading';
-      rapportLoading.style.display = 'block';  // Affiche un message de chargement
-      rapportLoading.innerHTML = "Chargement des rapports...";
-      document.body.appendChild(rapportLoading); // Ajoute l'élément au body ou une autre section
-    }
-    return; // Retourner avant d'essayer d'afficher les rapports
+    document.getElementById('rapportLoading').style.display = 'block';
+    return;
   }
 
-  // Si les données sont prêtes, masquer le message de chargement
-  const rapportLoading = document.getElementById('rapportLoading');
-  if (rapportLoading) {
-    rapportLoading.style.display = 'none'; // Masquer le message d'attente
-  } else {
-    console.warn("L'élément #rapportLoading n'a pas été trouvé.");
-  }
+  // ✅ Masquer le message de chargement si données prêtes
+  document.getElementById('rapportLoading').style.display = 'none';
 
   const periode = document.getElementById('periodeRapports')?.value || 'tout';
   const ventesFiltrees = filtrerVentesParPeriode(appData.ventes || [], periode);
@@ -1527,18 +1516,17 @@ function afficherRapports() {
   });
   appData.stats.paiements = paiementsMap;
 
-  // --- Calcul chiffre d’affaires par période ---
-  const ventesJour = filtrerVentesParPeriode(appData.ventes || [], 'jour');
-  const ventesSemaine = filtrerVentesParPeriode(appData.ventes || [], 'semaine');
-  const ventesMois = filtrerVentesParPeriode(appData.ventes || [], 'mois');
-  const ventesTout = filtrerVentesParPeriode(appData.ventes || [], 'tout');
+  // --- Chiffre d’affaires ---
+  const totalJour = filtrerVentesParPeriode(appData.ventes, 'jour')
+    .reduce((s, v) => s + (v.total || (v.price||0)*(v.quantity||0)), 0);
+  const totalSemaine = filtrerVentesParPeriode(appData.ventes, 'semaine')
+    .reduce((s, v) => s + (v.total || (v.price||0)*(v.quantity||0)), 0);
+  const totalMois = filtrerVentesParPeriode(appData.ventes, 'mois')
+    .reduce((s, v) => s + (v.total || (v.price||0)*(v.quantity||0)), 0);
+  const totalTout = filtrerVentesParPeriode(appData.ventes, 'tout')
+    .reduce((s, v) => s + (v.total || (v.price||0)*(v.quantity||0)), 0);
 
-  const totalJour = ventesJour.reduce((sum, v) => sum + (v.total || (v.price||0) * (v.quantity||0)), 0);
-  const totalSemaine = ventesSemaine.reduce((sum, v) => sum + (v.total || (v.price||0) * (v.quantity||0)), 0);
-  const totalMois = ventesMois.reduce((sum, v) => sum + (v.total || (v.price||0) * (v.quantity||0)), 0);
-  const totalTout = ventesTout.reduce((sum, v) => sum + (v.total || (v.price||0) * (v.quantity||0)), 0);
-
-  // --- Injection dans le DOM ---
+  // --- Injection DOM ---
   document.getElementById('recettesJour').textContent = totalJour.toLocaleString() + ' F';
   document.getElementById('recettesSemaine').textContent = totalSemaine.toLocaleString() + ' F';
   document.getElementById('recettesMois').textContent = totalMois.toLocaleString() + ' F';
@@ -1547,20 +1535,20 @@ function afficherRapports() {
   }
 
   // --- Paiements ---
-  var containerPaiements = document.getElementById('rapportsPaiements');
+  const containerPaiements = document.getElementById('rapportsPaiements');
   containerPaiements.innerHTML = '';
-  var methodesNoms = {
+  const methodesNoms = {
     especes: { name: 'Espèces', emoji: '💵', couleur: 'green' },
     wave: { name: 'Wave', emoji: '📱', couleur: 'blue' },
     orange: { name: 'Orange Money', emoji: '📞', couleur: 'orange' }
   };
-  var totalPaiements = Object.values(paiementsMap).reduce((sum, val) => sum + val, 0);
+  const totalPaiements = Object.values(paiementsMap).reduce((s, v) => s + v, 0);
 
-  Object.keys(paiementsMap).forEach(function(m) {
-    var montant = paiementsMap[m] || 0;
-    var info = methodesNoms[m] || { name: m, emoji: '', couleur: 'gray' };
-    var pct = totalPaiements > 0 ? ((montant / totalPaiements) * 100).toFixed(1) : 0;
-    var div = document.createElement('div');
+  Object.keys(paiementsMap).forEach(m => {
+    const montant = paiementsMap[m] || 0;
+    const info = methodesNoms[m] || { name: m, emoji: '', couleur: 'gray' };
+    const pct = totalPaiements > 0 ? ((montant / totalPaiements) * 100).toFixed(1) : 0;
+    const div = document.createElement('div');
     div.className = `bg-${info.couleur}-50 rounded-2xl p-3 flex justify-between items-center`;
     div.innerHTML = `
       <div class="flex items-center gap-3">
@@ -1576,16 +1564,17 @@ function afficherRapports() {
   });
 
   // --- Produits populaires ---
-  var cPop = document.getElementById('produitsPopulaires');
+  const cPop = document.getElementById('produitsPopulaires');
   cPop.innerHTML = '';
-  var populaires = appData.produits.filter(p => p.vendu > 0)
+  const populaires = appData.produits.filter(p => p.vendu > 0)
     .sort((a, b) => b.vendu - a.vendu)
     .slice(0, 5);
+
   if (!populaires.length) {
     cPop.innerHTML = '<div class="text-gray-500 text-center py-4">Aucune vente</div>';
   } else {
-    populaires.forEach(function(p) {
-      var d = document.createElement('div');
+    populaires.forEach(p => {
+      const d = document.createElement('div');
       d.className = 'flex justify-between items-center bg-gray-50 rounded-lg p-3';
       d.innerHTML = `<div class="font-bold">${p.name}</div>
                      <div class="text-blue-600 font-bold">${p.vendu} vendus</div>`;
@@ -1599,7 +1588,7 @@ function afficherRapports() {
   // --- Historique des ventes --- 
   tryRenderSalesHistory(ventesFiltrees);
 
-  // --- Sécuriser l'affichage crédits --- 
+  // --- Crédits --- 
   if (appData?.credits?.length) {
     afficherStatsCredits();
   } else {
@@ -2023,29 +2012,39 @@ function fermerModal() {
 }
 
 // Quand on soumet le formulaire
-document.getElementById("formModifierVente").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  
-  const id = document.getElementById("venteId").value;
-  const quantity = parseInt(document.getElementById("venteQuantite").value, 10);
-  const payment_method = document.getElementById("ventePaiement").value;
+document.addEventListener("DOMContentLoaded", () => {
+  const formModifier = document.getElementById("formModifierVente");
+  if (formModifier) {
+    formModifier.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById("venteId")?.value;
+      const quantity = parseInt(document.getElementById("venteQuantite")?.value, 10);
+      const payment_method = document.getElementById("ventePaiement")?.value;
 
-  try {
-    const res = await authfetch(`${API_BASE}/sales/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quantity, payment_method })
+      if (!id || !quantity || quantity <= 0 || !payment_method) {
+        alert("❌ Champs invalides.");
+        return;
+      }
+
+      try {
+        const res = await authfetch(`${API_BASE}/sales/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantity, payment_method })
+        });
+
+        if (!res.ok) throw new Error("Erreur lors de la modification");
+
+        alert("✅ Vente modifiée avec succès");
+        fermerModal();
+        syncFromServer(); // recharge les données
+
+      } catch (err) {
+        console.error("Erreur modifierVente:", err);
+        alert("❌ Erreur lors de la modification de la vente");
+      }
     });
-
-    if (!res.ok) throw new Error("Erreur lors de la modification");
-
-    alert("✅ Vente modifiée avec succès");
-    fermerModal();
-    syncFromServer(); // recharge les données
-
-  } catch (err) {
-    console.error("Erreur modifierVente:", err);
-    alert("❌ Erreur lors de la modification de la vente");
   }
 });
 
@@ -2108,48 +2107,50 @@ function remplirProduitsCredit() {
 }
 
 // Soumission formulaire crédit
-document.getElementById("creditForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
+document.addEventListener("DOMContentLoaded", () => {
+  const creditForm = document.getElementById("creditForm");
+  if (creditForm) {
+    creditForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-  const client = document.getElementById("creditClient").value.trim();
-  const product_id = document.getElementById("creditProduct").value;
-  const quantity = parseInt(document.getElementById("creditQuantity").value, 10);
-  const due_date = document.getElementById("creditDueDate").value;
+      const client = document.getElementById("creditClient")?.value.trim();
+      const product_id = document.getElementById("creditProduct")?.value;
+      const quantity = parseInt(document.getElementById("creditQuantity")?.value, 10);
+      const due_date = document.getElementById("creditDueDate")?.value;
 
-  if (!client || !product_id || !quantity || quantity <= 0) {
-    alert("❌ Veuillez remplir tous les champs correctement.");
-    return;
+      if (!client || !product_id || !quantity || quantity <= 0) {
+        alert("❌ Veuillez remplir tous les champs correctement.");
+        return;
+      }
+
+      // Trouver le produit
+      const produit = appData.produits.find(p => p.id == product_id);
+      if (!produit) {
+        alert("❌ Produit introuvable.");
+        return;
+      }
+
+      const montant = (produit.price || 0) * quantity;
+      const credit = {
+        id: Date.now(), // id temporaire local
+        date: new Date().toISOString(),
+        client,
+        product_id,
+        product_name: produit.name,
+        quantity,
+        montant,
+        due_date,
+        status: "non payé"
+      };
+
+      // Sauvegarde locale (backend à connecter plus tard)
+      appData.credits.push(credit);
+
+      renderCreditsHistory();
+      creditForm.reset();
+      alert("✅ Vente à crédit enregistrée !");
+    });
   }
-
-  // Trouver le produit
-  const produit = appData.produits.find(p => p.id == product_id);
-  if (!produit) {
-    alert("❌ Produit introuvable.");
-    return;
-  }
-
-  const montant = (produit.price || 0) * quantity;
-  const credit = {
-    id: Date.now(), // id local pour le moment
-    date: new Date().toISOString(),
-    client,
-    product_id,
-    product_name: produit.name,
-    quantity,
-    montant,
-    due_date,
-    status: "non payé"
-  };
-
-  // Sauvegarde locale (plus tard on connectera au backend)
-  appData.credits.push(credit);
-
-  // Rafraîchir le tableau
-  renderCreditsHistory();
-
-  // Réinitialiser le formulaire
-  document.getElementById("creditForm").reset();
-  alert("✅ Vente à crédit enregistrée !");
 });
 
 // Afficher l’historique des crédits
@@ -2158,33 +2159,38 @@ function renderCreditsHistory() {
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  if (!appData.credits.length) {
+  if (!appData.credits?.length) {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500 py-4">Aucun crédit enregistré</td></tr>`;
     return;
   }
 
   appData.credits.forEach(c => {
+    // ✅ Chercher le produit lié à ce crédit
+    const prod = appData.produits?.find(p => p.id === c.product_id);
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
-  <td class="p-2 border">${c.client_name || '-'}</td>
-  <td class="p-2 border">${c.client_phone || '-'}</td>
-  <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
-  <td class="p-2 border">${c.total.toLocaleString()} F</td>
-  <td class="p-2 border">${c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}</td>
-  <td class="p-2 border">
-    ${c.paid ? '<span class="text-green-600 font-bold">✅ Payé</span>' : '<span class="text-red-600 font-bold">❌ Non payé</span>'}
-  </td>
-  <td class="p-2 border text-center">
-    ${c.paid ? '' : `
-      <button class="bg-green-500 text-white px-2 py-1 rounded text-xs" 
-        onclick="marquerRembourse(${c.id})">💰 Marquer comme payé</button>
-    `}
-  </td>
-`;
-
+      <td class="p-2 border">${c.client_name || '-'}</td>
+      <td class="p-2 border">${c.client_phone || '-'}</td>
+      <td class="p-2 border">${prod ? prod.name : 'Inconnu'}</td>
+      <td class="p-2 border">${c.total?.toLocaleString() || 0} F</td>
+      <td class="p-2 border">${c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}</td>
+      <td class="p-2 border">
+        ${c.paid 
+          ? '<span class="text-green-600 font-bold">✅ Payé</span>' 
+          : '<span class="text-red-600 font-bold">❌ Non payé</span>'}
+      </td>
+      <td class="p-2 border text-center">
+        ${c.paid ? '' : `
+          <button class="bg-green-500 text-white px-2 py-1 rounded text-xs" 
+            onclick="marquerRembourse(${c.id})">💰 Marquer comme payé</button>
+        `}
+      </td>
+    `;
     tbody.appendChild(tr);
   });
 }
+
 
 // Marquer un crédit comme payé
 function marquerCreditPaye(id) {
@@ -2220,16 +2226,26 @@ function hideModalCredit() {
   document.getElementById("modalPaiement").classList.remove("hidden");
 }
 
-document.getElementById("formCredit").addEventListener("submit", async (e) => {
-  e.preventDefault();
+document.addEventListener("DOMContentLoaded", () => {
+  const formCredit = document.getElementById("formCredit");
+  if (formCredit) {
+    formCredit.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-  const creditData = {
-    client_name: document.getElementById("creditClientName").value,
-    client_phone: document.getElementById("creditClientPhone").value,
-    due_date: document.getElementById("creditDueDate").value
-  };
+      const creditData = {
+        client_name: document.getElementById("creditClientName")?.value.trim(),
+        client_phone: document.getElementById("creditClientPhone")?.value.trim(),
+        due_date: document.getElementById("creditDueDate")?.value || null
+      };
 
-  await finaliserVente("credit", creditData);
+      if (!creditData.client_name || !creditData.client_phone) {
+        alert("❌ Veuillez renseigner le nom et le téléphone du client.");
+        return;
+      }
+
+      await finaliserVente("credit", creditData);
+    });
+  }
 });
 
 let chartCredits; // global
