@@ -1045,58 +1045,61 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // Gestion du formulaire de vente à crédit
-  const creditForm = document.getElementById('creditForm');
-  if (creditForm) {
-    creditForm.addEventListener('submit', async function(e) {
-      e.preventDefault(); // Empêche le rechargement de la page
+  const creditFormObserver = new MutationObserver(() => {
+    const creditForm = document.getElementById('formCredit');
+    if (creditForm) {
+      creditForm.addEventListener('submit', async function(e) {
+        e.preventDefault(); // Empêche le rechargement de la page
 
-      const clientName = document.getElementById('creditClient')?.value.trim();
-      const clientPhone = document.getElementById('creditPhone')?.value.trim();
-      const productId = parseInt(document.getElementById('creditProduct')?.value);
-      const quantity = parseInt(document.getElementById('creditQuantity')?.value) || 1;
-      const dueDate = document.getElementById('creditDueDate')?.value;
+        const clientName = document.getElementById('creditClient')?.value.trim();
+        const clientPhone = document.getElementById('creditPhone')?.value.trim();
+        const productId = parseInt(document.getElementById('creditProduct')?.value);
+        const quantity = parseInt(document.getElementById('creditQuantity')?.value) || 1;
+        const dueDate = document.getElementById('creditDueDate')?.value;
 
-      if (!clientName || !clientPhone || !productId || !dueDate) {
-        alert("⚠️ Merci de remplir toutes les informations du crédit.");
-        return;
-      }
+        if (!clientName || !clientPhone || !productId || !dueDate) {
+          alert("⚠️ Merci de remplir toutes les informations du crédit.");
+          return;
+        }
 
-      const produit = appData.produits.find(p => p.id === productId);
-      if (!produit) {
-        alert("❌ Produit introuvable.");
-        return;
-      }
+        const produit = appData.produits.find(p => p.id === productId);
+        if (!produit) {
+          alert("❌ Produit introuvable.");
+          return;
+        }
 
-      const venteCredit = {
-        product_id: productId,
-        quantity: quantity,
-        payment_method: "credit",
-        client_name: clientName,
-        client_phone: clientPhone,
-        due_date: dueDate,
-        paid: false
-      };
+        const venteCredit = {
+          product_id: productId,
+          quantity: quantity,
+          payment_method: "credit",
+          client_name: clientName,
+          client_phone: clientPhone,
+          due_date: dueDate,
+          paid: false
+        };
 
-      const created = await postSaleServer(venteCredit);
-      if (!created) {
-        alert("❌ Erreur lors de l'enregistrement de la vente à crédit.");
-        return;
-      }
+        const created = await postSaleServer(venteCredit);
+        if (!created) {
+          alert("❌ Erreur lors de l'enregistrement de la vente à crédit.");
+          return;
+        }
 
-      alert("✅ Vente à crédit enregistrée !");
-      
-      // Mise à jour des données après création de la vente à crédit
-      await syncFromServer();
-      afficherCredits();
-      afficherRapports();
-      afficherInventaire();
+        alert("✅ Vente à crédit enregistrée !");
+        
+        // Mise à jour des données après création de la vente à crédit
+        await syncFromServer();
+        afficherCredits();
+        afficherRapports();
+        afficherInventaire();
 
-      // Reset du formulaire
-      creditForm.reset();
-    });
-  } else {
-    console.warn("L'élément #creditForm n'a pas été trouvé.");
-  }
+        // Reset du formulaire
+        creditForm.reset();
+      });
+      creditFormObserver.disconnect(); // Arrêter l'observation une fois que l'élément est trouvé et l'événement attaché
+    }
+  });
+
+  creditFormObserver.observe(document.body, { childList: true, subtree: true });
 
   // Gestion du message d'expiration de session (si nécessaire)
   const params = new URLSearchParams(window.location.search);
