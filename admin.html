@@ -993,92 +993,41 @@ async function loadSubscribers() {
 
         // Populate subscribers grid
         function populateSubscribersGrid() {
-            const grid = document.getElementById('subscribersGrid');
-            grid.innerHTML = '';
+  const grid = document.getElementById('subscribersGrid');
+  grid.innerHTML = '';
 
-            filteredSubscribers.forEach((subscriber, index) => {
-                const originalIndex = subscribers.findIndex(s => s.id === subscriber.id);
-                const paymentStatusColor = {
-                    'ok': 'bg-green-100 text-green-800',
-                    'warning': 'bg-orange-100 text-orange-800',
-                    'late': 'bg-red-100 text-red-800'
-                };
+  if (!filteredSubscribers.length) {
+    grid.innerHTML = `<div class="text-gray-500 text-center py-4">Aucun abonné trouvé</div>`;
+    return;
+  }
 
-                const paymentMethodIcons = {
-                    'wave': '🌊',
-                    'orange': '🟠',
-                    'cash': '💵'
-                };
-
-                const statusBadge = subscriber.status === 'Actif' 
-                    ? '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Actif</span>'
-                    : '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Bloqué</span>';
-                
-                const planBadge = subscriber.plan === 'Premium'
-                    ? '<span class="px-2 py-1 text-xs font-medium bg-violet-100 text-violet-800 rounded-full">Premium</span>'
-                    : '<span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Free</span>';
-
-                const paymentBadge = `<span class="px-2 py-1 text-xs font-medium ${paymentStatusColor[subscriber.paymentStatus]} rounded-full">
-                    ${subscriber.paymentStatus === 'ok' ? 'À jour' : subscriber.paymentStatus === 'warning' ? 'Attention' : 'En retard'}
-                </span>`;
-
-                const actions = subscriber.status === 'Actif'
-                    ? `<button onclick="blockUser(${originalIndex})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Bloquer</button>
-                       <button onclick="sendReminder(${originalIndex})" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Rappel</button>
-                       <button onclick="deleteUser(${originalIndex})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`
-                    : `<button onclick="activateUser(${originalIndex})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Réactiver</button>
-                       <button onclick="deleteUser(${originalIndex})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`;
-
-                const card = document.createElement('div');
-                card.className = 'subscriber-card bg-white rounded-xl shadow-sm border border-gray-100 p-6';
-                card.innerHTML = `
-                    <div class="flex items-center space-x-4 mb-4">
-                        <div class="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
-                            <span class="text-violet-600 font-semibold">${subscriber.avatar}</span>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-semibold text-gray-800">${subscriber.name}</h3>
-                            <p class="text-sm text-gray-500">${subscriber.email}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-3 mb-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Statut:</span>
-                            ${statusBadge}
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Plan:</span>
-                            ${planBadge}
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Paiement:</span>
-                            ${paymentBadge}
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Méthode:</span>
-                            <span class="text-sm font-medium">${paymentMethodIcons[subscriber.paymentMethod]} ${subscriber.paymentMethod.charAt(0).toUpperCase() + subscriber.paymentMethod.slice(1)}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Expiration:</span>
-                            <span class="text-sm font-medium">${subscriber.expiration}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Montant:</span>
-                            <span class="text-sm font-medium">€${subscriber.amount}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="border-t pt-4">
-                        <div class="flex flex-wrap">
-                            ${actions}
-                        </div>
-                    </div>
-                `;
-                
-                grid.appendChild(card);
-            });
-        }
+  filteredSubscribers.forEach((subscriber) => {
+    const card = document.createElement('div');
+    card.className = 'subscriber-card bg-white rounded-xl shadow-sm border border-gray-100 p-6';
+    card.innerHTML = `
+      <div class="flex items-center space-x-4 mb-4">
+        <div class="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
+          <span class="text-violet-600 font-semibold">
+            ${subscriber.username.charAt(0).toUpperCase()}
+          </span>
+        </div>
+        <div class="flex-1">
+          <h3 class="font-semibold text-gray-800">${subscriber.username}</h3>
+          <p class="text-sm text-gray-500">${subscriber.company_name || "—"}</p>
+        </div>
+      </div>
+      <div class="space-y-3 mb-4">
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-gray-600">Rôle:</span>
+          <span class="px-2 py-1 text-xs font-medium bg-violet-100 text-violet-800 rounded-full">
+            ${subscriber.role || "user"}
+          </span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
 
         // Populate transactions list
         function populateTransactionsList() {
