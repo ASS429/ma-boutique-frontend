@@ -876,23 +876,30 @@ async function loadSubscribers() {
         }
 
         // Filter subscribers function
-        function filterSubscribers() {
-            const searchTerm = document.getElementById('subscriberSearch').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            
-            filteredSubscribers = subscribers.filter(subscriber => {
-                const matchesSearch = subscriber.name.toLowerCase().includes(searchTerm) || 
-                                    subscriber.email.toLowerCase().includes(searchTerm) ||
-                                    subscriber.phone.includes(searchTerm);
-                
-                const matchesStatus = !statusFilter || subscriber.status === statusFilter ||
-                                    (statusFilter === 'En retard' && subscriber.paymentStatus === 'late');
-                
-                return matchesSearch && matchesStatus;
-            });
-            
-            populateSubscribersGrid();
-        }
+function filterSubscribers() {
+  const searchTerm = document.getElementById('subscriberSearch').value.toLowerCase();
+  const statusFilter = document.getElementById('statusFilter').value;
+
+  filteredSubscribers = subscribers.filter(subscriber => {
+    const username = subscriber.username ? subscriber.username.toLowerCase() : "";
+    const company = subscriber.company_name ? subscriber.company_name.toLowerCase() : "";
+
+    // Recherche par nom ou société
+    const matchesSearch =
+      username.includes(searchTerm) || company.includes(searchTerm);
+
+    // Filtrage par statut
+    const matchesStatus =
+      !statusFilter ||
+      subscriber.status === statusFilter ||
+      (statusFilter === 'En retard' && subscriber.payment_status === 'En retard');
+
+    return matchesSearch && matchesStatus;
+  });
+
+  populateSubscribersGrid();
+}
+
 
         // Filter revenue function
         function filterRevenue() {
