@@ -75,23 +75,27 @@
     const data = JSON.parse(rawText);
 
     if (res.ok) {
-      // ✅ Sauvegarde du token et du rôle
-      localStorage.setItem('authToken', data.token);
-      if (data.user && data.user.role) {
-        localStorage.setItem('userRole', data.user.role);
-      }
+  // ✅ Sauvegarde du token et du rôle
+  localStorage.setItem('authToken', data.token);
+  if (data.user && data.user.role) {
+    localStorage.setItem('userRole', data.user.role);
+  }
 
-      alert('✅ Connexion réussie.');
+  // ✅ Sauvegarde de l'ID utilisateur
+  localStorage.setItem('userId', data.user.id);
 
-      // ✅ Redirection selon le rôle
-      if (data.user && data.user.role === "admin") {
-        window.location.href = 'admin.html';
-      } else {
-        window.location.href = 'index.html';
-      }
-    } else {
-      alert('❌ Erreur : ' + (data.error || "Identifiants incorrects"));
-    }
+  alert('✅ Connexion réussie.');
+
+  // ✅ Redirection selon le rôle
+  if (data.user && data.user.role === "admin") {
+    window.location.href = 'admin.html';
+  } else {
+    window.location.href = 'index.html';
+  }
+} else {
+  alert('❌ Erreur : ' + (data.error || "Identifiants incorrects"));
+}
+    
 
   } catch (err) {
     console.error("Erreur lors de la requête:", err);
