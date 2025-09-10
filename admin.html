@@ -1022,11 +1022,11 @@ async function loadSubscribers() {
     };
 
     const actions = subscriber.status === "Actif"
-      ? `<button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Bloquer</button>
-         <button class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Rappel</button>
-         <button class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`
-      : `<button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Réactiver</button>
-         <button class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`;
+  ? `<button onclick="blockUser(${subscriber.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Bloquer</button>
+     <button onclick="sendReminder(${subscriber.id})" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Rappel</button>
+     <button onclick="deleteUser(${subscriber.id})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`
+  : `<button onclick="activateUser(${subscriber.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Réactiver</button>
+     <button onclick="deleteUser(${subscriber.id})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`;
 
     const card = document.createElement('div');
     card.className = 'subscriber-card bg-white rounded-xl shadow-sm border border-gray-100 p-6';
@@ -1388,6 +1388,63 @@ async function loadSubscribers() {
             // Show welcome message
             showNotification('Bienvenue dans votre tableau de bord !', 'success');
         });
+
+        async function blockUser(id) {
+  try {
+    const res = await fetch(API_BASE + `/auth/users/${id}/block`, {
+      method: "PUT",
+      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+    });
+    if (!res.ok) throw new Error("Erreur " + res.status);
+    showNotification("Utilisateur bloqué", "success");
+    loadSubscribers();
+  } catch (err) {
+    showNotification("Erreur blocage: " + err.message, "error");
+  }
+}
+
+async function activateUser(id) {
+  try {
+    const res = await fetch(API_BASE + `/auth/users/${id}/activate`, {
+      method: "PUT",
+      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+    });
+    if (!res.ok) throw new Error("Erreur " + res.status);
+    showNotification("Utilisateur réactivé", "success");
+    loadSubscribers();
+  } catch (err) {
+    showNotification("Erreur activation: " + err.message, "error");
+  }
+}
+
+async function deleteUser(id) {
+  if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
+  try {
+    const res = await fetch(API_BASE + `/auth/users/${id}`, {
+      method: "DELETE",
+      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+    });
+    if (!res.ok) throw new Error("Erreur " + res.status);
+    showNotification("Utilisateur supprimé", "error");
+    loadSubscribers();
+  } catch (err) {
+    showNotification("Erreur suppression: " + err.message, "error");
+  }
+}
+
+async function sendReminder(id) {
+  try {
+    const res = await fetch(API_BASE + `/auth/users/${id}/reminder`, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+    });
+    if (!res.ok) throw new Error("Erreur " + res.status);
+    showNotification("Rappel envoyé", "info");
+  } catch (err) {
+    showNotification("Erreur rappel: " + err.message, "error");
+  }
+}
+
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ca510932392575',t:'MTc1NzQ1ODk4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
