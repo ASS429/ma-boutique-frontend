@@ -285,14 +285,7 @@ function tryRenderSalesHistory(ventesFiltrees) {
 
   <!-- Section Stock -->
   <div class="hidden slide-in p-6" id="stockSection">
-    <div class="flex justify-between items-center mb-6">
-  <h2 class="text-2xl font-bold">📦 Mon Stock</h2>
-  <button class="bg-blue-600 text-white px-4 py-2 rounded-2xl text-sm font-bold"
-          onclick="handleAddProductClick()">
-    + AJOUTER
-  </button>
-</div>
-
+    <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">📦 Mon Stock</h2><button class="bg-blue-600 text-white px-4 py-2 rounded-2xl text-sm font-bold" onclick="showModal('ajoutProduit')">+ AJOUTER</button></div>
     <div class="flex gap-2 mb-6 overflow-x-auto pb-2" id="filtreCategories"><button class="filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap" onclick="filtrerProduits('tous')">Tous</button></div>
     <div class="space-y-4" id="listeProduits"></div>
   </div>
@@ -717,27 +710,6 @@ function tryRenderSalesHistory(ventesFiltrees) {
     </div>
   </div>
 </div>
-
-<!-- Modal Upsell Premium -->
-<div id="premiumModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-  <div class="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center">
-    <h2 class="text-xl font-bold mb-4">🚀 Passez en Premium</h2>
-    <p class="text-gray-600 mb-4">
-      Votre plan <strong>Free</strong> vous permet d’ajouter jusqu’à <strong>5 produits</strong>.<br>
-      Pour débloquer un nombre illimité de produits, contactez un administrateur.
-    </p>
-    <div class="bg-gray-100 p-3 rounded-xl mb-4">
-      <p class="text-sm text-gray-800">
-        📞 Appelez ou envoyez un message à :<br>
-        <strong>+221 77 123 45 67</strong>
-      </p>
-    </div>
-    <button onclick="closePremiumModal()" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold">
-      OK
-    </button>
-  </div>
-</div>
-
 
 <div id="rapportLoading" style="display:none;">Chargement des rapports...</div>
 
@@ -2708,37 +2680,6 @@ installBtn?.addEventListener('click', async () => {
 
 // Juste pour debug
 console.log("🔎 Script bouton d’installation chargé !");
-
-async function handleAddProductClick() {
-  try {
-    // Vérifier le plan et le nombre de produits
-    const userRes = await fetch(`${API_BASE}/auth/users`, {
-      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
-    });
-    const users = await userRes.json();
-    const currentUser = users.find(u => u.id === getCurrentUserId()); // adapte selon ton auth
-
-    const prodRes = await fetch(`${API_BASE}/products`, {
-      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
-    });
-    const products = await prodRes.json();
-
-    if (currentUser.plan === "Free" && products.length >= 5) {
-      // Ouvre la modal Premium
-      document.getElementById("premiumModal").classList.remove("hidden");
-    } else {
-      // Ouvre la modal normale d’ajout de produit
-      showModal("ajoutProduit");
-    }
-  } catch (err) {
-    console.error("Erreur handleAddProductClick:", err);
-    showNotification("Erreur lors de la vérification du plan", "error");
-  }
-}
-
-function closePremiumModal() {
-  document.getElementById("premiumModal").classList.add("hidden");
-}
 
 
 </script>
