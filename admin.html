@@ -29,6 +29,34 @@
         .main-expanded { margin-left: 0 !important; }
         #mainContent { transition: margin-left 0.3s ease; }
         .modal { backdrop-filter: blur(4px); }
+
+        .subscriber-card {
+  transition: all 0.4s ease;
+}
+
+.subscriber-card.fade-out {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.subscriber-card.flash-green {
+  animation: flashGreen 1s ease;
+}
+
+.subscriber-card.flash-red {
+  animation: flashRed 1s ease;
+}
+
+@keyframes flashGreen {
+  0% { background-color: #d1fae5; }   /* vert clair */
+  100% { background-color: white; }
+}
+
+@keyframes flashRed {
+  0% { background-color: #fee2e2; }   /* rouge clair */
+  100% { background-color: white; }
+}
+
     </style>
     <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -1030,6 +1058,7 @@ async function loadSubscribers() {
 
     const card = document.createElement('div');
     card.className = 'subscriber-card bg-white rounded-xl shadow-sm border border-gray-100 p-6';
+    card.setAttribute("data-id", subscriber.id);
     card.innerHTML = `
       <div class="flex items-center space-x-4 mb-4">
         <div class="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
@@ -1396,8 +1425,18 @@ async function loadSubscribers() {
       headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
     });
     if (!res.ok) throw new Error("Erreur " + res.status);
+
+    filteredSubscribers = filteredSubscribers.map(u =>
+      u.id === id ? { ...u, status: "Bloqué" } : u
+    );
+
+    populateSubscribersGrid();
+
+    // ⚡ Animation visuelle
+    const card = document.querySelector(`.subscriber-card[data-id="${id}"]`);
+    if (card) card.classList.add("flash-red");
+
     showNotification("Utilisateur bloqué", "success");
-    loadSubscribers();
   } catch (err) {
     showNotification("Erreur blocage: " + err.message, "error");
   }
@@ -1410,12 +1449,22 @@ async function activateUser(id) {
       headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
     });
     if (!res.ok) throw new Error("Erreur " + res.status);
+
+    filteredSubscribers = filteredSubscribers.map(u =>
+      u.id === id ? { ...u, status: "Actif", payment_status: "À jour" } : u
+    );
+
+    populateSubscribersGrid();
+
+    const card = document.querySelector(`.subscriber-card[data-id="${id}"]`);
+    if (card) card.classList.add("flash-green");
+
     showNotification("Utilisateur réactivé", "success");
-    loadSubscribers();
   } catch (err) {
     showNotification("Erreur activation: " + err.message, "error");
   }
 }
+
 
 async function deleteUser(id) {
   if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
@@ -1425,8 +1474,17 @@ async function deleteUser(id) {
       headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
     });
     if (!res.ok) throw new Error("Erreur " + res.status);
+
+    const card = document.querySelector(`.subscriber-card[data-id="${id}"]`);
+    if (card) {
+      card.classList.add("fade-out");
+      setTimeout(() => {
+        filteredSubscribers = filteredSubscribers.filter(u => u.id !== id);
+        populateSubscribersGrid();
+      }, 400); // temps d’attente = durée transition
+    }
+
     showNotification("Utilisateur supprimé", "error");
-    loadSubscribers();
   } catch (err) {
     showNotification("Erreur suppression: " + err.message, "error");
   }
