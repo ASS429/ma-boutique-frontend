@@ -30,6 +30,18 @@
         #mainContent { transition: margin-left 0.3s ease; }
         .modal { backdrop-filter: blur(4px); }
     </style>
+    <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const role = localStorage.getItem("userRole");
+    const token = localStorage.getItem("authToken");
+
+    // Vérifie si l'utilisateur est connecté et admin
+    if (!token || role !== "admin") {
+      alert("⛔ Accès réservé aux administrateurs !");
+      window.location.href = "login.html";
+    }
+  });
+</script>
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
