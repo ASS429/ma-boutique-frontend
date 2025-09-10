@@ -770,39 +770,56 @@
     </div>
 
     <script>
-        // Sample subscriber data with payment methods
-        const subscribers = [
-            { 
-                id: 1, name: "Jean Dupont", email: "jean.dupont@email.com", phone: "+33 6 12 34 56 78", 
-                status: "Actif", plan: "Premium", expiration: "2024-03-15", avatar: "JD",
-                paymentStatus: "ok", lastPayment: "2024-01-15", amount: "29.99", paymentMethod: "wave"
-            },
-            { 
-                id: 2, name: "Marie Martin", email: "marie.martin@email.com", phone: "+33 6 98 76 54 32", 
-                status: "Actif", plan: "Free", expiration: "2024-02-28", avatar: "MM",
-                paymentStatus: "ok", lastPayment: "2024-01-10", amount: "0.00", paymentMethod: "orange"
-            },
-            { 
-                id: 3, name: "Pierre Durand", email: "pierre.durand@email.com", phone: "+33 6 11 22 33 44", 
-                status: "Bloqué", plan: "Premium", expiration: "2024-04-10", avatar: "PD",
-                paymentStatus: "late", lastPayment: "2023-12-10", amount: "29.99", paymentMethod: "cash"
-            },
-            { 
-                id: 4, name: "Sophie Leroy", email: "sophie.leroy@email.com", phone: "+33 6 55 66 77 88", 
-                status: "Actif", plan: "Premium", expiration: "2024-05-20", avatar: "SL",
-                paymentStatus: "ok", lastPayment: "2024-01-20", amount: "29.99", paymentMethod: "wave"
-            },
-            { 
-                id: 5, name: "Thomas Bernard", email: "thomas.bernard@email.com", phone: "+33 6 99 88 77 66", 
-                status: "Actif", plan: "Free", expiration: "2024-01-30", avatar: "TB",
-                paymentStatus: "warning", lastPayment: "2024-01-05", amount: "0.00", paymentMethod: "orange"
-            },
-            { 
-                id: 6, name: "Julie Moreau", email: "julie.moreau@email.com", phone: "+33 6 44 33 22 11", 
-                status: "Bloqué", plan: "Premium", expiration: "2024-03-05", avatar: "JM",
-                paymentStatus: "late", lastPayment: "2023-11-20", amount: "29.99", paymentMethod: "cash"
-            }
-        ];
+       const API_BASE = "https://ma-boutique-backend-3.onrender.com"; // adapte ton URL Render
+let subscribers = [];
+let filteredSubscribers = [];
+
+async function loadSubscribers() {
+  try {
+    const res = await fetch(API_BASE + "/auth/users", {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("authToken")
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Erreur API " + res.status);
+    }
+
+    subscribers = await res.json();
+    filteredSubscribers = [...subscribers];
+    renderSubscribers();
+  } catch (err) {
+    console.error("❌ Impossible de charger les abonnés:", err);
+    showNotification("Erreur lors du chargement des abonnés", "error");
+  }
+}
+
+function renderSubscribers() {
+  const container = document.getElementById("subscribersList");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!filteredSubscribers.length) {
+    container.innerHTML = `<div class="text-gray-500 text-center py-4">Aucun abonné trouvé</div>`;
+    return;
+  }
+
+  filteredSubscribers.forEach(user => {
+    const div = document.createElement("div");
+    div.className = "flex justify-between items-center p-4 bg-white rounded-lg shadow mb-2";
+    div.innerHTML = `
+      <div>
+        <div class="font-bold">${user.username}</div>
+        <div class="text-sm text-gray-500">${user.company_name || ""}</div>
+      </div>
+      <div class="text-sm text-gray-600">Role: ${user.role || "user"}</div>
+    `;
+    container.appendChild(div);
+  });
+}
 
         // Sample transactions
         const transactions = [
@@ -814,14 +831,23 @@
         ];
 
         let sidebarVisible = true;
-        let filteredSubscribers = [...subscribers];
+        
         let alertCount = 3;
 
         function logout() {
-            showNotification('Déconnexion réussie', 'info');
-            // Optionally redirect or refresh the page
-            location.reload();
-        }
+  // Supprimer les infos d'auth
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("userRole");
+
+  // Notification
+  showNotification("✅ Déconnexion réussie", "info");
+
+  // Redirection vers la page de login
+  setTimeout(() => {
+    window.location.href = "login.html";
+  }, 800);
+}
+
 
         // Sidebar toggle function
         function toggleSidebar() {
@@ -1382,6 +1408,7 @@
             populateSubscribersGrid();
             populateTransactionsList();
             initCharts();
+            loadSubscribers();
             
             // Initialize sidebar state
             const mainContent = document.getElementById('mainContent');
