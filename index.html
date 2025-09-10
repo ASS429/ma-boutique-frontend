@@ -2764,6 +2764,19 @@ function closePremiumModal() {
   document.getElementById("premiumModal").classList.add("hidden");
 }
 
+function showNotification(message, type = "info") {
+  // Pour l’instant, on fait simple : un alert
+  // Tu pourras améliorer avec un petit toast stylé comme en admin
+  if (type === "error") {
+    alert("❌ " + message);
+  } else if (type === "success") {
+    alert("✅ " + message);
+  } else if (type === "warning") {
+    alert("⚠️ " + message);
+  } else {
+    alert(message);
+  }
+}
 
 </script>
 
