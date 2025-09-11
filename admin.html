@@ -1086,7 +1086,8 @@ function populateSubscribersGrid() {
         <div class="flex-1">
           <h3 class="font-semibold text-gray-800">${subscriber.username}</h3>
           <p class="text-sm text-gray-500">${subscriber.company_name || "—"}</p>
-        </div>
+            <p class="text-sm text-gray-500">📞 ${subscriber.phone || "—"}</p>
+          </div>
       </div>
 
       <div class="space-y-3 mb-4">
