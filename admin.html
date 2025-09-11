@@ -1532,120 +1532,81 @@ async function addSubscriber() {
 
 // 🔒 Bloquer un utilisateur
 async function blockUser(id) {
-  if (!confirm("⚠️ Voulez-vous vraiment bloquer cet utilisateur ?")) return;
+  if (!confirm("Voulez-vous vraiment bloquer cet utilisateur ?")) return;
+
   try {
+    const token = localStorage.getItem("authToken");
     const res = await fetch(`${API_BASE}/auth/users/${id}/block`, {
       method: "PUT",
-      headers: {
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-        "Content-Type": "application/json"
-      }
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
-
-    showNotification(`🚫 Utilisateur ${data.username || id} bloqué`, "error");
-
-    // 🎨 Animation visuelle
-    const card = document.querySelector(`.subscriber-card[data-id="${id}"]`);
-    if (card) {
-      card.classList.add("flash-red");
-      setTimeout(() => card.classList.remove("flash-red"), 1000);
-    }
-
-    // ✅ Met à jour localement
-    subscribers = subscribers.map(u => u.id === id ? data : u);
-    filterSubscribers();
+    if (!res.ok) throw new Error("Erreur blocage " + res.status);
+    alert("✅ Utilisateur bloqué avec succès !");
+    loadSubscribers(); // recharge la liste
   } catch (err) {
-    console.error("Erreur blockUser:", err);
-    showNotification("Erreur blocage: " + err.message, "error");
+    console.error("❌ Erreur blockUser:", err);
+    alert("Impossible de bloquer l’utilisateur.");
   }
 }
+
 
 // ✅ Réactiver un utilisateur
 async function activateUser(id) {
+  if (!confirm("Voulez-vous réactiver cet utilisateur ?")) return;
+
   try {
+    const token = localStorage.getItem("authToken");
     const res = await fetch(`${API_BASE}/auth/users/${id}/activate`, {
       method: "PUT",
-      headers: {
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-        "Content-Type": "application/json"
-      }
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
-
-    showNotification(`✅ Utilisateur ${data.username || id} réactivé`, "success");
-
-    // 🎨 Animation visuelle
-    const card = document.querySelector(`.subscriber-card[data-id="${id}"]`);
-    if (card) {
-      card.classList.add("flash-green");
-      setTimeout(() => card.classList.remove("flash-green"), 1000);
-    }
-
-    // ✅ Met à jour localement
-    subscribers = subscribers.map(u => u.id === id ? data : u);
-    filterSubscribers();
+    if (!res.ok) throw new Error("Erreur activation " + res.status);
+    alert("✅ Utilisateur réactivé !");
+    loadSubscribers();
   } catch (err) {
-    console.error("Erreur activateUser:", err);
-    showNotification("Erreur activation: " + err.message, "error");
+    console.error("❌ Erreur activateUser:", err);
+    alert("Impossible de réactiver l’utilisateur.");
   }
 }
 
+
 // 🗑 Supprimer un utilisateur
 async function deleteUser(id) {
-  if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
+  if (!confirm("Voulez-vous supprimer définitivement cet utilisateur ?")) return;
+
   try {
+    const token = localStorage.getItem("authToken");
     const res = await fetch(`${API_BASE}/auth/users/${id}`, {
       method: "DELETE",
-      headers: {
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-        "Content-Type": "application/json"
-      }
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
-
-    showNotification(`🗑 ${data.user?.username || id} supprimé`, "error");
-
-    // 🎨 Animation visuelle + suppression
-    const card = document.querySelector(`.subscriber-card[data-id="${id}"]`);
-    if (card) {
-      card.classList.add("fade-out");
-      setTimeout(() => card.remove(), 400);
-    }
-
-    // ✅ Met à jour localement
-    subscribers = subscribers.filter(u => u.id !== id);
-    filterSubscribers();
+    if (!res.ok) throw new Error("Erreur suppression " + res.status);
+    alert("🗑️ Utilisateur supprimé !");
+    loadSubscribers();
   } catch (err) {
-    console.error("Erreur deleteUser:", err);
-    showNotification("Erreur suppression: " + err.message, "error");
+    console.error("❌ Erreur deleteUser:", err);
+    alert("Impossible de supprimer l’utilisateur.");
   }
 }
 
 // 📩 Envoyer un rappel
 async function sendReminder(id) {
   try {
+    const token = localStorage.getItem("authToken");
     const res = await fetch(`${API_BASE}/auth/users/${id}/reminder`, {
       method: "POST",
-      headers: {
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-        "Content-Type": "application/json"
-      }
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
-
-    showNotification(`📩 ${data.message}`, "info");
+    if (!res.ok) throw new Error("Erreur reminder " + res.status);
+    const data = await res.json();
+    alert("📩 " + data.message);
   } catch (err) {
-    console.error("Erreur sendReminder:", err);
-    showNotification("Erreur rappel: " + err.message, "error");
+    console.error("❌ Erreur sendReminder:", err);
+    alert("Impossible d’envoyer le rappel.");
   }
 }
 
