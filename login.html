@@ -39,15 +39,15 @@
     </section>
   </main>
 
-  <script>
-    
-  const API_BASE = "https://ma-boutique-backend-3.onrender.com";
+<script>
+const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 
-  document.addEventListener('DOMContentLoaded', () => {
+// Redirection automatique si déjà connecté
+document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('authToken');
-  const role = localStorage.getItem('userRole');
+  const role = localStorage.getItem('userRole')?.toLowerCase(); // normalisation
   if (token) {
-    if (role?.toLowerCase() === "admin") {
+    if (role === "admin") {
       window.location.href = 'admin.html';
     } else {
       window.location.href = 'index.html';
@@ -55,8 +55,8 @@
   }
 });
 
-
- document.getElementById('loginBtn').addEventListener('click', async () => {
+// Gestion du clic sur le bouton "Se connecter"
+document.getElementById('loginBtn').addEventListener('click', async () => {
   const username = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
 
@@ -66,7 +66,7 @@
   }
 
   try {
-    const res = await fetch(API_BASE + '/auth/login', {
+    const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -82,36 +82,36 @@
     }
 
     const data = JSON.parse(rawText);
+    console.log("Data JSON :", data);
 
-    if (res.ok) {
-  // ✅ Sauvegarde du token et du rôle
-  localStorage.setItem('authToken', data.token);
-  if (data.user && data.user.role) {
-    localStorage.setItem('userRole', data.user.role);
-  }
+    if (!res.ok) {
+      alert('❌ Erreur : ' + (data.error || "Identifiants incorrects"));
+      return;
+    }
 
-  // ✅ Sauvegarde de l'ID utilisateur
-  localStorage.setItem('userId', data.user.id);
+    // ✅ Sauvegarde du token
+    localStorage.setItem('authToken', data.token);
 
-  alert('✅ Connexion réussie.');
+    // ✅ Sauvegarde du rôle et de l'ID utilisateur
+    const userRole = data.user?.role?.toLowerCase() || "user"; 
+    localStorage.setItem('userRole', userRole);
+    localStorage.setItem('userId', data.user?.id);
 
-  // ✅ Redirection selon le rôle
-  if (data.user && data.user.role?.toLowerCase() === "admin") {
-  window.location.href = 'admin.html';
-} else {
-  window.location.href = 'index.html';
-}
-} else {
-  alert('❌ Erreur : ' + (data.error || "Identifiants incorrects"));
-}
-    
+    alert('✅ Connexion réussie.');
+
+    // ✅ Redirection selon le rôle
+    if (userRole === "admin") {
+      window.location.href = 'admin.html';
+    } else {
+      window.location.href = 'index.html';
+    }
 
   } catch (err) {
     console.error("Erreur lors de la requête:", err);
     alert("❌ Erreur de connexion au serveur.");
   }
 });
+</script>
 
-  </script>
 </body>
 </html>
