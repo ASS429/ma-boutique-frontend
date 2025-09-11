@@ -736,33 +736,7 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
 </div>
 
-<!-- Deuxième modal : Formulaire pour upgrade -->
-<div id="contactModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-  <div class="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center">
-    <h2 class="text-xl font-bold mb-4">🚀 Passer en Premium</h2>
-    <p class="text-gray-600 mb-4">
-      Remplissez vos informations pour compléter votre demande de passage en <strong>Premium</strong>.
-    </p>
 
-    <form id="upgradeForm" class="space-y-3">
-      <input type="text" id="payment_method" placeholder="Méthode de paiement (wave, orange, cash)" 
-             class="w-full border rounded-lg px-3 py-2" required>
-      <input type="number" id="amount" placeholder="Montant payé (€)" 
-             class="w-full border rounded-lg px-3 py-2" required>
-      <input type="date" id="expiration" 
-             class="w-full border rounded-lg px-3 py-2" required>
-
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold w-full">
-        Envoyer
-      </button>
-    </form>
-
-    <button onclick="closeContactModal()" 
-            class="mt-3 text-gray-500 hover:text-gray-800">
-      Annuler
-    </button>
-  </div>
-</div>
 
 
 <div id="rapportLoading" style="display:none;">Chargement des rapports...</div>
@@ -2740,22 +2714,27 @@ function getCurrentUserId() {
   return id ? parseInt(id, 10) : null;
 }
 
-async function handleAddProductClick() {
+// ✅ Fonction handleProductClick corrigée
+async function handleProductClick(productId) {
   try {
-    const userId = getCurrentUserId();
-    if (!userId) {
-      showNotification("Vous devez être connecté pour ajouter un produit", "error");
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      showNotification("Vous devez être connecté pour gérer vos produits", "error");
       return;
     }
 
-    // 1️⃣ Récupérer tous les utilisateurs pour identifier le courant
+    const userId = getCurrentUserId();
+    if (!userId) {
+      showNotification("Utilisateur introuvable", "error");
+      return;
+    }
+
+    // 1️⃣ Vérifier le statut de l’utilisateur
     const userRes = await fetch(`${API_BASE}/auth/users`, {
-      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    if (!userRes.ok) {
-      throw new Error("Erreur API Utilisateurs " + userRes.status);
-    }
+    if (!userRes.ok) throw new Error("Erreur API Utilisateurs " + userRes.status);
 
     const users = await userRes.json();
     const currentUser = users.find(u => u.id === userId);
@@ -2765,28 +2744,45 @@ async function handleAddProductClick() {
       return;
     }
 
-    // 2️⃣ Récupérer les produits de l’utilisateur
-    const prodRes = await fetch(`${API_BASE}/products`, {
-      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+    if (currentUser.upgrade_status === "en_attente") {
+      alert("⏳ Votre demande de passage en Premium est en attente de validation par l’administrateur.");
+      return;
+    }
+
+    // 2️⃣ Charger le produit cliqué
+    const prodRes = await fetch(`${API_BASE}/products/${productId}`, {
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    if (!prodRes.ok) {
-      throw new Error("Erreur API Produits " + prodRes.status);
-    }
+    if (!prodRes.ok) throw new Error("Erreur API Produit " + prodRes.status);
 
-    const products = await prodRes.json();
+    const product = await prodRes.json();
 
-    // 3️⃣ Vérifier limite Free
-    if (currentUser.plan === "Free" && products.length >= 5) {
-      document.getElementById("premiumModal").classList.remove("hidden");
-    } else {
-      showModal("ajoutProduit");
-    }
+    // 3️⃣ Pré-remplir le formulaire d’édition si les éléments existent
+    const editFields = {
+      editProductId: product.id,
+      editName: product.name || "",
+      editCategory: product.category_id || "",
+      editScent: product.scent || "",
+      editPrice: product.price ?? 0,
+      editStock: product.stock ?? 0,
+      editPriceAchat: product.price_achat ?? 0
+    };
+
+    Object.keys(editFields).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = editFields[id];
+    });
+
+    // 4️⃣ Ouvrir la modale d’édition
+    showModal("editProduct");
+
   } catch (err) {
-    console.error("Erreur handleAddProductClick:", err);
-    showNotification("Erreur lors de la vérification du plan", "error");
+    console.error("Erreur handleProductClick:", err);
+    showNotification("Impossible de charger le produit", "error");
   }
 }
+
 
 function closePremiumModal() {
   document.getElementById("premiumModal").classList.add("hidden");
