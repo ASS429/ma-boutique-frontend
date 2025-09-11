@@ -2812,13 +2812,19 @@ document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
 
   try {
     const token = localStorage.getItem("authToken"); // token JWT après login
+
     const res = await fetch("https://ma-boutique-backend-3.onrender.com/auth/upgrade", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify({ payment_method, amount, expiration })
+      body: JSON.stringify({
+        payment_method,
+        amount,
+        expiration,
+        upgrade_status: "en_attente" // ✅ Ajout de l'état en attente
+      })
     });
 
     if (!res.ok) {
@@ -2836,7 +2842,7 @@ document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
 
     const data = await res.json();
 
-    alert("✅ Compte mis à jour en Premium !");
+    alert("✅ Votre demande de passage en Premium est envoyée et en attente de validation par l’administrateur !");
     closeContactModal(); // Ferme la modal contact si elle est ouverte
     updateHeader?.(); // Met à jour le header si tu as une fonction updateHeader
 
@@ -2848,7 +2854,6 @@ document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
     alert("❌ Erreur réseau. Veuillez réessayer.");
   }
 });
-
 
 
 function showNotification(message, type = "info") {
