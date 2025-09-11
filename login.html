@@ -47,16 +47,20 @@ function parseJwt(token) {
     const base64 = token.split('.')[1];
     return JSON.parse(atob(base64));
   } catch (e) {
+    console.log("Erreur décodage JWT :", e);
     return null;
   }
 }
 
 // 🔹 Redirection selon le rôle
 function redirectAccordingToRole(role) {
+  console.log("Redirection appelée pour le rôle :", role);
   role = (role || "user").trim().toLowerCase();
   if (role === "admin") {
+    console.log("Redirection vers admin.html");
     window.location.replace('admin.html');
   } else {
+    console.log("Redirection vers index.html");
     window.location.replace('index.html');
   }
 }
@@ -65,11 +69,16 @@ function redirectAccordingToRole(role) {
 document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('authToken');
   const role = localStorage.getItem('userRole');
-  
+
+  console.log("Au chargement - Token existant :", token);
+  console.log("Au chargement - Rôle existant :", role);
+
   if (token && role) {
     const payload = parseJwt(token);
     const now = Math.floor(Date.now() / 1000);
-    
+    console.log("Payload du token :", payload);
+    console.log("Time actuel (s) :", now);
+
     if (payload && payload.exp && payload.exp > now) {
       console.log("Token valide, redirection selon rôle :", role);
       redirectAccordingToRole(role);
@@ -79,6 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('userRole');
       localStorage.removeItem('userId');
     }
+  } else {
+    console.log("Pas de token ou rôle trouvé dans le localStorage");
   }
 });
 
@@ -99,17 +110,18 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
       body: JSON.stringify({ username, password })
     });
 
+    console.log("Status HTTP :", res.status);
     const data = await res.json();
-    console.log("Status HTTP:", res.status);
-    console.log("Data JSON :", data);
+    console.log("Réponse JSON du backend :", data);
 
     if (!res.ok) {
       alert('❌ Erreur : ' + (data.error || "Identifiants incorrects"));
       return;
     }
 
-    // ✅ Sauvegarde du token, rôle et ID utilisateur
     const userRole = (data.user?.role || "user").trim().toLowerCase();
+    console.log("Rôle renvoyé par le backend :", data.user?.role, "=> normalisé :", userRole);
+
     localStorage.setItem('authToken', data.token);
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('userId', data.user?.id);
