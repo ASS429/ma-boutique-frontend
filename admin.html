@@ -1027,12 +1027,12 @@ function filterSubscribers() {
             }
         }
 
-        // Populate subscribers grid
-        function populateSubscribersGrid() {
+        // Populate subscribers grid avec gestion des upgrades
+function populateSubscribersGrid() {
   const grid = document.getElementById('subscribersGrid');
   grid.innerHTML = '';
 
-  if (!filteredSubscribers.length) {
+  if (!filteredSubscribers || filteredSubscribers.length === 0) {
     grid.innerHTML = `<div class="text-gray-500 text-center py-4">Aucun abonné trouvé</div>`;
     return;
   }
@@ -1051,18 +1051,29 @@ function filterSubscribers() {
       ? '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">À jour</span>'
       : '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">En retard</span>';
 
+    const upgradeBadge = subscriber.upgrade_status === "en_attente"
+      ? '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">En attente</span>'
+      : '';
+
     const paymentMethodIcons = {
       "wave": "🌊 Wave",
       "orange": "🟠 Orange",
       "cash": "💵 Cash"
     };
 
+    // Actions admin pour upgrades en attente
+    const upgradeActions = subscriber.upgrade_status === "en_attente"
+      ? `<button onclick="approveUpgrade(${subscriber.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Valider</button>
+         <button onclick="rejectUpgrade(${subscriber.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mb-2">Rejeter</button>`
+      : '';
+
+    // Actions classiques selon le statut
     const actions = subscriber.status === "Actif"
-  ? `<button onclick="blockUser(${subscriber.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Bloquer</button>
-     <button onclick="sendReminder(${subscriber.id})" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Rappel</button>
-     <button onclick="deleteUser(${subscriber.id})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`
-  : `<button onclick="activateUser(${subscriber.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Réactiver</button>
-     <button onclick="deleteUser(${subscriber.id})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`;
+      ? `<button onclick="blockUser(${subscriber.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Bloquer</button>
+         <button onclick="sendReminder(${subscriber.id})" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Rappel</button>
+         <button onclick="deleteUser(${subscriber.id})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`
+      : `<button onclick="activateUser(${subscriber.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Réactiver</button>
+         <button onclick="deleteUser(${subscriber.id})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`;
 
     const card = document.createElement('div');
     card.className = 'subscriber-card bg-white rounded-xl shadow-sm border border-gray-100 p-6';
@@ -1070,19 +1081,17 @@ function filterSubscribers() {
     card.innerHTML = `
       <div class="flex items-center space-x-4 mb-4">
         <div class="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
-          <span class="text-violet-600 font-semibold">
-            ${subscriber.username.charAt(0).toUpperCase()}
-          </span>
+          <span class="text-violet-600 font-semibold">${subscriber.username.charAt(0).toUpperCase()}</span>
         </div>
         <div class="flex-1">
           <h3 class="font-semibold text-gray-800">${subscriber.username}</h3>
           <p class="text-sm text-gray-500">${subscriber.company_name || "—"}</p>
         </div>
       </div>
-      
+
       <div class="space-y-3 mb-4">
         <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Statut:</span> ${statusBadge}</div>
-        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Plan:</span> ${planBadge}</div>
+        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Plan:</span> ${planBadge} ${upgradeBadge}</div>
         <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Paiement:</span> ${paymentBadge}</div>
         <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Méthode:</span>
           <span class="text-sm font-medium">${paymentMethodIcons[subscriber.payment_method] || "—"}</span>
@@ -1094,16 +1103,81 @@ function filterSubscribers() {
           <span class="text-sm font-medium">€${subscriber.amount || "0.00"}</span>
         </div>
       </div>
-      
-      <div class="border-t pt-4">
-        <div class="flex flex-wrap">
-          ${actions}
-        </div>
+
+      <div class="border-t pt-4 flex flex-wrap gap-2">
+        ${actions} ${upgradeActions}
       </div>
     `;
     grid.appendChild(card);
   });
 }
+
+// ✅ Valider l'upgrade d'un utilisateur
+async function approveUpgrade(userId) {
+  try {
+    const token = localStorage.getItem("authToken"); // token JWT admin
+    const res = await fetch(`https://ma-boutique-backend-3.onrender.com/admin/upgrade/${userId}/approve`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert("❌ Erreur lors de la validation : " + (data.error || "Impossible de valider."));
+      return;
+    }
+
+    // Mettre à jour filteredSubscribers localement
+    const index = filteredSubscribers.findIndex(sub => sub.id === userId);
+    if (index !== -1) {
+      filteredSubscribers[index] = { ...filteredSubscribers[index], plan: "Premium", upgrade_status: "validé" };
+    }
+
+    populateSubscribersGrid();
+    alert("✅ L'utilisateur est maintenant Premium !");
+  } catch (err) {
+    console.error("❌ Erreur approveUpgrade:", err);
+    alert("Erreur réseau.");
+  }
+}
+
+// ✅ Rejeter l'upgrade d'un utilisateur
+async function rejectUpgrade(userId) {
+  try {
+    const token = localStorage.getItem("authToken"); // token JWT admin
+    const res = await fetch(`https://ma-boutique-backend-3.onrender.com/admin/upgrade/${userId}/reject`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert("❌ Erreur lors du rejet : " + (data.error || "Impossible de rejeter."));
+      return;
+    }
+
+    // Mettre à jour filteredSubscribers localement
+    const index = filteredSubscribers.findIndex(sub => sub.id === userId);
+    if (index !== -1) {
+      filteredSubscribers[index] = { ...filteredSubscribers[index], upgrade_status: "rejeté" };
+    }
+
+    populateSubscribersGrid();
+    alert("⚠️ La demande d'upgrade a été rejetée.");
+  } catch (err) {
+    console.error("❌ Erreur rejectUpgrade:", err);
+    alert("Erreur réseau.");
+  }
+}
+
 
         // Populate transactions list
         function populateTransactionsList() {
