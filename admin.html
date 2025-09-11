@@ -1051,7 +1051,8 @@ function populateSubscribersGrid() {
       ? '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">À jour</span>'
       : '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">En retard</span>';
 
-    const upgradeBadge = subscriber.upgrade_status === "en_attente"
+    // ✅ corrige la condition "en attente"
+    const upgradeBadge = subscriber.upgrade_status === "en attente"
       ? '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">En attente</span>'
       : '';
 
@@ -1062,7 +1063,7 @@ function populateSubscribersGrid() {
     };
 
     // Actions admin pour upgrades en attente
-    const upgradeActions = subscriber.upgrade_status === "en_attente"
+    const upgradeActions = subscriber.upgrade_status === "en attente"
       ? `<button onclick="approveUpgrade(${subscriber.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Valider</button>
          <button onclick="rejectUpgrade(${subscriber.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mb-2">Rejeter</button>`
       : '';
@@ -1086,8 +1087,8 @@ function populateSubscribersGrid() {
         <div class="flex-1">
           <h3 class="font-semibold text-gray-800">${subscriber.username}</h3>
           <p class="text-sm text-gray-500">${subscriber.company_name || "—"}</p>
-            <p class="text-sm text-gray-500">📞 ${subscriber.phone || "—"}</p>
-          </div>
+          <p class="text-sm text-gray-500">📞 ${subscriber.phone || "—"}</p>
+        </div>
       </div>
 
       <div class="space-y-3 mb-4">
@@ -1113,82 +1114,156 @@ function populateSubscribersGrid() {
   });
 }
 
-// ✅ Valider l'upgrade d'un utilisateur
+
+// ==========================
+//  Upgrade : Valider / Rejeter
+// ==========================
+
 async function approveUpgrade(userId) {
   try {
-    const token = localStorage.getItem("authToken"); // JWT admin
-    const res = await fetch(`https://ma-boutique-backend-3.onrender.com/auth/upgrade/${userId}/approve`, {
+    const res = await fetch(`${API_BASE}/auth/upgrade/${userId}/approve`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
+        "Content-Type": "application/json"
       }
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || "Impossible de valider.");
-    }
-
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
 
-    // Mettre à jour localement
-    const index = filteredSubscribers.findIndex(sub => sub.id === userId);
-    if (index !== -1) {
-      filteredSubscribers[index] = { 
-        ...filteredSubscribers[index], 
-        plan: "Premium", 
-        upgrade_status: "validé", 
-        payment_status: "À jour" 
-      };
-    }
+    // 🔄 Mise à jour locale
+    filteredSubscribers = filteredSubscribers.map(u =>
+      u.id === userId ? { ...u, plan: "Premium", upgrade_status: "validé" } : u
+    );
 
-    populateSubscribersGrid();
-    alert("✅ L'utilisateur est maintenant Premium !");
+    // 🔄 Mise à jour visuelle
+    updateSubscriberCard(userId);
+
+    showNotification(`✅ Upgrade validé pour ${data.user?.username || userId}`, "success");
   } catch (err) {
-    console.error("❌ Erreur approveUpgrade:", err);
-    alert("❌ Erreur approveUpgrade: " + err.message);
+    console.error("Erreur approveUpgrade:", err);
+    showNotification("❌ Impossible de valider l'upgrade", "error");
   }
 }
 
-
-// ✅ Rejeter l'upgrade d'un utilisateur
 async function rejectUpgrade(userId) {
   try {
-    const token = localStorage.getItem("authToken"); // JWT admin
-    const res = await fetch(`https://ma-boutique-backend-3.onrender.com/auth/upgrade/${userId}/reject`, {
+    const res = await fetch(`${API_BASE}/auth/upgrade/${userId}/reject`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
+        "Content-Type": "application/json"
       }
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || "Impossible de rejeter.");
-    }
-
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
 
-    // Mettre à jour localement
-    const index = filteredSubscribers.findIndex(sub => sub.id === userId);
-    if (index !== -1) {
-      filteredSubscribers[index] = { 
-        ...filteredSubscribers[index], 
-        upgrade_status: "rejeté" 
-      };
-    }
+    // 🔄 Mise à jour locale
+    filteredSubscribers = filteredSubscribers.map(u =>
+      u.id === userId ? { ...u, upgrade_status: "rejeté" } : u
+    );
 
-    populateSubscribersGrid();
-    alert("⚠️ La demande d'upgrade a été rejetée.");
+    // 🔄 Mise à jour visuelle
+    updateSubscriberCard(userId);
+
+    showNotification(`🚫 Upgrade rejeté pour ${data.user?.username || userId}`, "error");
   } catch (err) {
-    console.error("❌ Erreur rejectUpgrade:", err);
-    alert("❌ Erreur rejectUpgrade: " + err.message);
+    console.error("Erreur rejectUpgrade:", err);
+    showNotification("❌ Impossible de rejeter l'upgrade", "error");
   }
 }
 
+// ==========================
+//  Rafraîchir 1 seule carte
+// ==========================
+function updateSubscriberCard(userId) {
+  const subscriber = filteredSubscribers.find(u => u.id === userId);
+  if (!subscriber) return;
 
+  const oldCard = document.querySelector(`.subscriber-card[data-id="${userId}"]`);
+  if (oldCard) {
+    const newCard = document.createElement("div");
+    newCard.className = oldCard.className;
+    newCard.setAttribute("data-id", userId);
+    newCard.innerHTML = generateSubscriberCardHTML(subscriber);
+    oldCard.replaceWith(newCard);
+  }
+}
+
+// ==========================
+//  Générer HTML d’une carte
+// ==========================
+function generateSubscriberCardHTML(subscriber) {
+  const statusBadge = subscriber.status === "Actif"
+    ? '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Actif</span>'
+    : '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Bloqué</span>';
+
+  const planBadge = subscriber.plan === "Premium"
+    ? '<span class="px-2 py-1 text-xs font-medium bg-violet-100 text-violet-800 rounded-full">Premium</span>'
+    : '<span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Free</span>';
+
+  const paymentBadge = subscriber.payment_status === "À jour"
+    ? '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">À jour</span>'
+    : '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">En retard</span>';
+
+  const upgradeBadge = subscriber.upgrade_status === "en attente"
+    ? '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">En attente</span>'
+    : (subscriber.upgrade_status === "rejeté"
+        ? '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Rejeté</span>'
+        : "");
+
+  const paymentMethodIcons = {
+    "wave": "🌊 Wave",
+    "orange": "🟠 Orange",
+    "cash": "💵 Cash"
+  };
+
+  const upgradeActions = subscriber.upgrade_status === "en attente"
+    ? `<button onclick="approveUpgrade(${subscriber.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Valider</button>
+       <button onclick="rejectUpgrade(${subscriber.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mb-2">Rejeter</button>`
+    : "";
+
+  const actions = subscriber.status === "Actif"
+    ? `<button onclick="blockUser(${subscriber.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Bloquer</button>
+       <button onclick="sendReminder(${subscriber.id})" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Rappel</button>
+       <button onclick="deleteUser(${subscriber.id})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`
+    : `<button onclick="activateUser(${subscriber.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Réactiver</button>
+       <button onclick="deleteUser(${subscriber.id})" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs mb-2">Supprimer</button>`;
+
+  return `
+    <div class="flex items-center space-x-4 mb-4">
+      <div class="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
+        <span class="text-violet-600 font-semibold">${subscriber.username.charAt(0).toUpperCase()}</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="font-semibold text-gray-800">${subscriber.username}</h3>
+        <p class="text-sm text-gray-500">${subscriber.company_name || "—"}</p>
+        <p class="text-sm text-gray-500">📞 ${subscriber.phone || "—"}</p>
+      </div>
+    </div>
+
+    <div class="space-y-3 mb-4">
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Statut:</span> ${statusBadge}</div>
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Plan:</span> ${planBadge} ${upgradeBadge}</div>
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Paiement:</span> ${paymentBadge}</div>
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Méthode:</span>
+        <span class="text-sm font-medium">${paymentMethodIcons[subscriber.payment_method] || "—"}</span>
+      </div>
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Expiration:</span>
+        <span class="text-sm font-medium">${subscriber.expiration || "—"}</span>
+      </div>
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Montant:</span>
+        <span class="text-sm font-medium">€${subscriber.amount || "0.00"}</span>
+      </div>
+    </div>
+
+    <div class="border-t pt-4 flex flex-wrap gap-2">
+      ${actions} ${upgradeActions}
+    </div>
+  `;
+}
 
         // Populate transactions list
         function populateTransactionsList() {
