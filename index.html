@@ -2801,12 +2801,17 @@ function closeContactModal() {
 document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const payment_method = document.getElementById("payment_method").value;
-  const amount = document.getElementById("amount").value;
+  const payment_method = document.getElementById("payment_method").value.trim();
+  const amount = document.getElementById("amount").value.trim();
   const expiration = document.getElementById("expiration").value;
 
+  if (!payment_method || !amount || !expiration) {
+    alert("❌ Tous les champs sont requis.");
+    return;
+  }
+
   try {
-    const token = localStorage.getItem("authToken"); // ⚡ Ton token JWT après login
+    const token = localStorage.getItem("authToken"); // token JWT après login
     const res = await fetch("https://ma-boutique-backend-3.onrender.com/auth/upgrade", {
       method: "PUT",
       headers: {
@@ -2816,33 +2821,34 @@ document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
       body: JSON.stringify({ payment_method, amount, expiration })
     });
 
+    if (!res.ok) {
+      // Essaie de parser JSON mais fallback si ce n’est pas JSON
+      let errorMsg = "Impossible d’upgrader.";
+      try {
+        const data = await res.json();
+        if (data.error) errorMsg = data.error;
+      } catch (err) {
+        errorMsg = await res.text();
+      }
+      alert("❌ Erreur : " + errorMsg);
+      return;
+    }
+
     const data = await res.json();
 
-    if (!res.ok) {
-  alert("Erreur: " + (data.error || "Impossible d’upgrader."));
-  return;
-}
+    alert("✅ Compte mis à jour en Premium !");
+    closeContactModal(); // Ferme la modal contact si elle est ouverte
+    updateHeader?.(); // Met à jour le header si tu as une fonction updateHeader
 
-// Mettre à jour filteredSubscribers
-const updatedUser = data.user;
-const index = filteredSubscribers.findIndex(sub => sub.id === updatedUser.id);
-
-if (index !== -1) {
-  filteredSubscribers[index] = { ...filteredSubscribers[index], ...updatedUser };
-}
-
-// Rafraîchir la grille
-populateSubscribersGrid();
-
-alert("✅ Compte mis à jour en Premium !");
-closeContactModal();
-updateHeader();
+    // Optionnel : rafraîchir la page pour mettre à jour l'affichage
+    window.location.reload();
 
   } catch (err) {
     console.error("❌ Erreur upgrade:", err);
-    alert("Erreur réseau.");
+    alert("❌ Erreur réseau. Veuillez réessayer.");
   }
 });
+
 
 
 function showNotification(message, type = "info") {
