@@ -42,6 +42,13 @@
 <script>
 const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 
+// ✅ Nettoyage du localStorage au chargement pour éviter les valeurs obsolètes
+document.addEventListener('DOMContentLoaded', () => {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('userRole');
+  localStorage.removeItem('userId');
+});
+
 // Gestion du clic sur le bouton "Se connecter"
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const username = document.getElementById('email').value.trim();
@@ -87,6 +94,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     alert('✅ Connexion réussie.');
 
     // ✅ Redirection selon le rôle
+    console.log("Redirection vers :", userRole === "admin" ? 'admin.html' : 'index.html');
     if (userRole === "admin") {
       window.location.href = 'admin.html';
     } else {
