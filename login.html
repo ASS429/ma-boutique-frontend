@@ -42,12 +42,7 @@
 <script>
 const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 
-// ✅ Nettoyage du localStorage au chargement pour éviter les valeurs obsolètes
-document.addEventListener('DOMContentLoaded', () => {
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('userRole');
-  localStorage.removeItem('userId');
-});
+// ⚡ Ne videz plus le localStorage au chargement, sinon ça casse la redirection de l'admin
 
 // Gestion du clic sur le bouton "Se connecter"
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -83,11 +78,9 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
       return;
     }
 
-    // ✅ Sauvegarde du token
-    localStorage.setItem('authToken', data.token);
-
-    // ✅ Sauvegarde du rôle et de l'ID utilisateur
+    // ✅ Sauvegarde du token, rôle et ID
     const userRole = (data.user?.role || "user").trim().toLowerCase(); 
+    localStorage.setItem('authToken', data.token);
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('userId', data.user?.id);
 
