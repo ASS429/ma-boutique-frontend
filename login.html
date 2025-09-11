@@ -42,23 +42,6 @@
 <script>
 const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 
-// Redirection automatique si déjà connecté
-document.addEventListener('DOMContentLoaded', () => {
-  const token = localStorage.getItem('authToken');
-  const role = (localStorage.getItem('userRole') || "").trim().toLowerCase();
-  console.log("Token existant :", token);
-  console.log("Rôle existant :", role);
-  if (token) {
-    if (role === "admin") {
-      console.log("Redirection automatique vers admin.html");
-      window.location.href = 'admin.html';
-    } else {
-      console.log("Redirection automatique vers index.html");
-      window.location.href = 'index.html';
-    }
-  }
-});
-
 // Gestion du clic sur le bouton "Se connecter"
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const username = document.getElementById('email').value.trim();
@@ -97,11 +80,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     localStorage.setItem('authToken', data.token);
 
     // ✅ Sauvegarde du rôle et de l'ID utilisateur
-    const userRoleRaw = data.user?.role || "user"; 
-    const userRole = userRoleRaw.trim().toLowerCase(); // supprime espaces et normalise
-    console.log("Rôle renvoyé par le backend :", userRoleRaw);
-    console.log("Rôle après nettoyage :", userRole);
-
+    const userRole = (data.user?.role || "user").trim().toLowerCase(); 
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('userId', data.user?.id);
 
@@ -109,10 +88,8 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 
     // ✅ Redirection selon le rôle
     if (userRole === "admin") {
-      console.log("Redirection vers admin.html");
       window.location.href = 'admin.html';
     } else {
-      console.log("Redirection vers index.html");
       window.location.href = 'index.html';
     }
 
