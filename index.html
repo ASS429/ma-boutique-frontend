@@ -91,15 +91,27 @@ function tryRenderSalesHistory(ventesFiltrees) {
 
 
   (function () {
-    try {
-      var token = localStorage.getItem('authToken');
-      if (!token) {
-        window.location.replace('login.html');
-      }
-    } catch (e) {
-      window.location.replace('login.html');
+  try {
+    const token = localStorage.getItem('authToken');
+    const role = localStorage.getItem('userRole')?.toLowerCase();
+    console.log("Au chargement - token :", token);
+    console.log("Au chargement - rôle :", role);
+
+    if (!token) {
+      console.log("Pas de token, redirection vers login.html");
+      window.location.replace('login.html?expired=1');
+    } else if (role === "admin") {
+      console.log("Utilisateur admin détecté, redirection vers admin.html");
+      window.location.replace('admin.html');
+    } else {
+      console.log("Utilisateur normal détecté, reste sur index.html");
     }
-  })();
+  } catch (e) {
+    console.error("Erreur lors du check initial :", e);
+    window.location.replace('login.html?expired=1');
+  }
+})();
+
 </script>
 
 
@@ -2001,18 +2013,16 @@ function renderVentesChart() {
 function authfetch(url, options = {}) {
   const token = localStorage.getItem('authToken');
   if (!token) {
-    window.location.href = 'login.html?expired=1';
+    console.warn("Token manquant, rejet de la promesse");
     return Promise.reject(new Error('Token manquant'));
   }
 
-  // ✅ Vérifier expiration du token avant d’envoyer
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const now = Math.floor(Date.now() / 1000);
     if (payload.exp && payload.exp < now) {
-      console.warn("⚠️ Token expiré, déconnexion auto");
+      console.warn("⚠️ Token expiré");
       localStorage.removeItem('authToken');
-      window.location.href = 'login.html?expired=1';
       return Promise.reject(new Error('Token expiré'));
     }
   } catch (e) {
@@ -2027,12 +2037,12 @@ function authfetch(url, options = {}) {
   return fetch(url, { ...options, headers }).then(res => {
     if (res.status === 401) {
       localStorage.removeItem('authToken');
-      window.location.href = 'login.html?expired=1';
-      throw new Error('401 Unauthorized');
+      return Promise.reject(new Error('401 Unauthorized'));
     }
     return res;
   });
 }
+
 
 
 function renderSalesHistory(ventes) {
