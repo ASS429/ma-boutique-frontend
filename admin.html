@@ -1115,8 +1115,8 @@ function populateSubscribersGrid() {
 // ✅ Valider l'upgrade d'un utilisateur
 async function approveUpgrade(userId) {
   try {
-    const token = localStorage.getItem("authToken"); // token JWT admin
-    const res = await fetch(`https://ma-boutique-backend-3.onrender.com/admin/upgrade/${userId}/approve`, {
+    const token = localStorage.getItem("authToken"); // JWT admin
+    const res = await fetch(`https://ma-boutique-backend-3.onrender.com/auth/upgrade/${userId}/approve`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -1124,32 +1124,38 @@ async function approveUpgrade(userId) {
       }
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      alert("❌ Erreur lors de la validation : " + (data.error || "Impossible de valider."));
-      return;
+      const text = await res.text();
+      throw new Error(text || "Impossible de valider.");
     }
 
-    // Mettre à jour filteredSubscribers localement
+    const data = await res.json();
+
+    // Mettre à jour localement
     const index = filteredSubscribers.findIndex(sub => sub.id === userId);
     if (index !== -1) {
-      filteredSubscribers[index] = { ...filteredSubscribers[index], plan: "Premium", upgrade_status: "validé" };
+      filteredSubscribers[index] = { 
+        ...filteredSubscribers[index], 
+        plan: "Premium", 
+        upgrade_status: "validé", 
+        payment_status: "À jour" 
+      };
     }
 
     populateSubscribersGrid();
     alert("✅ L'utilisateur est maintenant Premium !");
   } catch (err) {
     console.error("❌ Erreur approveUpgrade:", err);
-    alert("Erreur réseau.");
+    alert("❌ Erreur approveUpgrade: " + err.message);
   }
 }
+
 
 // ✅ Rejeter l'upgrade d'un utilisateur
 async function rejectUpgrade(userId) {
   try {
-    const token = localStorage.getItem("authToken"); // token JWT admin
-    const res = await fetch(`https://ma-boutique-backend-3.onrender.com/admin/upgrade/${userId}/reject`, {
+    const token = localStorage.getItem("authToken"); // JWT admin
+    const res = await fetch(`https://ma-boutique-backend-3.onrender.com/auth/upgrade/${userId}/reject`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -1157,26 +1163,30 @@ async function rejectUpgrade(userId) {
       }
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      alert("❌ Erreur lors du rejet : " + (data.error || "Impossible de rejeter."));
-      return;
+      const text = await res.text();
+      throw new Error(text || "Impossible de rejeter.");
     }
 
-    // Mettre à jour filteredSubscribers localement
+    const data = await res.json();
+
+    // Mettre à jour localement
     const index = filteredSubscribers.findIndex(sub => sub.id === userId);
     if (index !== -1) {
-      filteredSubscribers[index] = { ...filteredSubscribers[index], upgrade_status: "rejeté" };
+      filteredSubscribers[index] = { 
+        ...filteredSubscribers[index], 
+        upgrade_status: "rejeté" 
+      };
     }
 
     populateSubscribersGrid();
     alert("⚠️ La demande d'upgrade a été rejetée.");
   } catch (err) {
     console.error("❌ Erreur rejectUpgrade:", err);
-    alert("Erreur réseau.");
+    alert("❌ Erreur rejectUpgrade: " + err.message);
   }
 }
+
 
 
         // Populate transactions list
