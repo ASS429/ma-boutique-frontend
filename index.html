@@ -736,6 +736,34 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
 </div>
 
+<!-- Deuxième modal : Formulaire pour upgrade -->
+<div id="contactModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+  <div class="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center">
+    <h2 class="text-xl font-bold mb-4">🚀 Passer en Premium</h2>
+    <p class="text-gray-600 mb-4">
+      Remplissez vos informations pour compléter votre demande de passage en <strong>Premium</strong>.
+    </p>
+
+    <form id="upgradeForm" class="space-y-3">
+      <input type="text" id="payment_method" placeholder="Méthode de paiement (wave, orange, cash)" 
+             class="w-full border rounded-lg px-3 py-2" required>
+      <input type="number" id="amount" placeholder="Montant payé (€)" 
+             class="w-full border rounded-lg px-3 py-2" required>
+      <input type="date" id="expiration" 
+             class="w-full border rounded-lg px-3 py-2" required>
+
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold w-full">
+        Envoyer
+      </button>
+    </form>
+
+    <button onclick="closeContactModal()" 
+            class="mt-3 text-gray-500 hover:text-gray-800">
+      Annuler
+    </button>
+  </div>
+</div>
+
 
 <div id="rapportLoading" style="display:none;">Chargement des rapports...</div>
 
@@ -2762,7 +2790,60 @@ async function handleAddProductClick() {
 
 function closePremiumModal() {
   document.getElementById("premiumModal").classList.add("hidden");
+  document.getElementById("contactModal").classList.remove("hidden"); // ouvre le 2e modal immédiatement
 }
+
+function closeContactModal() {
+  document.getElementById("contactModal").classList.add("hidden");
+}
+
+// Soumission du formulaire Upgrade
+document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const payment_method = document.getElementById("payment_method").value;
+  const amount = document.getElementById("amount").value;
+  const expiration = document.getElementById("expiration").value;
+
+  try {
+    const token = localStorage.getItem("token"); // ⚡ Ton token JWT après login
+    const res = await fetch("https://ma-boutique-backend-3.onrender.com/auth/upgrade", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ payment_method, amount, expiration })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+  alert("Erreur: " + (data.error || "Impossible d’upgrader."));
+  return;
+}
+
+// Mettre à jour filteredSubscribers
+const updatedUser = data.user;
+const index = filteredSubscribers.findIndex(sub => sub.id === updatedUser.id);
+
+if (index !== -1) {
+  filteredSubscribers[index] = { ...filteredSubscribers[index], ...updatedUser };
+}
+
+// Rafraîchir la grille
+populateSubscribersGrid();
+
+alert("✅ Compte mis à jour en Premium !");
+closeContactModal();
+updateHeader();
+
+  } catch (err) {
+    console.error("❌ Erreur upgrade:", err);
+    alert("Erreur réseau.");
+  }
+});
+
 
 function showNotification(message, type = "info") {
   // Pour l’instant, on fait simple : un alert
