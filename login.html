@@ -13,7 +13,6 @@
 </style>
 </head>
 <body class="font-sans antialiased">
-  <!-- Overlay pour lisibilité sur l'image (réduit sur desktop) -->
   <div class="fixed inset-0 bg-black/30 md:bg-black/20 pointer-events-none"></div>
 
   <main class="relative w-full min-h-svh flex items-center justify-center md:justify-end p-4 md:pr-16" style="padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);">
@@ -42,21 +41,28 @@
 <script>
 const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 
-// ⚡ Vérification automatique si déjà connecté
+// 🔹 Fonction de redirection selon le rôle
+function redirectAccordingToRole(role) {
+  role = (role || "user").trim().toLowerCase();
+  if (role === "admin") {
+    window.location.replace('admin.html');
+  } else {
+    window.location.replace('index.html');
+  }
+}
+
+// 🔹 Vérification automatique si déjà connecté
 document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('authToken');
-  const role = localStorage.getItem('userRole')?.trim().toLowerCase();
-
-  if (token) {
-    if (role === "admin") {
-      window.location.replace('admin.html');
-    } else {
-      window.location.replace('index.html');
-    }
+  const role = localStorage.getItem('userRole');
+  console.log("Token existant :", token);
+  console.log("Rôle existant :", role);
+  if (token && role) {
+    redirectAccordingToRole(role);
   }
 });
 
-// Gestion du clic sur le bouton "Se connecter"
+// 🔹 Gestion du clic sur le bouton "Se connecter"
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const username = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
@@ -90,12 +96,8 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 
     alert('✅ Connexion réussie.');
 
-    // ✅ Redirection selon le rôle
-    if (userRole === "admin") {
-      window.location.replace('admin.html');
-    } else {
-      window.location.replace('index.html');
-    }
+    // 🔹 Redirection immédiate selon le rôle
+    redirectAccordingToRole(userRole);
 
   } catch (err) {
     console.error("Erreur lors de la requête:", err);
