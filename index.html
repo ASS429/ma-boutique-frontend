@@ -2813,7 +2813,7 @@ async function handleAddProductClick() {
       return;
     }
 
-    // Vérifier l’utilisateur
+    // 🔎 Vérifier l’utilisateur connecté
     const userRes = await fetch(`${API_BASE}/auth/users`, {
       headers: { "Authorization": `Bearer ${token}` }
     });
@@ -2828,13 +2828,13 @@ async function handleAddProductClick() {
       return;
     }
 
-    // Bloquer si demande en attente
+    // 🚫 Cas 1 : Demande en attente
     if (currentUser.upgrade_status === "en_attente") {
-      alert("⏳ Votre demande Premium est en attente, vous ne pouvez pas ajouter de produit.");
+      alert("⏳ Votre demande Premium est en attente de validation par l’administrateur.\nVous ne pouvez pas ajouter de produit pour le moment.");
       return;
     }
 
-    // Vérifier limite de produits si plan Free
+    // 🔄 Charger produits existants
     const prodRes = await fetch(`${API_BASE}/products`, {
       headers: { "Authorization": `Bearer ${token}` }
     });
@@ -2844,13 +2844,24 @@ async function handleAddProductClick() {
     const products = await prodRes.json();
     const userProducts = products.filter(p => p.user_id === userId);
 
-    if (currentUser.plan === "Free" && userProducts.length >= 5) {
-      // Ouvrir modal Premium
-      showModalById("premiumModal");
-    } else {
-      // Ouvrir modal ajout produit classique
-      showModal("ajoutProduit");
+    // Cas 2 : Plan Premium validé
+    if (currentUser.plan === "Premium" && currentUser.upgrade_status === "validé") {
+      showModal("ajoutProduit"); // ✅ pas de limite
+      return;
     }
+
+    // Cas 3 : Plan Free (ou upgrade rejeté => retour Free)
+    if (currentUser.plan === "Free" || currentUser.upgrade_status === "rejeté") {
+      if (userProducts.length >= 5) {
+        showModalById("premiumModal"); // 🔔 Proposer upgrade
+      } else {
+        showModal("ajoutProduit"); // ✅ peut ajouter (limite pas atteinte)
+      }
+      return;
+    }
+
+    // Sécurité : fallback
+    showModal("ajoutProduit");
 
   } catch (err) {
     console.error("Erreur handleAddProductClick:", err);
