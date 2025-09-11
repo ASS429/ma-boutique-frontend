@@ -2714,23 +2714,27 @@ function getCurrentUserId() {
   return id ? parseInt(id, 10) : null;
 }
 
-// ✅ Nouvelle fonction handleProductClick
+// ✅ Fonction handleProductClick corrigée
 async function handleProductClick(productId) {
   try {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      showNotification("Vous devez être connecté pour gérer vos produits", "error");
+      return;
+    }
+
     const userId = getCurrentUserId();
     if (!userId) {
-      showNotification("Vous devez être connecté pour gérer vos produits", "error");
+      showNotification("Utilisateur introuvable", "error");
       return;
     }
 
     // 1️⃣ Vérifier le statut de l’utilisateur
     const userRes = await fetch(`${API_BASE}/auth/users`, {
-      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    if (!userRes.ok) {
-      throw new Error("Erreur API Utilisateurs " + userRes.status);
-    }
+    if (!userRes.ok) throw new Error("Erreur API Utilisateurs " + userRes.status);
 
     const users = await userRes.json();
     const currentUser = users.find(u => u.id === userId);
@@ -2747,23 +2751,28 @@ async function handleProductClick(productId) {
 
     // 2️⃣ Charger le produit cliqué
     const prodRes = await fetch(`${API_BASE}/products/${productId}`, {
-      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+      headers: { "Authorization": `Bearer ${token}` }
     });
 
-    if (!prodRes.ok) {
-      throw new Error("Erreur API Produit " + prodRes.status);
-    }
+    if (!prodRes.ok) throw new Error("Erreur API Produit " + prodRes.status);
 
     const product = await prodRes.json();
 
-    // 3️⃣ Pré-remplir le formulaire d’édition
-    document.getElementById("editProductId").value = product.id;
-    document.getElementById("editName").value = product.name;
-    document.getElementById("editCategory").value = product.category_id || "";
-    document.getElementById("editScent").value = product.scent || "";
-    document.getElementById("editPrice").value = product.price;
-    document.getElementById("editStock").value = product.stock;
-    document.getElementById("editPriceAchat").value = product.price_achat;
+    // 3️⃣ Pré-remplir le formulaire d’édition si les éléments existent
+    const editFields = {
+      editProductId: product.id,
+      editName: product.name || "",
+      editCategory: product.category_id || "",
+      editScent: product.scent || "",
+      editPrice: product.price ?? 0,
+      editStock: product.stock ?? 0,
+      editPriceAchat: product.price_achat ?? 0
+    };
+
+    Object.keys(editFields).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = editFields[id];
+    });
 
     // 4️⃣ Ouvrir la modale d’édition
     showModal("editProduct");
