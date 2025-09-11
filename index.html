@@ -2806,7 +2806,7 @@ document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
   const expiration = document.getElementById("expiration").value;
 
   try {
-    const token = localStorage.getItem("token"); // ⚡ Ton token JWT après login
+    const token = localStorage.getItem("authToken"); // ⚡ Ton token JWT après login
     const res = await fetch("https://ma-boutique-backend-3.onrender.com/auth/upgrade", {
       method: "PUT",
       headers: {
