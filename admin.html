@@ -1155,38 +1155,54 @@ function filterSubscribers() {
             document.getElementById('newSubscriberPaymentMethod').value = 'wave';
         }
 
-        function addSubscriber() {
-            const name = document.getElementById('newSubscriberName').value;
-            const email = document.getElementById('newSubscriberEmail').value;
-            const phone = document.getElementById('newSubscriberPhone').value;
-            const plan = document.getElementById('newSubscriberPlan').value;
-            const paymentMethod = document.getElementById('newSubscriberPaymentMethod').value;
+        // ➕ Ajouter un abonné en BDD
+async function addSubscriber() {
+  const name = document.getElementById('newSubscriberName').value.trim();
+  const email = document.getElementById('newSubscriberEmail').value.trim();
+  const phone = document.getElementById('newSubscriberPhone').value.trim();
+  const plan = document.getElementById('newSubscriberPlan').value;
+  const paymentMethod = document.getElementById('newSubscriberPaymentMethod').value;
 
-            if (!name || !email || !phone) {
-                showNotification('Veuillez remplir tous les champs obligatoires', 'error');
-                return;
-            }
+  if (!name || !email || !phone) {
+    showNotification('Veuillez remplir tous les champs obligatoires', 'error');
+    return;
+  }
 
-            const newSubscriber = {
-                id: subscribers.length + 1,
-                name: name,
-                email: email,
-                phone: phone,
-                status: "Actif",
-                plan: plan,
-                expiration: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
-                avatar: name.split(' ').map(n => n[0]).join('').toUpperCase(),
-                paymentStatus: "ok",
-                lastPayment: new Date().toISOString().split('T')[0],
-                amount: plan === 'Premium' ? '29.99' : '0.00',
-                paymentMethod: paymentMethod
-            };
+  try {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: email,          // ⚡ On utilise l'email comme identifiant
+        password: "changeme123",  // ⚠️ Mot de passe par défaut (tu peux le générer ou demander)
+        company_name: name,       // Le "Nom complet" → stocké comme company_name
+        status: "Actif",
+        plan: plan,
+        payment_status: "À jour",
+        payment_method: paymentMethod,
+        expiration: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+        amount: plan === "Premium" ? 29.99 : 0.00
+      })
+    });
 
-            subscribers.push(newSubscriber);
-            populateSubscribersGrid();
-            closeAddSubscriberModal();
-            showNotification('Abonné ajouté avec succès', 'success');
-        }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
+
+    showNotification(`✅ Abonné ${data.user?.username || email} ajouté avec succès`, "success");
+
+    // 🔄 Recharge la liste depuis l’API
+    await loadSubscribers();
+
+    // Ferme la modal
+    closeAddSubscriberModal();
+  } catch (err) {
+    console.error("Erreur addSubscriber:", err);
+    showNotification("Erreur ajout: " + err.message, "error");
+  }
+}
 
         function openWithdrawModal() {
             document.getElementById('withdrawModal').classList.remove('hidden');
