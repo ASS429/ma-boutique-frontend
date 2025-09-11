@@ -109,11 +109,17 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         localStorage.setItem('userRole', userRole);
         localStorage.setItem('userId', data.user?.id);
 
-        alert('✅ Connexion réussie.');
         console.log("Rôle renvoyé par le backend :", data.user?.role, "=> normalisé :", userRole);
+        console.log("Role sauvegardé dans localStorage:", localStorage.getItem('userRole'));
 
-        // ✅ Redirection selon le rôle après un petit délai pour garantir l’écriture dans localStorage
-        setTimeout(() => redirectAccordingToRole(userRole), 100);
+        alert('✅ Connexion réussie.');
+
+        // ✅ Redirection selon le rôle après un petit délai
+        setTimeout(() => {
+            const roleStored = localStorage.getItem('userRole');
+            console.log("Rôle lu depuis localStorage juste avant redirection:", roleStored);
+            redirectAccordingToRole(roleStored);
+        }, 200);
 
     } catch (err) {
         console.error("Erreur lors de la requête :", err);
@@ -121,5 +127,6 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     }
 });
 </script>
+
 </body>
 </html>
