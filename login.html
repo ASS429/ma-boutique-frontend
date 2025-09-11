@@ -41,99 +41,86 @@
 <script>
 const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 
-// 🔹 Décode un token JWT pour extraire payload
-function parseJwt(token) {
-  try {
-    const base64 = token.split('.')[1];
-    return JSON.parse(atob(base64));
-  } catch (e) {
-    console.log("Erreur décodage JWT :", e);
-    return null;
-  }
-}
-
-// 🔹 Redirection selon le rôle
+// ⚡ Fonction de redirection selon le rôle
 function redirectAccordingToRole(role) {
-  console.log("Redirection appelée pour le rôle :", role);
-  role = (role || "user").trim().toLowerCase();
-  if (role === "admin") {
-    console.log("Redirection vers admin.html");
-    window.location.replace('admin.html');
-  } else {
-    console.log("Redirection vers index.html");
-    window.location.replace('index.html');
-  }
+    console.log("Redirection selon rôle :", role);
+    if (role === "admin") {
+        console.log("➡ Redirection vers admin.html");
+        window.location.replace('admin.html'); // plus fiable qu'href
+    } else {
+        console.log("➡ Redirection vers index.html");
+        window.location.replace('index.html');
+    }
 }
 
-// 🔹 Vérification automatique si déjà connecté et token valide
+// ⚡ Redirection automatique si déjà connecté
 document.addEventListener('DOMContentLoaded', () => {
-  const token = localStorage.getItem('authToken');
-  const role = localStorage.getItem('userRole');
+    const token = localStorage.getItem('authToken');
+    const role = localStorage.getItem('userRole')?.toLowerCase();
 
-  console.log("Au chargement - Token existant :", token);
-  console.log("Au chargement - Rôle existant :", role);
+    console.log("Au chargement - Token existant :", token);
+    console.log("Au chargement - Rôle existant :", role);
 
-  if (token && role) {
-    const payload = parseJwt(token);
-    const now = Math.floor(Date.now() / 1000);
-    console.log("Payload du token :", payload);
-    console.log("Time actuel (s) :", now);
-
-    if (payload && payload.exp && payload.exp > now) {
-      console.log("Token valide, redirection selon rôle :", role);
-      redirectAccordingToRole(role);
+    if (token && role) {
+        console.log("Token et rôle trouvés, redirection automatique");
+        redirectAccordingToRole(role);
     } else {
-      console.log("Token expiré ou invalide, suppression du localStorage");
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userId');
+        console.log("Pas de token ou rôle trouvé dans le localStorage");
     }
-  } else {
-    console.log("Pas de token ou rôle trouvé dans le localStorage");
-  }
 });
 
-// 🔹 Gestion du clic sur le bouton "Se connecter"
+// ⚡ Gestion du clic sur le bouton "Se connecter"
 document.getElementById('loginBtn').addEventListener('click', async () => {
-  const username = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
+    const username = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
 
-  if (!username || !password) {
-    alert('Veuillez remplir tous les champs.');
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-
-    console.log("Status HTTP :", res.status);
-    const data = await res.json();
-    console.log("Réponse JSON du backend :", data);
-
-    if (!res.ok) {
-      alert('❌ Erreur : ' + (data.error || "Identifiants incorrects"));
-      return;
+    if (!username || !password) {
+        alert('Veuillez remplir tous les champs.');
+        return;
     }
 
-    const userRole = (data.user?.role || "user").trim().toLowerCase();
-    console.log("Rôle renvoyé par le backend :", data.user?.role, "=> normalisé :", userRole);
+    try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
 
-    localStorage.setItem('authToken', data.token);
-    localStorage.setItem('userRole', userRole);
-    localStorage.setItem('userId', data.user?.id);
+        const rawText = await res.text();
+        console.log("Status HTTP :", res.status);
+        console.log("Réponse brute du serveur :", rawText);
 
-    alert('✅ Connexion réussie.');
-    redirectAccordingToRole(userRole);
+        if (rawText.trim().startsWith("<")) {
+            alert("❌ Le serveur a renvoyé du HTML au lieu d'un JSON (voir console).");
+            return;
+        }
 
-  } catch (err) {
-    console.error("Erreur lors de la requête:", err);
-    alert("❌ Erreur de connexion au serveur.");
-  }
+        const data = JSON.parse(rawText);
+        console.log("Réponse JSON du backend :", data);
+
+        if (!res.ok) {
+            alert('❌ Erreur : ' + (data.error || "Identifiants incorrects"));
+            return;
+        }
+
+        // ✅ Sauvegarde du token, rôle et ID
+        const userRole = (data.user?.role || "user").trim().toLowerCase();
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('userRole', userRole);
+        localStorage.setItem('userId', data.user?.id);
+
+        alert('✅ Connexion réussie.');
+        console.log("Rôle renvoyé par le backend :", data.user?.role, "=> normalisé :", userRole);
+
+        // ✅ Redirection selon le rôle
+        redirectAccordingToRole(userRole);
+
+    } catch (err) {
+        console.error("Erreur lors de la requête :", err);
+        alert("❌ Erreur de connexion au serveur.");
+    }
 });
 </script>
+
 </body>
 </html>
