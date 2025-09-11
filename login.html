@@ -46,7 +46,7 @@ function redirectAccordingToRole(role) {
     console.log("Redirection selon rôle :", role);
     if (role === "admin") {
         console.log("➡ Redirection vers admin.html");
-        window.location.replace('admin.html'); // plus fiable qu'href
+        window.location.replace('admin.html');
     } else {
         console.log("➡ Redirection vers index.html");
         window.location.replace('index.html');
@@ -112,8 +112,8 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         alert('✅ Connexion réussie.');
         console.log("Rôle renvoyé par le backend :", data.user?.role, "=> normalisé :", userRole);
 
-        // ✅ Redirection selon le rôle
-        redirectAccordingToRole(userRole);
+        // ✅ Redirection selon le rôle après un petit délai pour garantir l’écriture dans localStorage
+        setTimeout(() => redirectAccordingToRole(userRole), 100);
 
     } catch (err) {
         console.error("Erreur lors de la requête :", err);
@@ -121,6 +121,5 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     }
 });
 </script>
-
 </body>
 </html>
