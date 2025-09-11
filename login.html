@@ -42,7 +42,19 @@
 <script>
 const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 
-// ⚡ Ne videz plus le localStorage au chargement, sinon ça casse la redirection de l'admin
+// ⚡ Vérification automatique si déjà connecté
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('authToken');
+  const role = localStorage.getItem('userRole')?.trim().toLowerCase();
+
+  if (token) {
+    if (role === "admin") {
+      window.location.replace('admin.html');
+    } else {
+      window.location.replace('index.html');
+    }
+  }
+});
 
 // Gestion du clic sur le bouton "Se connecter"
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -61,16 +73,8 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
       body: JSON.stringify({ username, password })
     });
 
-    const rawText = await res.text();
+    const data = await res.json();
     console.log("Status HTTP:", res.status);
-    console.log("Réponse brute du serveur:", rawText);
-
-    if (rawText.trim().startsWith("<")) {
-      alert("❌ Le serveur a renvoyé du HTML au lieu d'un JSON (voir console).");
-      return;
-    }
-
-    const data = JSON.parse(rawText);
     console.log("Data JSON :", data);
 
     if (!res.ok) {
@@ -87,11 +91,10 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     alert('✅ Connexion réussie.');
 
     // ✅ Redirection selon le rôle
-    console.log("Redirection vers :", userRole === "admin" ? 'admin.html' : 'index.html');
     if (userRole === "admin") {
-      window.location.href = 'admin.html';
+      window.location.replace('admin.html');
     } else {
-      window.location.href = 'index.html';
+      window.location.replace('index.html');
     }
 
   } catch (err) {
@@ -100,7 +103,6 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
   }
 });
 </script>
-
 
 </body>
 </html>
