@@ -45,11 +45,15 @@ const API_BASE = "https://ma-boutique-backend-3.onrender.com";
 // Redirection automatique si déjà connecté
 document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('authToken');
-  const role = localStorage.getItem('userRole')?.toLowerCase(); // normalisation
+  const role = (localStorage.getItem('userRole') || "").trim().toLowerCase();
+  console.log("Token existant :", token);
+  console.log("Rôle existant :", role);
   if (token) {
     if (role === "admin") {
+      console.log("Redirection automatique vers admin.html");
       window.location.href = 'admin.html';
     } else {
+      console.log("Redirection automatique vers index.html");
       window.location.href = 'index.html';
     }
   }
@@ -72,8 +76,8 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
       body: JSON.stringify({ username, password })
     });
 
-    console.log("Status HTTP:", res.status);
     const rawText = await res.text();
+    console.log("Status HTTP:", res.status);
     console.log("Réponse brute du serveur:", rawText);
 
     if (rawText.trim().startsWith("<")) {
@@ -93,7 +97,11 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     localStorage.setItem('authToken', data.token);
 
     // ✅ Sauvegarde du rôle et de l'ID utilisateur
-    const userRole = data.user?.role?.toLowerCase() || "user"; 
+    const userRoleRaw = data.user?.role || "user"; 
+    const userRole = userRoleRaw.trim().toLowerCase(); // supprime espaces et normalise
+    console.log("Rôle renvoyé par le backend :", userRoleRaw);
+    console.log("Rôle après nettoyage :", userRole);
+
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('userId', data.user?.id);
 
@@ -101,8 +109,10 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 
     // ✅ Redirection selon le rôle
     if (userRole === "admin") {
+      console.log("Redirection vers admin.html");
       window.location.href = 'admin.html';
     } else {
+      console.log("Redirection vers index.html");
       window.location.href = 'index.html';
     }
 
@@ -112,6 +122,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
   }
 });
 </script>
+
 
 </body>
 </html>
