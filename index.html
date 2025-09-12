@@ -2828,9 +2828,9 @@ async function handleAddProductClick() {
       return;
     }
 
-    // 🚫 Cas 1 : Demande en attente
+    // 🚫 Cas 1 : Upgrade en attente = blocage total
     if (currentUser.upgrade_status === "en attente") {
-      alert("⏳ Votre demande Premium est en attente de validation par l’administrateur.\nVous ne pouvez pas ajouter de produit pour le moment.");
+      alert("⏳ Votre demande Premium est en attente de validation.\nVous ne pouvez pas ajouter de produit pour le moment.");
       return;
     }
 
@@ -2844,23 +2844,23 @@ async function handleAddProductClick() {
     const products = await prodRes.json();
     const userProducts = products.filter(p => p.user_id === userId);
 
-    // Cas 2 : Plan Premium validé
+    // ✅ Cas 2 : Premium validé
     if (currentUser.plan === "Premium" && currentUser.upgrade_status === "validé") {
-      showModal("ajoutProduit"); // ✅ pas de limite
+      showModal("ajoutProduit"); // pas de limite
       return;
     }
 
-    // Cas 3 : Plan Free (ou upgrade rejeté => retour Free)
+    // ✅ Cas 3 : Free ou rejeté => limite 5 produits
     if (currentUser.plan === "Free" || currentUser.upgrade_status === "rejeté") {
       if (userProducts.length >= 5) {
-        showModalById("premiumModal"); // 🔔 Proposer upgrade
+        showModalById("premiumModal"); // proposer upgrade
       } else {
-        showModal("ajoutProduit"); // ✅ peut ajouter (limite pas atteinte)
+        showModal("ajoutProduit"); // peut ajouter
       }
       return;
     }
 
-    // Sécurité : fallback
+    // 🔒 Sécurité : fallback
     showModal("ajoutProduit");
 
   } catch (err) {
