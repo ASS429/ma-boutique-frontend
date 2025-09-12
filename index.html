@@ -2829,7 +2829,7 @@ async function handleAddProductClick() {
     }
 
     // 🚫 Cas 1 : Demande en attente
-    if (currentUser.upgrade_status === "en_attente") {
+    if (currentUser.upgrade_status === "en attente") {
       alert("⏳ Votre demande Premium est en attente de validation par l’administrateur.\nVous ne pouvez pas ajouter de produit pour le moment.");
       return;
     }
