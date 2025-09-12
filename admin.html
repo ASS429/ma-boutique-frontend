@@ -153,7 +153,7 @@
                         </div>
                     </div>
                 </div>
-                <span class="text-gray-600">Marie Dubois</span>
+                <span class="text-gray-600">Arfang</span>
                 <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                     Déconnexion
                 </button>
@@ -1038,6 +1038,9 @@ function populateSubscribersGrid() {
   }
 
   filteredSubscribers.forEach((subscriber) => {
+    // ✅ normaliser le statut upgrade
+    const isPending = subscriber.upgrade_status === "en attente";
+
     // Badges
     const statusBadge = subscriber.status === "Actif"
       ? '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Actif</span>'
@@ -1051,8 +1054,7 @@ function populateSubscribersGrid() {
       ? '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">À jour</span>'
       : '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">En retard</span>';
 
-    // ✅ corrige la condition "en attente"
-    const upgradeBadge = subscriber.upgrade_status === "en attente"
+    const upgradeBadge = isPending
       ? '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">En attente</span>'
       : '';
 
@@ -1063,7 +1065,7 @@ function populateSubscribersGrid() {
     };
 
     // Actions admin pour upgrades en attente
-    const upgradeActions = subscriber.upgrade_status === "en attente"
+    const upgradeActions = isPending
       ? `<button onclick="approveUpgrade(${subscriber.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2 mb-2">Valider</button>
          <button onclick="rejectUpgrade(${subscriber.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mb-2">Rejeter</button>`
       : '';
@@ -1113,6 +1115,7 @@ function populateSubscribersGrid() {
     grid.appendChild(card);
   });
 }
+
 
 
 // ==========================
