@@ -413,91 +413,92 @@
             <!-- Accounts Section -->
             <div id="accounts" class="section">
                 <div class="mb-6">
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Mes Comptes</h1>
-                    <div class="flex items-center space-x-4 mt-4">
-                        <label class="text-sm font-medium text-gray-700">Période:</label>
-                        <select id="accountsPeriodFilter" onchange="filterAccounts()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white">
-                            <option value="all">Tous les montants</option>
-                            <option value="daily">Journalier</option>
-                            <option value="weekly">Hebdomadaire</option>
-                            <option value="monthly" selected>Mensuel</option>
-                        </select>
-                        <div id="accountsFilterInfo" class="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
-                            Montants mensuels affichés
-                        </div>
-                    </div>
-                </div>
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Mes Comptes</h1>
+    <div class="flex items-center space-x-4 mt-4">
+      <label class="text-sm font-medium text-gray-700">Période:</label>
+      <select id="accountsPeriodFilter" onchange="filterAccounts()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white">
+        <option value="all">Tous les montants</option>
+        <option value="daily">Journalier</option>
+        <option value="weekly">Hebdomadaire</option>
+        <option value="monthly" selected>Mensuel</option>
+      </select>
+      <div id="accountsFilterInfo" class="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
+        Montants mensuels affichés
+      </div>
+    </div>
+  </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Orange Money Account -->
-                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold">Orange Money</h3>
-                            <span class="text-2xl">🟠</span>
-                        </div>
-                        <p class="text-2xl font-bold mb-2">FCFA45,230.50</p>
-                        <p class="text-orange-200 text-sm mb-4">Compte principal</p>
-                        <div class="flex space-x-2">
-                            <button onclick="viewAccountDetails('orange')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
-                            <button onclick="transferFromAccount('orange')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Transférer</button>
-                        </div>
-                    </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Orange Money Account -->
+    <div id="accountOrange" class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Orange Money</h3>
+        <span class="text-2xl">🟠</span>
+      </div>
+      <p class="amount text-2xl font-bold mb-2">FCFA0</p>
+      <p class="text-orange-200 text-sm mb-4">Compte principal</p>
+      <div class="flex space-x-2">
+        <button onclick="viewAccountDetails('orange')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
+        <button onclick="transferFromAccount('orange')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Transférer</button>
+      </div>
+    </div>
 
-                    <!-- Wave Account -->
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold">Wave</h3>
-                            <span class="text-2xl">🌊</span>
-                        </div>
-                        <p class="text-2xl font-bold mb-2">FCFA32,180.75</p>
-                        <p class="text-blue-200 text-sm mb-4">Compte secondaire</p>
-                        <div class="flex space-x-2">
-                            <button onclick="viewAccountDetails('wave')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
-                            <button onclick="transferFromAccount('wave')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Transférer</button>
-                        </div>
-                    </div>
+    <!-- Wave Account -->
+    <div id="accountWave" class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Wave</h3>
+        <span class="text-2xl">🌊</span>
+      </div>
+      <p class="amount text-2xl font-bold mb-2">FCFA0</p>
+      <p class="text-blue-200 text-sm mb-4">Compte secondaire</p>
+      <div class="flex space-x-2">
+        <button onclick="viewAccountDetails('wave')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
+        <button onclick="transferFromAccount('wave')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Transférer</button>
+      </div>
+    </div>
 
-                    <!-- Cash Account -->
-                    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold">Espèces</h3>
-                            <span class="text-2xl">💵</span>
-                        </div>
-                        <p class="text-2xl font-bold mb-2">FCFA15,420.00</p>
-                        <p class="text-green-200 text-sm mb-4">Caisse physique</p>
-                        <div class="flex space-x-2">
-                            <button onclick="viewAccountDetails('cash')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
-                            <button onclick="addCashTransaction()" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Ajouter</button>
-                        </div>
-                    </div>
-                </div>
+    <!-- Cash Account -->
+    <div id="accountCash" class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Espèces</h3>
+        <span class="text-2xl">💵</span>
+      </div>
+      <p class="amount text-2xl font-bold mb-2">FCFA0</p>
+      <p class="text-green-200 text-sm mb-4">Caisse physique</p>
+      <div class="flex space-x-2">
+        <button onclick="viewAccountDetails('cash')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
+        <button onclick="addCashTransaction()" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Ajouter</button>
+      </div>
+    </div>
+  </div>
 
                 <!-- Account Summary -->
-                <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-800">Résumé des Comptes</h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div class="text-center">
-                                <p class="text-2xl font-bold text-gray-800">FCFA92,831.25</p>
-                                <p class="text-sm text-gray-500">Total Disponible</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-2xl font-bold text-green-600">FCFA8,450.00</p>
-                                <p class="text-sm text-gray-500">Entrées Aujourd'hui</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-2xl font-bold text-red-600">FCFA1,250.00</p>
-                                <p class="text-sm text-gray-500">Sorties Aujourd'hui</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-2xl font-bold text-violet-600">FCFA7,200.00</p>
-                                <p class="text-sm text-gray-500">Bénéfice Net</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-100">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <h2 class="text-lg font-semibold text-gray-800">Résumé des Comptes</h2>
+  </div>
+  <div class="p-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="text-center">
+        <p id="summaryTotal" class="text-2xl font-bold text-gray-800">FCFA0</p>
+        <p class="text-sm text-gray-500">Total Disponible</p>
+      </div>
+      <div class="text-center">
+        <p id="summaryIn" class="text-2xl font-bold text-green-600">FCFA0</p>
+        <p class="text-sm text-gray-500">Entrées Aujourd'hui</p>
+      </div>
+      <div class="text-center">
+        <p id="summaryOut" class="text-2xl font-bold text-red-600">FCFA0</p>
+        <p class="text-sm text-gray-500">Sorties Aujourd'hui</p>
+      </div>
+      <div class="text-center">
+        <p id="summaryNet" class="text-2xl font-bold text-violet-600">FCFA0</p>
+        <p class="text-sm text-gray-500">Bénéfice Net</p>
+      </div>
+    </div>
+  </div>
+</div>
+
             </div>
 
             <!-- Analytics Section -->
@@ -802,6 +803,7 @@
        const API_BASE = "https://ma-boutique-backend-3.onrender.com"; // adapte ton URL Render
 let subscribers = [];
 let filteredSubscribers = [];
+let subscriptionsData = [];
 
 async function loadSubscribers() {
   try {
@@ -823,6 +825,28 @@ async function loadSubscribers() {
   } catch (err) {
     console.error("❌ Impossible de charger les abonnés:", err);
     showNotification("Erreur lors du chargement des abonnés", "error");
+  }
+}
+
+// Charger les abonnements Premium depuis le backend
+async function loadSubscriptions() {
+  try {
+    const res = await fetch(API_BASE + "/subscriptions", {
+      headers: {
+        "Authorization": "Bearer " + localStorage.getItem("authToken")
+      }
+    });
+
+    if (!res.ok) throw new Error("Erreur API " + res.status);
+
+    subscriptionsData = await res.json();
+console.log("📦 Abonnements Premium récupérés:", subscriptionsData);
+
+populateTransactionsList(subscriptionsData);
+updateRevenueCards(subscriptionsData);
+  } catch (err) {
+    console.error("❌ Impossible de charger les abonnements:", err);
+    showNotification("Erreur lors du chargement des revenus Premium", "error");
   }
 }
 
@@ -877,6 +901,34 @@ async function loadSubscribers() {
             }
         }
 
+        function filterSubscriptionsByPeriod(period) {
+  const now = new Date();
+
+  return subscriptionsData.filter(sub => {
+    const paidAt = new Date(sub.paid_at);
+
+    switch (period) {
+      case "daily":
+        return paidAt.toDateString() === now.toDateString();
+
+      case "weekly": {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay()); 
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        return paidAt >= startOfWeek && paidAt <= endOfWeek;
+      }
+
+      case "monthly":
+        return paidAt.getMonth() === now.getMonth() && paidAt.getFullYear() === now.getFullYear();
+
+      case "all":
+      default:
+        return true;
+    }
+  });
+}
+
         // Filter subscribers function
 function filterSubscribers() {
   const searchTerm = document.getElementById('subscriberSearch').value.toLowerCase();
@@ -905,69 +957,127 @@ function filterSubscribers() {
 
         // Filter revenue function
         function filterRevenue() {
-            const period = document.getElementById('revenuePeriodFilter').value;
-            const info = document.getElementById('revenueFilterInfo');
-            
-            const periodTexts = {
-                'all': 'Tous les revenus affichés',
-                'daily': 'Revenus journaliers affichés',
-                'weekly': 'Revenus hebdomadaires affichés',
-                'monthly': 'Revenus mensuels affichés'
-            };
-            
-            info.textContent = periodTexts[period];
-            
-            // Update revenue display based on period
-            updateRevenueDisplay(period);
-        }
+  const period = document.getElementById('revenuePeriodFilter').value;
+  const info = document.getElementById('revenueFilterInfo');
+
+  const periodTexts = {
+    'all': 'Tous les revenus affichés',
+    'daily': 'Revenus journaliers affichés',
+    'weekly': 'Revenus hebdomadaires affichés',
+    'monthly': 'Revenus mensuels affichés'
+  };
+
+  info.textContent = periodTexts[period];
+
+  // Met à jour selon la période choisie
+  updateRevenueDisplay(period);
+}
+
 
         // Filter accounts function
         function filterAccounts() {
-            const period = document.getElementById('accountsPeriodFilter').value;
-            const info = document.getElementById('accountsFilterInfo');
-            
-            const periodTexts = {
-                'all': 'Tous les montants affichés',
-                'daily': 'Montants journaliers affichés',
-                'weekly': 'Montants hebdomadaires affichés',
-                'monthly': 'Montants mensuels affichés'
-            };
-            
-            info.textContent = periodTexts[period];
-            
-            // Update accounts display based on period
-            updateAccountsDisplay(period);
-        }
+  const period = document.getElementById('accountsPeriodFilter').value;
+  const info = document.getElementById('accountsFilterInfo');
+
+  const periodTexts = {
+    'all': 'Tous les montants affichés',
+    'daily': 'Montants journaliers affichés',
+    'weekly': 'Montants hebdomadaires affichés',
+    'monthly': 'Montants mensuels affichés'
+  };
+
+  info.textContent = periodTexts[period];
+
+  // 🔄 Met à jour l'affichage
+  updateAccountsDisplay(period);
+}
 
         // Update revenue display
         function updateRevenueDisplay(period) {
-            const amounts = {
-                'daily': { main: 'FCFA4,230.00', monthly: 'FCFA1,450.00', pending: 'FCFA320.00' },
-                'weekly': { main: 'FCFA28,450.00', monthly: 'FCFA9,850.00', pending: 'FCFA1,200.00' },
-                'monthly': { main: 'FCFA127,450.00', monthly: 'FCFA45,230.00', pending: 'FCFA8,750.00' },
-                'all': { main: 'FCFA542,180.00', monthly: 'FCFA198,450.00', pending: 'FCFA25,300.00' }
-            };
-            
-            const data = amounts[period];
-            document.querySelector('.bg-gradient-to-r.from-violet-500 .text-3xl').textContent = data.main;
-            document.querySelector('.bg-gradient-to-r.from-green-500 .text-3xl').textContent = data.monthly;
-            document.querySelector('.bg-gradient-to-r.from-orange-500 .text-3xl').textContent = data.pending;
-        }
+  const filtered = filterSubscriptionsByPeriod(period);
+
+  let total = 0, monthly = 0, pending = 0;
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+
+  filtered.forEach(sub => {
+    total += parseFloat(sub.amount);
+
+    if (sub.status === "en_attente") {
+      pending += parseFloat(sub.amount);
+    }
+
+    const paidAt = new Date(sub.paid_at);
+    if (paidAt.getMonth() === month && paidAt.getFullYear() === year) {
+      monthly += parseFloat(sub.amount);
+    }
+  });
+
+  // Mise à jour des cartes HTML
+  document.querySelector('.bg-gradient-to-r.from-violet-500 .text-3xl').textContent = `FCFA${total.toLocaleString()}`;
+  document.querySelector('.bg-gradient-to-r.from-green-500 .text-3xl').textContent = `FCFA${monthly.toLocaleString()}`;
+  document.querySelector('.bg-gradient-to-r.from-orange-500 .text-3xl').textContent = `FCFA${pending.toLocaleString()}`;
+
+  // Et mise à jour de la liste des transactions
+  populateTransactionsList(filtered);
+}
+
+
+        function updateRevenueCards(subscriptions) {
+  let total = 0, pending = 0, monthly = 0;
+
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+
+  subscriptions.forEach(sub => {
+    total += parseFloat(sub.amount);
+
+    if (sub.status === "en_attente") {
+      pending += parseFloat(sub.amount);
+    }
+
+    const paidAt = new Date(sub.paid_at);
+    if (paidAt.getMonth() === month && paidAt.getFullYear() === year) {
+      monthly += parseFloat(sub.amount);
+    }
+  });
+
+  // Mets à jour les cartes HTML
+  document.querySelector("#revenue .grid .bg-gradient-to-r.from-violet-500 p.text-3xl").textContent = `FCFA${total.toLocaleString()}`;
+  document.querySelector("#revenue .grid .bg-gradient-to-r.from-green-500 p.text-3xl").textContent = `FCFA${monthly.toLocaleString()}`;
+  document.querySelector("#revenue .grid .bg-gradient-to-r.from-orange-500 p.text-3xl").textContent = `FCFA${pending.toLocaleString()}`;
+}
+
 
         // Update accounts display
         function updateAccountsDisplay(period) {
-            const amounts = {
-                'daily': { orange: 'FCFA1,230.50', wave: 'FCFA890.75', cash: 'FCFA420.00' },
-                'weekly': { orange: 'FCFA8,450.50', wave: 'FCFA6,180.75', cash: 'FCFA2,840.00' },
-                'monthly': { orange: 'FCFA45,230.50', wave: 'FCFA32,180.75', cash: 'FCFA15,420.00' },
-                'all': { orange: 'FCFA198,450.50', wave: 'FCFA145,680.75', cash: 'FCFA67,890.00' }
-            };
-            
-            const data = amounts[period];
-            document.querySelectorAll('.bg-gradient-to-r')[3].querySelector('.text-2xl').textContent = data.orange;
-            document.querySelectorAll('.bg-gradient-to-r')[4].querySelector('.text-2xl').textContent = data.wave;
-            document.querySelectorAll('.bg-gradient-to-r')[5].querySelector('.text-2xl').textContent = data.cash;
-        }
+  const filtered = filterSubscriptionsByPeriod(period);
+
+  // Calcul des montants par méthode
+  const totals = {
+    wave: 0,
+    orange: 0,
+    cash: 0
+  };
+
+  filtered.forEach(sub => {
+    if (sub.payment_method && totals.hasOwnProperty(sub.payment_method)) {
+      totals[sub.payment_method] += parseFloat(sub.amount);
+    }
+  });
+
+  // Mise à jour du DOM (exemple : 3 cartes comptes)
+  const waveEl = document.querySelector("#accountWave .amount");
+  const orangeEl = document.querySelector("#accountOrange .amount");
+  const cashEl = document.querySelector("#accountCash .amount");
+
+  if (waveEl) waveEl.textContent = `FCFA${totals.wave.toLocaleString()}`;
+  if (orangeEl) orangeEl.textContent = `FCFA${totals.orange.toLocaleString()}`;
+  if (cashEl) cashEl.textContent = `FCFA${totals.cash.toLocaleString()}`;
+}
+
 
         // Alert functions
         function closeAlert(alertId) {
@@ -1279,39 +1389,33 @@ function generateSubscriberCardHTML(subscriber) {
 }
 
         // Populate transactions list
-        function populateTransactionsList() {
-            const list = document.getElementById('transactionsList');
-            list.innerHTML = '';
+function populateTransactionsList(subscriptions) {
+  const container = document.getElementById("transactionsList");
+  container.innerHTML = "";
 
-            transactions.forEach(transaction => {
-                const methodIcons = {
-                    'wave': '🌊',
-                    'orange': '🟠',
-                    'cash': '💵',
-                    'main': '💳'
-                };
+  if (!subscriptions.length) {
+    container.innerHTML = `<p class="p-4 text-gray-500">Aucune transaction trouvée</p>`;
+    return;
+  }
 
-                const div = document.createElement('div');
-                div.className = `transaction-item ${transaction.type} p-4 hover:bg-gray-50`;
-                div.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'} rounded-full flex items-center justify-center">
-                                <span class="${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}">${transaction.type === 'income' ? '💰' : '💸'}</span>
-                            </div>
-                            <div>
-                                <p class="font-medium text-gray-800">${transaction.description}</p>
-                                <p class="text-sm text-gray-500">${transaction.date} • ${methodIcons[transaction.method]} ${transaction.method.charAt(0).toUpperCase() + transaction.method.slice(1)}</p>
-                            </div>
-                        </div>
-                        <span class="${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'} font-semibold">
-                            ${transaction.type === 'income' ? '+' : ''}FCFA${Math.abs(transaction.amount).toFixed(2)}
-                        </span>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        }
+  subscriptions.forEach(sub => {
+    const row = document.createElement("div");
+    row.className = "flex justify-between items-center px-6 py-3 hover:bg-gray-50";
+
+    row.innerHTML = `
+      <div>
+        <p class="font-medium text-gray-800">Paiement Premium - ${sub.username}</p>
+        <p class="text-sm text-gray-500">${sub.payment_method.toUpperCase()} | ${new Date(sub.paid_at).toLocaleString()}</p>
+      </div>
+      <div class="text-right">
+        <p class="font-bold text-green-600">+ FCFA${sub.amount}</p>
+        <p class="text-xs text-gray-500">Expire le ${new Date(sub.expiration).toLocaleDateString()}</p>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
 
         // Modal functions
         function openAddSubscriberModal() {
@@ -1598,6 +1702,7 @@ async function addSubscriber() {
             populateTransactionsList();
             initCharts();
             loadSubscribers();
+            loadSubscriptions(); // ✅ revenus premium
             
             // Initialize sidebar state
             const mainContent = document.getElementById('mainContent');
