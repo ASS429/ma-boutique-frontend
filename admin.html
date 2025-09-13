@@ -443,7 +443,7 @@
                         <p class="text-orange-200 text-sm mb-4">Compte principal</p>
                         <div class="flex space-x-2">
                             <button onclick="viewAccountDetails('orange')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
-                            <button onclick="transferFromAccount('orange')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Transférer</button>
+                            <button onclick="openTransferModal('orange')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Transférer</button>
                         </div>
                     </div>
 
@@ -457,7 +457,7 @@
                         <p class="text-blue-200 text-sm mb-4">Compte secondaire</p>
                         <div class="flex space-x-2">
                             <button onclick="viewAccountDetails('wave')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
-                            <button onclick="transferFromAccount('wave')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Transférer</button>
+                            <button onclick="openTransferModal('wave')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Transférer</button>
                         </div>
                     </div>
 
@@ -471,7 +471,7 @@
                         <p class="text-green-200 text-sm mb-4">Caisse physique</p>
                         <div class="flex space-x-2">
                             <button onclick="viewAccountDetails('cash')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
-                            <button onclick="addCashTransaction()" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Ajouter</button>
+                            <button onclick="openTransferModal()" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Ajouter</button>
                         </div>
                     </div>
                 </div>
@@ -793,6 +793,17 @@
             </div>
         </div>
     </div>
+
+      <!-- Modal Détails Compte -->
+<div id="accountDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+  <div class="bg-white rounded-2xl shadow-lg p-6 max-w-lg w-full">
+    <h2 id="accountDetailsTitle" class="text-xl font-bold mb-4">Détails</h2>
+    <div id="accountTransactions" class="max-h-80 overflow-y-auto space-y-2"></div>
+    <div class="mt-3 text-center">
+      <button onclick="hideModal('accountDetailsModal')" class="text-gray-500">Fermer</button>
+    </div>
+  </div>
+</div>
 
 
     <script>
@@ -1557,46 +1568,43 @@ async function showTransactionHistory() {
   }
 }
 
-        function viewAccountDetails(account) {
-            showNotification(`Détails du compte ${account} affichés`, 'info');
-        }
+        // --- Bouton Détails ---
+async function viewAccountDetails(account) {
+  try {
+    const token = localStorage.getItem("authToken");
+    const res = await fetch(`${API_BASE}/admin-stats/transactions`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const transactions = await res.json();
 
-        function transferFromAccount(account) {
-            showNotification(`Transfert depuis ${account} initié`, 'info');
-        }
+    // Filtrer selon le moyen de paiement
+    const filtered = transactions.filter(t => t.payment_method === account);
 
-        function addCashTransaction() {
-            showNotification('Ajout de transaction en espèces', 'info');
-        }
+    document.getElementById("accountDetailsTitle").textContent = `Détails - ${account}`;
+    const container = document.getElementById("accountTransactions");
+    container.innerHTML = "";
 
-        // Action functions
-        function blockUser(index) {
-            subscribers[index].status = 'Bloqué';
-            filteredSubscribers = [...subscribers];
-            filterSubscribers();
-            showNotification('Utilisateur bloqué avec succès', 'success');
-        }
+    if (filtered.length === 0) {
+      container.innerHTML = "<p class='text-gray-500 text-sm'>Aucune transaction trouvée.</p>";
+    } else {
+      filtered.forEach(tx => {
+        const div = document.createElement("div");
+        div.className = "flex justify-between border-b pb-2 text-sm";
+        div.innerHTML = `
+          <span>${tx.username || "Utilisateur"}</span>
+          <span class="font-bold">FCFA${tx.amount}</span>
+          <span class="text-gray-500">${tx.expiration?.split("T")[0] || ""}</span>
+        `;
+        container.appendChild(div);
+      });
+    }
 
-        function activateUser(index) {
-            subscribers[index].status = 'Actif';
-            subscribers[index].paymentStatus = 'ok';
-            filteredSubscribers = [...subscribers];
-            filterSubscribers();
-            showNotification('Utilisateur réactivé avec succès', 'success');
-        }
-
-        function deleteUser(index) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-                subscribers.splice(index, 1);
-                filteredSubscribers = [...subscribers];
-                filterSubscribers();
-                showNotification('Utilisateur supprimé avec succès', 'error');
-            }
-        }
-
-        function sendReminder(index) {
-            showNotification(`Rappel envoyé à ${subscribers[index].name}`, 'info');
-        }
+    showModal("accountDetailsModal");
+  } catch (err) {
+    console.error("❌ Erreur viewAccountDetails:", err);
+    alert("Impossible de charger les transactions.");
+  }
+}
 
         function toggleNotifications() {
             const panel = document.getElementById('notificationPanel');
@@ -1979,20 +1987,39 @@ async function submitWithdraw() {
   }
 }
 
-// 🔄 Soumettre un transfert (simulation interne pour admin)
-function submitTransfer() {
+// --- Soumettre un transfert interne vers le backend ---
+async function submitTransfer() {
   const from = document.getElementById("fromAccount").value;
   const to = document.getElementById("toAccount").value;
-  const amount = document.getElementById("transferAmount").value;
+  const amount = parseFloat(document.getElementById("transferAmount").value);
 
-  if (!amount || from === to) {
+  if (!amount || amount <= 0 || from === to) {
     alert("⚠️ Choisissez deux comptes différents et un montant valide.");
     return;
   }
 
-  showNotification(`✅ Transfert de FCFA${amount} de ${from} vers ${to} effectué (simulation).`, "success");
-  document.getElementById("transferModal").remove();
+  try {
+    const token = localStorage.getItem("authToken");
+    const res = await fetch(`${API_BASE}/admin-transfers`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ from, to, amount })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    alert(`✅ Transfert de FCFA${amount} de ${from} vers ${to} effectué !`);
+    document.getElementById("transferModal").remove(); // ferme ton modal dynamique
+    loadAdminAccounts(); // 🔄 recharge les soldes
+  } catch (err) {
+    console.error("❌ Erreur transfert:", err);
+    alert("Erreur transfert: " + err.message);
+  }
 }
+
 
 async function loadAdminAccounts() {
   try {
@@ -2021,6 +2048,8 @@ async function loadAdminAccounts() {
 
 // Charger au démarrage
 document.addEventListener("DOMContentLoaded", loadAdminAccounts);
+
+
     </script>
 
 </html>
