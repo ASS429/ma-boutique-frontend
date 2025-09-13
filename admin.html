@@ -1837,9 +1837,11 @@ function closeWithdrawModal() {
 }
 
 async function submitWithdraw() {
+    console.log("✅ Fonction submitWithdraw déclenchée !");
   const amount = parseFloat(document.getElementById("withdrawAmount").value); // ✅ cast en number
   const method = document.getElementById("withdrawMethod").value;
   const token = localStorage.getItem("authToken");
+  console.log("Valeurs saisies:", { amount, method, token });
 
   if (!amount || amount <= 0) {
     alert("Veuillez entrer un montant valide");
