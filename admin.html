@@ -439,7 +439,7 @@
                             <h3 class="text-lg font-semibold">Orange Money</h3>
                             <span class="text-2xl">🟠</span>
                         </div>
-                        <p class="text-2xl font-bold mb-2">FCFA45,230.50</p>
+                        <p id="orangeBalance" class="text-2xl font-bold mb-2">FCFA0</p>
                         <p class="text-orange-200 text-sm mb-4">Compte principal</p>
                         <div class="flex space-x-2">
                             <button onclick="viewAccountDetails('orange')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
@@ -453,7 +453,7 @@
                             <h3 class="text-lg font-semibold">Wave</h3>
                             <span class="text-2xl">🌊</span>
                         </div>
-                        <p class="text-2xl font-bold mb-2">FCFA32,180.75</p>
+                        <p id="waveBalance" class="text-2xl font-bold mb-2">FCFA0</p>
                         <p class="text-blue-200 text-sm mb-4">Compte secondaire</p>
                         <div class="flex space-x-2">
                             <button onclick="viewAccountDetails('wave')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
@@ -467,7 +467,7 @@
                             <h3 class="text-lg font-semibold">Espèces</h3>
                             <span class="text-2xl">💵</span>
                         </div>
-                        <p class="text-2xl font-bold mb-2">FCFA15,420.00</p>
+                        <p id="cashBalance" class="text-2xl font-bold mb-2">FCFA0</p>
                         <p class="text-green-200 text-sm mb-4">Caisse physique</p>
                         <div class="flex space-x-2">
                             <button onclick="viewAccountDetails('cash')" class="bg-white bg-opacity-20 px-3 py-1 rounded text-sm">Détails</button>
@@ -484,19 +484,19 @@
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div class="text-center">
-                                <p class="text-2xl font-bold text-gray-800">FCFA92,831.25</p>
+                                <p id="totalDisponible" class="text-2xl font-bold text-gray-800">FCFA0</p>
                                 <p class="text-sm text-gray-500">Total Disponible</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-2xl font-bold text-green-600">FCFA8,450.00</p>
+                                <p id="entriesToday" class="text-2xl font-bold text-green-600">FCFA0</p>
                                 <p class="text-sm text-gray-500">Entrées Aujourd'hui</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-2xl font-bold text-red-600">FCFA1,250.00</p>
+                                <p id="withdrawalsToday" class="text-2xl font-bold text-red-600">FCFA0</p>
                                 <p class="text-sm text-gray-500">Sorties Aujourd'hui</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-2xl font-bold text-violet-600">FCFA7,200.00</p>
+                                <p id="netProfit" class="text-2xl font-bold text-violet-600">FCFA0</p>
                                 <p class="text-sm text-gray-500">Bénéfice Net</p>
                             </div>
                         </div>
@@ -1993,6 +1993,34 @@ function submitTransfer() {
   showNotification(`✅ Transfert de FCFA${amount} de ${from} vers ${to} effectué (simulation).`, "success");
   document.getElementById("transferModal").remove();
 }
+
+async function loadAdminAccounts() {
+  try {
+    const res = await fetch(API_BASE + "/admin-stats/accounts", {
+      headers: { "Authorization": "Bearer " + localStorage.getItem("authToken") }
+    });
+
+    if (!res.ok) throw new Error("Erreur API " + res.status);
+    const data = await res.json();
+
+    // Mettre à jour les cartes
+    document.querySelector("#orangeBalance").textContent = `FCFA${data.accounts.orange || 0}`;
+    document.querySelector("#waveBalance").textContent = `FCFA${data.accounts.wave || 0}`;
+    document.querySelector("#cashBalance").textContent = `FCFA${data.accounts.cash || 0}`;
+
+    // Résumé des comptes
+    document.querySelector("#totalDisponible").textContent = `FCFA${data.total}`;
+    document.querySelector("#entriesToday").textContent = `FCFA${data.entries}`;
+    document.querySelector("#withdrawalsToday").textContent = `FCFA${data.withdrawals}`;
+    document.querySelector("#netProfit").textContent = `FCFA${data.net}`;
+  } catch (err) {
+    console.error("❌ Impossible de charger les comptes:", err);
+    showNotification("Erreur lors du chargement des comptes", "error");
+  }
+}
+
+// Charger au démarrage
+document.addEventListener("DOMContentLoaded", loadAdminAccounts);
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ca510932392575',t:'MTc1NzQ1ODk4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+
 </html>
