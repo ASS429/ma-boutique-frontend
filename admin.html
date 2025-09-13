@@ -799,6 +799,28 @@
         </div>
     </div>
 
+    <!-- Withdraw Modal -->
+<div id="withdrawModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md">
+    <h2 class="text-lg font-semibold mb-4">Demande de Retrait</h2>
+    <label class="block mb-2 text-sm text-gray-600">Montant (FCFA)</label>
+    <input id="withdrawAmount" type="number" class="w-full px-4 py-2 border rounded-lg mb-4" placeholder="Ex: 5000" />
+
+    <label class="block mb-2 text-sm text-gray-600">Méthode</label>
+    <select id="withdrawMethod" class="w-full px-4 py-2 border rounded-lg mb-4">
+      <option value="wave">🌊 Wave</option>
+      <option value="orange">🟠 Orange</option>
+      <option value="cash">💵 Cash</option>
+    </select>
+
+    <div class="flex justify-end space-x-2">
+      <button onclick="closeWithdrawModal()" class="px-4 py-2 bg-gray-300 rounded-lg">Annuler</button>
+      <button onclick="submitWithdraw()" class="px-4 py-2 bg-violet-600 text-white rounded-lg">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+
     <script>
        const API_BASE = "https://ma-boutique-backend-3.onrender.com"; // adapte ton URL Render
 let subscribers = [];
@@ -1804,6 +1826,47 @@ async function sendReminder(id) {
     alert("Impossible d’envoyer le rappel.");
   }
 }
+
+// ---------- Admin Withdrawals ----------
+function openWithdrawModal() {
+  document.getElementById("withdrawModal").classList.remove("hidden");
+}
+
+function closeWithdrawModal() {
+  document.getElementById("withdrawModal").classList.add("hidden");
+}
+
+async function submitWithdraw() {
+  const amount = document.getElementById("withdrawAmount").value;
+  const method = document.getElementById("withdrawMethod").value;
+  const token = localStorage.getItem("authToken");
+
+  if (!amount || amount <= 0) {
+    alert("Veuillez entrer un montant valide");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/admin-withdrawals`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ amount, method })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
+
+    showNotification("✅ Demande de retrait enregistrée", "success");
+    closeWithdrawModal();
+  } catch (err) {
+    console.error("Erreur submitWithdraw:", err);
+    showNotification("❌ Erreur lors du retrait", "error");
+  }
+}
+
 
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ca510932392575',t:'MTc1NzQ1ODk4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
