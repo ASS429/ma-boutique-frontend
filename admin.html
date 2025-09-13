@@ -1837,7 +1837,7 @@ function closeWithdrawModal() {
 }
 
 async function submitWithdraw() {
-  const amount = document.getElementById("withdrawAmount").value;
+  const amount = parseFloat(document.getElementById("withdrawAmount").value); // ✅ cast en number
   const method = document.getElementById("withdrawMethod").value;
   const token = localStorage.getItem("authToken");
 
@@ -1847,6 +1847,8 @@ async function submitWithdraw() {
   }
 
   try {
+    console.log("📤 Envoi retrait:", { amount, method }); // 👀 log frontend
+
     const res = await fetch(`${API_BASE}/admin-withdrawals`, {
       method: "POST",
       headers: {
@@ -1857,12 +1859,18 @@ async function submitWithdraw() {
     });
 
     const data = await res.json();
+    console.log("📥 Réponse API retrait:", data); // 👀 log réponse
+
     if (!res.ok) throw new Error(data.error || "Erreur API");
 
     showNotification("✅ Demande de retrait enregistrée", "success");
     closeWithdrawModal();
+
+    // (Optionnel) Rafraîchir la liste des retraits
+    // await loadWithdrawals();
+
   } catch (err) {
-    console.error("Erreur submitWithdraw:", err);
+    console.error("❌ Erreur submitWithdraw:", err);
     showNotification("❌ Erreur lors du retrait", "error");
   }
 }
