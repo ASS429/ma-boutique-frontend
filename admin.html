@@ -2515,14 +2515,28 @@ async function loadDashboardOverview() {
     document.getElementById("revenues").textContent = `FCFA${data.revenues}`;
     document.getElementById("pendingSubs").textContent = data.pending;
 
-    // (Optionnel : calcul croissance % vs mois dernier si tu veux l'ajouter)
-    // Ici tu pourrais appeler une nouvelle route backend /overview/previousMonth
-    // et calculer les %.
+    // ✅ Croissance % vs mois précédent
+    function calcGrowth(current, prev) {
+      if (prev === 0) return "+0%";
+      const pct = ((current - prev) / prev * 100).toFixed(1);
+      return (pct >= 0 ? "+" : "") + pct + "%";
+    }
+
+    document.getElementById("totalUsersGrowth").textContent =
+      calcGrowth(data.growth.totalUsers.current, data.growth.totalUsers.previous);
+
+    document.getElementById("activePremiumGrowth").textContent =
+      calcGrowth(data.growth.activePremium.current, data.growth.activePremium.previous);
+
+    document.getElementById("revenuesGrowth").textContent =
+      calcGrowth(data.growth.revenues.current, data.growth.revenues.previous);
+
   } catch (err) {
     console.error("❌ Erreur loadDashboardOverview:", err);
     showNotification("Erreur chargement dashboard", "error");
   }
 }
+
 
 // Auto-chargement au démarrage
 document.addEventListener("DOMContentLoaded", () => {
