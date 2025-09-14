@@ -994,7 +994,6 @@ function filterSubscribers() {
             document.querySelectorAll('.bg-gradient-to-r')[5].querySelector('.text-2xl').textContent = data.cash;
         }
 
-        // Alert functions
         // Ignorer une alerte
 async function ignoreAlert(alertId) {
   const token = localStorage.getItem("authToken");
@@ -1003,9 +1002,15 @@ async function ignoreAlert(alertId) {
       method: "PATCH",
       headers: { "Authorization": `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error("Erreur API");
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
+
+    // Assombrir l’alerte
     document.getElementById(alertId).style.opacity = "0.5";
-    showNotification("✅ Alerte ignorée", "info");
+
+    showNotification(data.message || "✅ Alerte ignorée", "info");
+    await loadAlerts(); // recharge la liste pour bien garder cohérent
   } catch (err) {
     console.error("Erreur ignoreAlert:", err);
     showNotification("❌ Impossible d’ignorer l’alerte", "error");
@@ -1020,11 +1025,18 @@ async function closeAlert(alertId) {
       method: "DELETE",
       headers: { "Authorization": `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error("Erreur API");
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
+
+    // Supprimer du DOM
     document.getElementById(alertId).remove();
+
     alertCount--;
     updateAlertBadge();
-    showNotification("✅ Alerte fermée", "success");
+
+    showNotification(data.message || "✅ Alerte fermée", "success");
+    await loadAlerts(); // recharge pour rester synchro
   } catch (err) {
     console.error("Erreur closeAlert:", err);
     showNotification("❌ Impossible de fermer l’alerte", "error");
@@ -2596,7 +2608,7 @@ async function loadAlerts() {
           <div class="flex items-center space-x-3">
             <div class="w-2 h-2 ${color} rounded-full"></div>
             <div class="flex-1">
-              <p class="text-sm font-medium text-gray-800">${a.name}</p>
+              <p class="text-sm font-medium text-gray-800">${a.username || "Utilisateur"}</p>
               <p class="text-xs text-gray-500">${a.message}</p>
             </div>
           </div>
@@ -2646,7 +2658,6 @@ window.addEventListener("DOMContentLoaded", loadAlerts);
     </script>
 
 </html>
-
 
 
 
