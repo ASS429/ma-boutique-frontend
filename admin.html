@@ -93,6 +93,12 @@
                         <span class="text-xl">🔔</span>
                         <span id="alertBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center alert-badge">3</span>
                     </button>
+                    <div class="p-2 border-t border-gray-200 text-center">
+  <button onclick="refreshAlerts()" class="text-sm text-violet-600 hover:underline">
+    🔄 Rafraîchir
+  </button>
+</div>
+
                     <div id="notificationPanel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                         <div class="p-4 border-b border-gray-200">
                             <h3 class="font-semibold text-gray-800">Alertes de Paiement</h3>
@@ -2608,8 +2614,29 @@ function toggleNotifications() {
 
 // Charger au démarrage
 window.addEventListener("DOMContentLoaded", loadAlerts);
+
+        async function refreshAlerts() {
+  const token = localStorage.getItem("authToken");
+  try {
+    const res = await fetch(`${API_BASE}/alerts/refresh`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
+
+    showNotification(data.message, "success");
+    await loadAlerts(); // recharger après recalcul
+  } catch (err) {
+    console.error("Erreur refreshAlerts:", err);
+    showNotification("❌ Impossible de rafraîchir les alertes", "error");
+  }
+}
+
     </script>
 
 </html>
+
 
 
