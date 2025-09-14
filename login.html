@@ -29,6 +29,16 @@
       <label class="block text-sm font-medium text-gray-700 mb-1" for="password">Mot de passe</label>
       <input type="password" id="password" placeholder="••••••••" class="w-full p-3 border border-gray-200 rounded-xl mb-5 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition bg-white/90">
 
+      <div id="twofaSection" class="hidden mb-4">
+  <label class="block text-sm font-medium text-gray-700 mb-1" for="twofaCode">Code 2FA</label>
+  <input type="text" id="twofaCode" maxlength="6" placeholder="123456" 
+         class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition bg-white/90">
+  <button id="verify2faBtn" 
+          class="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-xl font-semibold shadow-md mt-3 transition">
+    Vérifier le code
+  </button>
+</div>
+
       <button id="loginBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-xl font-semibold shadow-md transition active:scale-[0.99]">Se connecter</button>
 
       <p class="text-center text-sm mt-4 text-gray-700">
@@ -103,6 +113,15 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
             return;
         }
 
+      if (data.twofa_required) {
+    alert("Un code 2FA vous a été envoyé par email.");
+    localStorage.setItem("pendingUserId", data.userId);
+
+    // Affiche la section 2FA
+    document.getElementById("twofaSection").classList.remove("hidden");
+    return;
+}
+
         // ✅ Sauvegarde du token, rôle et ID
         const userRole = (data.user?.role || "user").trim().toLowerCase();
         localStorage.setItem('authToken', data.token);
@@ -126,6 +145,41 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         alert("❌ Erreur de connexion au serveur.");
     }
 });
+
+  document.getElementById("verify2faBtn").addEventListener("click", async () => {
+  const userId = localStorage.getItem("pendingUserId");
+  const code = document.getElementById("twofaCode").value.trim();
+
+  if (!userId || !code) {
+    alert("Veuillez entrer le code.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/verify-2fa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, code })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
+
+    // ✅ Sauvegarde du token et rôle
+    const userRole = (data.user?.role || "user").trim().toLowerCase();
+    localStorage.setItem("authToken", data.token);
+    localStorage.setItem("userRole", userRole);
+    localStorage.setItem("userId", data.user?.id);
+    localStorage.removeItem("pendingUserId");
+
+    alert("✅ Connexion réussie avec 2FA.");
+    redirectAccordingToRole(userRole);
+  } catch (err) {
+    console.error("Erreur verify2fa:", err);
+    alert("❌ Code invalide ou expiré.");
+  }
+});
+
 </script>
 
 </body>
