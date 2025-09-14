@@ -88,79 +88,31 @@
             </div>
             <div class="flex items-center space-x-4">
                 <!-- Notification Bell -->
-                <div class="relative">
-                    <button onclick="toggleNotifications()" class="p-2 text-gray-600 hover:text-violet-600 relative">
-                        <span class="text-xl">🔔</span>
-                        <span id="alertBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center alert-badge">3</span>
-                    </button>
-                    <button onclick="refreshAlerts()" class="text-sm text-violet-600 hover:underline">
-                         🔄 Rafraîchir
-                    </button>
-                    <div id="notificationPanel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                        <div class="p-4 border-b border-gray-200">
-                            <h3 class="font-semibold text-gray-800">Alertes de Paiement</h3>
-                        </div>
-                        <div class="max-h-64 overflow-y-auto">
-                            <div class="p-3 border-b border-gray-100 hover:bg-gray-50" id="alert-1">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                                        <div class="flex-1">
-                                            <p class="text-sm font-medium text-gray-800">Pierre Durand</p>
-                                            <p class="text-xs text-gray-500">Paiement en retard de 5 jours</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex space-x-1">
-                                        <button onclick="ignoreAlert('alert-1')" class="text-gray-400 hover:text-orange-500 p-1" title="Ignorer">
-                                            <span class="text-xs">👁️‍🗨️</span>
-                                        </button>
-                                        <button onclick="closeAlert('alert-1')" class="text-gray-400 hover:text-red-500 p-1" title="Fermer">
-                                            <span class="text-xs">✕</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-3 border-b border-gray-100 hover:bg-gray-50" id="alert-2">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                        <div class="flex-1">
-                                            <p class="text-sm font-medium text-gray-800">Julie Moreau</p>
-                                            <p class="text-xs text-gray-500">Paiement dû dans 2 jours</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex space-x-1">
-                                        <button onclick="ignoreAlert('alert-2')" class="text-gray-400 hover:text-orange-500 p-1" title="Ignorer">
-                                            <span class="text-xs">👁️‍🗨️</span>
-                                        </button>
-                                        <button onclick="closeAlert('alert-2')" class="text-gray-400 hover:text-red-500 p-1" title="Fermer">
-                                            <span class="text-xs">✕</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-3 hover:bg-gray-50" id="alert-3">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                                        <div class="flex-1">
-                                            <p class="text-sm font-medium text-gray-800">Marc Petit</p>
-                                            <p class="text-xs text-gray-500">Paiement en retard de 12 jours</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex space-x-1">
-                                        <button onclick="ignoreAlert('alert-3')" class="text-gray-400 hover:text-orange-500 p-1" title="Ignorer">
-                                            <span class="text-xs">👁️‍🗨️</span>
-                                        </button>
-                                        <button onclick="closeAlert('alert-3')" class="text-gray-400 hover:text-red-500 p-1" title="Fermer">
-                                            <span class="text-xs">✕</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<div class="relative">
+  <!-- Icône cloche -->
+  <button onclick="toggleNotifications()" class="p-2 text-gray-600 hover:text-violet-600 relative">
+    <span class="text-xl">🔔</span>
+    <span id="alertBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center alert-badge">0</span>
+  </button>
+
+  <!-- Bouton Rafraîchir -->
+  <button onclick="refreshAlerts()" class="text-sm text-violet-600 hover:underline">
+    🔄 Rafraîchir
+  </button>
+
+  <!-- Panneau des notifications -->
+  <div id="notificationPanel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+    <div class="p-4 border-b border-gray-200">
+      <h3 class="font-semibold text-gray-800">Alertes de Paiement</h3>
+    </div>
+
+    <!-- Liste des alertes chargées dynamiquement -->
+    <div class="max-h-64 overflow-y-auto">
+      <!-- ⚠️ Les alertes sont injectées ici par loadAlerts() -->
+    </div>
+  </div>
+</div>
+
                 <span class="text-gray-600">Arfang</span>
                 <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                     Déconnexion
@@ -168,8 +120,6 @@
             </div>
         </div>
     </header>
-
-
 
     <!-- Dashboard Container -->
     <div id="dashboardContainer">
@@ -1006,11 +956,10 @@ async function ignoreAlert(alertId) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erreur API");
 
-    // Assombrir l’alerte
     document.getElementById(alertId).style.opacity = "0.5";
 
     showNotification(data.message || "✅ Alerte ignorée", "info");
-    await loadAlerts(); // recharge la liste pour bien garder cohérent
+    await loadAlerts();
   } catch (err) {
     console.error("Erreur ignoreAlert:", err);
     showNotification("❌ Impossible d’ignorer l’alerte", "error");
@@ -1029,14 +978,12 @@ async function closeAlert(alertId) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erreur API");
 
-    // Supprimer du DOM
     document.getElementById(alertId).remove();
-
     alertCount--;
     updateAlertBadge();
 
     showNotification(data.message || "✅ Alerte fermée", "success");
-    await loadAlerts(); // recharge pour rester synchro
+    await loadAlerts();
   } catch (err) {
     console.error("Erreur closeAlert:", err);
     showNotification("❌ Impossible de fermer l’alerte", "error");
@@ -2613,6 +2560,7 @@ async function loadAlerts() {
             </div>
           </div>
           <div class="flex space-x-1">
+            <button onclick="markAsSeen('${a.id}')" class="text-gray-400 hover:text-blue-500 p-1" title="Marquer comme vue">👁️</button>
             <button onclick="ignoreAlert('${a.id}')" class="text-gray-400 hover:text-orange-500 p-1" title="Ignorer">👁️‍🗨️</button>
             <button onclick="closeAlert('${a.id}')" class="text-gray-400 hover:text-red-500 p-1" title="Fermer">✕</button>
           </div>
@@ -2636,22 +2584,38 @@ function toggleNotifications() {
 // Charger au démarrage
 window.addEventListener("DOMContentLoaded", loadAlerts);
 
-        async function refreshAlerts() {
+// Rafraîchir les alertes (simple reload depuis la DB)
+async function refreshAlerts() {
+  try {
+    await loadAlerts();
+    showNotification("🔄 Alertes rechargées", "success");
+  } catch (err) {
+    console.error("Erreur refreshAlerts:", err);
+    showNotification("❌ Impossible de rafraîchir les alertes", "error");
+  }
+}
+
+// Marquer une alerte comme vue
+async function markAsSeen(alertId) {
   const token = localStorage.getItem("authToken");
   try {
-    const res = await fetch(`${API_BASE}/alerts/refresh`, {
-      method: "POST",
+    const res = await fetch(`${API_BASE}/alerts/${alertId}/seen`, {
+      method: "PATCH",
       headers: { "Authorization": `Bearer ${token}` }
     });
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Erreur API");
 
-    showNotification(data.message, "success");
-    await loadAlerts(); // recharger après recalcul
+    // Style "vue"
+    const el = document.getElementById(alertId);
+    if (el) el.classList.add("opacity-70");
+
+    showNotification(data.message || "👁️ Alerte marquée comme vue", "info");
+    await loadAlerts();
   } catch (err) {
-    console.error("Erreur refreshAlerts:", err);
-    showNotification("❌ Impossible de rafraîchir les alertes", "error");
+    console.error("Erreur markAsSeen:", err);
+    showNotification("❌ Impossible de marquer comme vue", "error");
   }
 }
 
