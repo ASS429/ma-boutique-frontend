@@ -995,29 +995,41 @@ function filterSubscribers() {
         }
 
         // Alert functions
-        function closeAlert(alertId) {
-            const alert = document.getElementById(alertId);
-            alert.style.transition = 'all 0.3s ease';
-            alert.style.opacity = '0';
-            alert.style.transform = 'translateX(100%)';
-            
-            setTimeout(() => {
-                alert.remove();
-                alertCount--;
-                updateAlertBadge();
-            }, 300);
-            
-            showNotification('Alerte fermée', 'info');
-        }
+        // Ignorer une alerte
+async function ignoreAlert(alertId) {
+  const token = localStorage.getItem("authToken");
+  try {
+    const res = await fetch(`${API_BASE}/alerts/${alertId}/ignore`, {
+      method: "PATCH",
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error("Erreur API");
+    document.getElementById(alertId).style.opacity = "0.5";
+    showNotification("✅ Alerte ignorée", "info");
+  } catch (err) {
+    console.error("Erreur ignoreAlert:", err);
+    showNotification("❌ Impossible d’ignorer l’alerte", "error");
+  }
+}
 
-        function ignoreAlert(alertId) {
-            const alert = document.getElementById(alertId);
-            alert.style.opacity = '0.5';
-            alert.querySelector('.w-2.h-2').classList.remove('bg-red-500', 'bg-orange-500');
-            alert.querySelector('.w-2.h-2').classList.add('bg-gray-400');
-            
-            showNotification('Alerte ignorée', 'info');
-        }
+// Fermer une alerte
+async function closeAlert(alertId) {
+  const token = localStorage.getItem("authToken");
+  try {
+    const res = await fetch(`${API_BASE}/alerts/${alertId}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error("Erreur API");
+    document.getElementById(alertId).remove();
+    alertCount--;
+    updateAlertBadge();
+    showNotification("✅ Alerte fermée", "success");
+  } catch (err) {
+    console.error("Erreur closeAlert:", err);
+    showNotification("❌ Impossible de fermer l’alerte", "error");
+  }
+}
 
         function updateAlertBadge() {
             const badge = document.getElementById('alertBadge');
@@ -2634,6 +2646,7 @@ window.addEventListener("DOMContentLoaded", loadAlerts);
     </script>
 
 </html>
+
 
 
 
