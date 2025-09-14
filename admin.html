@@ -222,85 +222,93 @@
 
         <!-- Main Content -->
         <main id="mainContent" class="flex-1 ml-64 p-8 transition-all duration-300">
-            <!-- Dashboard Section -->
-            <div id="dashboard" class="section active">
-                <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="stat-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium">Total Abonnés</p>
-                                <p class="text-2xl font-bold text-gray-800 mt-1">2,847</p>
-                            </div>
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <span class="text-blue-600 text-xl">👥</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-center">
-                            <span class="text-green-500 text-sm font-medium">+12%</span>
-                            <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium">Abonnés Actifs</p>
-                                <p class="text-2xl font-bold text-gray-800 mt-1">2,634</p>
-                            </div>
-                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                <span class="text-green-600 text-xl">✅</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-center">
-                            <span class="text-green-500 text-sm font-medium">+8%</span>
-                            <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium">Revenus Mensuels</p>
-                                <p class="text-2xl font-bold text-gray-800 mt-1">FCFA45,230</p>
-                            </div>
-                            <div class="w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center">
-                                <span class="text-violet-600 text-xl">💰</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-center">
-                            <span class="text-green-500 text-sm font-medium">+15%</span>
-                            <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium">Alertes Paiement</p>
-                                <p class="text-2xl font-bold text-red-600 mt-1">3</p>
-                            </div>
-                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                <span class="text-red-600 text-xl">⚠️</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-center">
-                            <span class="text-red-500 text-sm font-medium">Retards</span>
-                            <span class="text-gray-500 text-sm ml-2">à traiter</span>
-                        </div>
-                    </div>
+           <!-- Dashboard Section -->
+<div id="dashboard" class="section active">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Total Utilisateurs -->
+        <div class="stat-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Total Utilisateurs</p>
+                    <p id="totalUsers" class="text-2xl font-bold text-gray-800 mt-1">0</p>
                 </div>
-
-                <!-- Revenue Chart -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-800">Évolution des Revenus</h2>
-                    </div>
-                    <div class="p-6">
-                        <canvas id="revenueChart" width="400" height="200"></canvas>
-                    </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span class="text-blue-600 text-xl">👥</span>
                 </div>
             </div>
+            <div class="mt-4 flex items-center">
+                <span id="totalUsersGrowth" class="text-green-500 text-sm font-medium">+0%</span>
+                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+            </div>
+        </div>
+
+        <!-- Abonnés Actifs -->
+        <div class="stat-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Abonnés Actifs</p>
+                    <p id="activePremium" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <span class="text-green-600 text-xl">✅</span>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center">
+                <span id="activePremiumGrowth" class="text-green-500 text-sm font-medium">+0%</span>
+                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+            </div>
+        </div>
+
+        <!-- Revenus Totaux -->
+        <div class="stat-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Revenus Totaux</p>
+                    <p id="revenues" class="text-2xl font-bold text-gray-800 mt-1">FCFA0</p>
+                </div>
+                <div class="w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center">
+                    <span class="text-violet-600 text-xl">💰</span>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center">
+                <span id="revenuesGrowth" class="text-green-500 text-sm font-medium">+0%</span>
+                <span class="text-gray-500 text-sm ml-2">vs mois dernier</span>
+            </div>
+        </div>
+
+        <!-- Abonnements en Attente -->
+        <div class="stat-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Abonnements en Attente</p>
+                    <p id="pendingSubs" class="text-2xl font-bold text-red-600 mt-1">0</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <span class="text-red-600 text-xl">⚠️</span>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center">
+                <span class="text-red-500 text-sm font-medium">Retards</span>
+                <span class="text-gray-500 text-sm ml-2">à traiter</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Revenue Chart -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">Évolution des Revenus</h2>
+        </div>
+        <div class="p-6">
+            <canvas id="revenueChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+
 
             <!-- Subscribers Section -->
             <div id="subscribers" class="section">
@@ -2448,6 +2456,80 @@ async function toggle2FA() {
     showNotification("❌ Erreur lors de l’activation 2FA", "error");
   }
 }
+
+// Charger la courbe des revenus
+async function loadRevenueChart() {
+  try {
+    const token = localStorage.getItem("authToken");
+    const res = await fetch(`${API_BASE}/admin-stats/revenus/evolution`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    if (!res.ok) throw new Error("Erreur API " + res.status);
+    const data = await res.json();
+
+    const labels = data.map(r => r.mois);   // ["2025-01", "2025-02", ...]
+    const values = data.map(r => r.total);  // [12000, 15000, ...]
+
+    const ctx = document.getElementById("revenueChart").getContext("2d");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Revenus (FCFA)",
+          data: values,
+          fill: true,
+          backgroundColor: "rgba(139,92,246,0.1)",
+          borderColor: "#8b5cf6",
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true }
+        }
+      }
+    });
+  } catch (err) {
+    console.error("❌ Erreur loadRevenueChart:", err);
+    showNotification("Erreur chargement graphique", "error");
+  }
+}
+
+// Charger l’overview
+async function loadDashboardOverview() {
+  try {
+    const token = localStorage.getItem("authToken");
+    const res = await fetch(`${API_BASE}/admin-stats/overview`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+
+    if (!res.ok) throw new Error("Erreur API " + res.status);
+    const data = await res.json();
+
+    // ✅ Mise à jour des cartes
+    document.getElementById("totalUsers").textContent = data.totalUsers;
+    document.getElementById("activePremium").textContent = data.activePremium;
+    document.getElementById("revenues").textContent = `FCFA${data.revenues}`;
+    document.getElementById("pendingSubs").textContent = data.pending;
+
+    // (Optionnel : calcul croissance % vs mois dernier si tu veux l'ajouter)
+    // Ici tu pourrais appeler une nouvelle route backend /overview/previousMonth
+    // et calculer les %.
+  } catch (err) {
+    console.error("❌ Erreur loadDashboardOverview:", err);
+    showNotification("Erreur chargement dashboard", "error");
+  }
+}
+
+// Auto-chargement au démarrage
+document.addEventListener("DOMContentLoaded", () => {
+  loadDashboardOverview();
+  loadAdminAccounts();   // ⚡ déjà implémenté plus haut
+  loadRevenueChart();
+});
 
     </script>
 
