@@ -2516,27 +2516,41 @@ async function loadDashboardOverview() {
     if (!res.ok) throw new Error("Erreur API " + res.status);
     const data = await res.json();
 
-    // ✅ Mise à jour des cartes
+    // ✅ Mise à jour des cartes (valeurs totales)
     document.getElementById("totalUsers").textContent = data.totalUsers;
     document.getElementById("activePremium").textContent = data.activePremium;
     document.getElementById("revenues").textContent = `FCFA${data.revenues}`;
     document.getElementById("pendingSubs").textContent = data.pending;
 
-    // ✅ Croissance % vs mois précédent
+    // ✅ Fonction de calcul + couleur dynamique
     function calcGrowth(current, prev) {
-      if (prev === 0) return "+0%";
+      if (prev === 0) {
+        return { text: "+0%", class: "text-gray-500" };
+      }
       const pct = ((current - prev) / prev * 100).toFixed(1);
-      return (pct >= 0 ? "+" : "") + pct + "%";
+      return {
+        text: (pct >= 0 ? "+" : "") + pct + "%",
+        class: pct > 0 ? "text-green-500" : (pct < 0 ? "text-red-500" : "text-gray-500")
+      };
     }
 
-    document.getElementById("totalUsersGrowth").textContent =
-      calcGrowth(data.growth.totalUsers.current, data.growth.totalUsers.previous);
+    // ✅ Total Users Growth
+    let g1 = calcGrowth(data.growth.totalUsers.current, data.growth.totalUsers.previous);
+    let el1 = document.getElementById("totalUsersGrowth");
+    el1.textContent = g1.text;
+    el1.className = g1.class + " text-sm font-medium";
 
-    document.getElementById("activePremiumGrowth").textContent =
-      calcGrowth(data.growth.activePremium.current, data.growth.activePremium.previous);
+    // ✅ Active Premium Growth
+    let g2 = calcGrowth(data.growth.activePremium.current, data.growth.activePremium.previous);
+    let el2 = document.getElementById("activePremiumGrowth");
+    el2.textContent = g2.text;
+    el2.className = g2.class + " text-sm font-medium";
 
-    document.getElementById("revenuesGrowth").textContent =
-      calcGrowth(data.growth.revenues.current, data.growth.revenues.previous);
+    // ✅ Revenues Growth
+    let g3 = calcGrowth(data.growth.revenues.current, data.growth.revenues.previous);
+    let el3 = document.getElementById("revenuesGrowth");
+    el3.textContent = g3.text;
+    el3.className = g3.class + " text-sm font-medium";
 
   } catch (err) {
     console.error("❌ Erreur loadDashboardOverview:", err);
@@ -2548,7 +2562,7 @@ async function loadDashboardOverview() {
 // Auto-chargement au démarrage
 document.addEventListener("DOMContentLoaded", () => {
   loadDashboardOverview();
-  loadAdminAccounts();   // ⚡ déjà implémenté plus haut
+  //  loadAdminAccounts();   // ⚡ déjà implémenté plus haut
   loadRevenueChart();
 });
 
