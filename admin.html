@@ -6,6 +6,8 @@
     <title>Admin Dashboard - SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -510,44 +512,44 @@
                     <h1 class="text-2xl font-bold text-gray-800 mb-2">Analyses et Chiffres</h1>
                 </div>
 
-                <!-- KPI Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-sm font-medium text-gray-500">Chiffre d'Affaires</h3>
-                            <span class="text-green-500">📈</span>
-                        </div>
-                        <p class="text-2xl font-bold text-gray-800">FCFA542,180</p>
-                        <p class="text-sm text-green-600 mt-2">+18.5% vs année dernière</p>
-                    </div>
+                <!-- KPI Cards (remplacer les 4 existantes par celles-ci) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-medium text-gray-500">Chiffre d'Affaires</h3>
+      <span class="text-green-500">📈</span>
+    </div>
+    <p id="kpiCA" class="text-2xl font-bold text-gray-800">FCFA0.00</p>
+    <p class="text-sm text-green-600 mt-2">Total des abonnements validés</p>
+  </div>
 
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-sm font-medium text-gray-500">Taux de Conversion</h3>
-                            <span class="text-blue-500">🎯</span>
-                        </div>
-                        <p class="text-2xl font-bold text-gray-800">24.8%</p>
-                        <p class="text-sm text-blue-600 mt-2">+3.2% ce mois</p>
-                    </div>
+  <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-medium text-gray-500">Taux de Conversion</h3>
+      <span class="text-blue-500">🎯</span>
+    </div>
+    <p id="kpiConversion" class="text-2xl font-bold text-gray-800">0.0%</p>
+    <p class="text-sm text-blue-600 mt-2">Premium / Total utilisateurs</p>
+  </div>
 
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-sm font-medium text-gray-500">Valeur Moyenne</h3>
-                            <span class="text-violet-500">💎</span>
-                        </div>
-                        <p class="text-2xl font-bold text-gray-800">FCFA89.50</p>
-                        <p class="text-sm text-violet-600 mt-2">Par abonné/mois</p>
-                    </div>
+  <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-medium text-gray-500">Valeur Moyenne</h3>
+      <span class="text-violet-500">💎</span>
+    </div>
+    <p id="kpiAvgValue" class="text-2xl font-bold text-gray-800">FCFA0.00</p>
+    <p class="text-sm text-violet-600 mt-2">Montant moyen par abonnement</p>
+  </div>
 
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-sm font-medium text-gray-500">Taux de Rétention</h3>
-                            <span class="text-orange-500">🔄</span>
-                        </div>
-                        <p class="text-2xl font-bold text-gray-800">92.3%</p>
-                        <p class="text-sm text-orange-600 mt-2">Excellent niveau</p>
-                    </div>
-                </div>
+  <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-medium text-gray-500">Taux de Rétention</h3>
+      <span class="text-orange-500">🔄</span>
+    </div>
+    <p id="kpiRetention" class="text-2xl font-bold text-gray-800">0.0%</p>
+    <p class="text-sm text-orange-600 mt-2">Premium actifs avec expiration future</p>
+  </div>
+</div>
 
                 <!-- Charts -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -2101,6 +2103,250 @@ function showModal(id) {
 function hideModal(id) {
   document.getElementById(id).classList.add("hidden");
 }
+
+// Instances Chart.js
+let revenueBreakdownChart = null;
+let growthChart = null;
+
+/* ====== Utilitaires ====== */
+function formatFCFA(n) {
+  const num = Number(n || 0);
+  return 'FCFA' + num.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function fetchAuthJSON(path, opts = {}) {
+  const token = localStorage.getItem('authToken');
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+  if (!res.ok) {
+    const text = await res.text().catch(()=>null);
+    let body = null;
+    try { body = text ? JSON.parse(text) : null; } catch(e){ body = text; }
+    const err = new Error('API error ' + res.status + (body && body.error ? (': ' + body.error) : ''));
+    err.status = res.status; err.body = body;
+    throw err;
+  }
+  return res.json();
+}
+
+/* ====== Chargement principal ====== */
+async function loadAnalytics(period = 'monthly') {
+  try {
+    // Indicateur console pour debug
+    console.log("🔎 loadAnalytics period =", period);
+
+    // Lancer les requêtes en parallèle
+    const [revenus, transactions, accounts, users] = await Promise.all([
+      fetchAuthJSON(`/admin-stats/revenus?period=${encodeURIComponent(period)}`),
+      fetchAuthJSON(`/admin-stats/transactions?limit=100`),
+      fetchAuthJSON(`/admin-stats/accounts`),
+      fetchAuthJSON(`/auth/users`)
+    ]);
+
+    console.log('📊 revenus', revenus, '📥 transactions', transactions, '🏦 accounts', accounts);
+
+    // KPI 1 : Chiffre d'affaires (balance total)
+    document.getElementById('kpiCA').textContent = formatFCFA(revenus.balance || 0);
+
+    // KPI 2 : Taux de conversion = validatedPremium / totalUsers * 100
+    const totalUsers = Array.isArray(users) ? users.length : 0;
+    const validatedPremiumUsers = (users || []).filter(u => u.plan === 'Premium' && (u.upgrade_status === 'validé' || u.upgrade_status === 'validé'.toLowerCase()));
+    const validatedCount = validatedPremiumUsers.length;
+    const conversion = totalUsers ? ((validatedCount / totalUsers) * 100) : 0;
+    document.getElementById('kpiConversion').textContent = conversion.toFixed(1) + '%';
+
+    // KPI 3 : Valeur moyenne par abonnement (balance / validatedCount)
+    const avgValue = validatedCount ? ((revenus.balance || 0) / validatedCount) : 0;
+    document.getElementById('kpiAvgValue').textContent = formatFCFA(avgValue);
+
+    // KPI 4 : Rétention = proportion des premium validés dont expiration > today
+    const now = new Date();
+    const premiumWithFutureExp = validatedPremiumUsers.filter(u => u.expiration && new Date(u.expiration) > now).length;
+    const retention = validatedCount ? ((premiumWithFutureExp / validatedCount) * 100) : 0;
+    document.getElementById('kpiRetention').textContent = retention.toFixed(1) + '%';
+
+    // Balance / Period / Pending (section Revenus déjà sur la page)
+    if (revenus) {
+      if (document.getElementById('balanceMain')) document.getElementById('balanceMain').textContent = formatFCFA(revenus.balance || 0);
+      if (document.getElementById('revenuePeriodValue')) document.getElementById('revenuePeriodValue').textContent = formatFCFA(revenus.periodTotal || 0);
+      if (document.getElementById('pendingAmount')) document.getElementById('pendingAmount').textContent = formatFCFA(revenus.pending || 0);
+    }
+
+    // Transactions récentes (liste simple)
+    renderTransactionsList(transactions);
+
+    // Graph 1 : répartition des revenus par méthode — on essaie d'utiliser accounts.accounts en priorité
+    let breakdownData = { wave: 0, orange: 0, cash: 0 };
+    if (accounts && accounts.accounts) {
+      breakdownData = Object.assign(breakdownData, accounts.accounts);
+    } else {
+      // fallback : calculer à partir des transactions
+      (transactions || []).forEach(t => {
+        const m = (t.payment_method || t.method || '').toLowerCase();
+        if (m === 'wave' || m === 'orange' || m === 'cash') {
+          breakdownData[m] = (breakdownData[m] || 0) + Number(t.amount || t.total || 0);
+        }
+      });
+    }
+    renderRevenueBreakdownChart(breakdownData);
+
+    // Graph 2 : croissance mensuelle à partir des transactions (regrouper par mois)
+    const monthly = aggregateMonthly(transactions || []);
+    renderGrowthChart(monthly);
+
+  } catch (err) {
+    console.error("Erreur loadAnalytics:", err);
+    // message simple pour l'admin
+    showNotification ? showNotification("Impossible de charger les analyses", "error") : alert("Erreur chargement analyses : " + (err.message || err));
+  }
+}
+
+/* ====== Rendu transactions ====== */
+function renderTransactionsList(transactions) {
+  const container = document.getElementById('transactionsList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!Array.isArray(transactions) || transactions.length === 0) {
+    container.innerHTML = '<div class="p-6 text-gray-500 text-center">Aucune transaction récente</div>';
+    return;
+  }
+
+  transactions.slice(0, 20).forEach(t => {
+    const amount = Number(t.amount || t.total || 0);
+    const when = t.created_at ? (new Date(t.created_at)).toLocaleString('fr-FR') : '—';
+    const method = t.payment_method || t.method || '—';
+    const user = t.username || t.user || '—';
+
+    const node = document.createElement('div');
+    node.className = 'px-6 py-4 flex items-center justify-between';
+    node.innerHTML = `
+      <div>
+        <div class="font-medium text-gray-800">${user} <span class="text-xs text-gray-500">(${t.plan || '—'})</span></div>
+        <div class="text-sm text-gray-500">${t.description || ''}</div>
+      </div>
+      <div class="text-right">
+        <div class="font-bold text-gray-800">${formatFCFA(amount)}</div>
+        <div class="text-xs text-gray-500">${method} • ${when}</div>
+      </div>
+    `;
+    container.appendChild(node);
+  });
+}
+
+/* ====== Chart helpers ====== */
+function renderRevenueBreakdownChart(dataObj) {
+  const ctx = document.getElementById('revenueBreakdownChart').getContext('2d');
+  const labels = [];
+  const values = [];
+  if ((dataObj.wave || 0) > 0) { labels.push('Wave'); values.push(Number(dataObj.wave || 0)); }
+  if ((dataObj.orange || 0) > 0) { labels.push('Orange'); values.push(Number(dataObj.orange || 0)); }
+  if ((dataObj.cash || 0) > 0) { labels.push('Cash'); values.push(Number(dataObj.cash || 0)); }
+  if (labels.length === 0) { labels.push('Aucun'); values.push(0); }
+
+  if (revenueBreakdownChart) revenueBreakdownChart.destroy();
+  revenueBreakdownChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        /* couleurs = Chart.js par défaut (ne pas forcer) */
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => formatFCFA(ctx.raw) } }
+      }
+    }
+  });
+}
+
+function renderGrowthChart(monthlyObj) {
+  const ctx = document.getElementById('growthChart').getContext('2d');
+  // monthlyObj = { '2024-02': 1234, '2024-03': 2345, ... } --> on veut les 6 derniers mois
+  const labels = Object.keys(monthlyObj);
+  const values = labels.map(k => Number(monthlyObj[k] || 0));
+
+  if (growthChart) growthChart.destroy();
+  growthChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Revenus',
+        data: values,
+        tension: 0.3,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => formatFCFA(ctx.raw) } }
+      },
+      scales: {
+        y: { ticks: { callback: v => v >= 1000 ? (v/1000)+'k' : v } }
+      }
+    }
+  });
+}
+
+/* ====== Aggregations ====== */
+function aggregateMonthly(transactions) {
+  // Retourne un objet avec les 6 derniers mois (clé YYYY-MM) et somme des montants
+  const map = {};
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.toISOString().slice(0,7); // YYYY-MM
+    months.push(key);
+    map[key] = 0;
+  }
+
+  transactions.forEach(t => {
+    const date = t.created_at ? new Date(t.created_at) : null;
+    if (!date || isNaN(date)) return;
+    const key = date.toISOString().slice(0,7);
+    if (map.hasOwnProperty(key)) {
+      map[key] += Number(t.amount || t.total || 0);
+    }
+  });
+
+  // assure l'ordre des 6 mois
+  const ordered = {};
+  months.forEach(k => { ordered[k] = map[k] || 0; });
+  return ordered;
+}
+
+/* ====== Hook sur select période ====== */
+document.addEventListener('DOMContentLoaded', () => {
+  const select = document.getElementById('revenuePeriodFilter');
+  if (select) {
+    select.addEventListener('change', (e) => {
+      const period = e.target.value || 'monthly';
+      // Mettre à jour l'info d'affichage comme tu avais
+      const infoMap = {
+        all: 'Tous les revenus affichés',
+        daily: 'Revenus journaliers affichés',
+        weekly: 'Revenus hebdomadaires affichés',
+        monthly: 'Revenus mensuels affichés'
+      };
+      const infoElm = document.getElementById('revenueFilterInfo');
+      if (infoElm) infoElm.textContent = infoMap[period] || 'Revenus affichés';
+      // Recharger les données
+      loadAnalytics(period);
+    });
+  }
+
+  // Appel initial
+  loadAnalytics('monthly');
+});
 
     </script>
 
