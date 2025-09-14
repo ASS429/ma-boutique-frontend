@@ -668,9 +668,10 @@
                             <button class="w-full bg-violet-600 hover:bg-violet-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
                                 Changer le mot de passe
                             </button>
-                            <button class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
-                                Activer 2FA
+                            <button onclick="toggle2FA()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                               Activer 2FA
                             </button>
+
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-medium text-gray-700">Sessions multiples</span>
                                 <label class="relative inline-flex items-center cursor-pointer">
@@ -1690,9 +1691,7 @@ async function viewAccountDetails(account) {
             panel.classList.toggle('hidden');
         }
 
-        function saveSettings() {
-            showNotification('Paramètres sauvegardés avec succès', 'success');
-        }
+        
 
         function showNotification(message, type) {
             const colors = {
@@ -2406,7 +2405,7 @@ async function saveSettings() {
     notify_new_subs: checkboxes[1].checked,
     notify_late_payments: checkboxes[2].checked,
     notify_reports: checkboxes[3].checked,
-    allow_multi_sessions: checkboxes[4].checked,
+    multi_sessions: checkboxes[4].checked,
   };
 
   try {
@@ -2425,6 +2424,28 @@ async function saveSettings() {
   } catch (err) {
     console.error("Erreur saveSettings:", err);
     showNotification("❌ Erreur lors de la sauvegarde", "error");
+  }
+}
+
+async function toggle2FA() {
+  const token = localStorage.getItem("authToken");
+
+  try {
+    const res = await fetch(`${API_BASE}/admin-settings/twofa`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
+
+    showNotification(`🔐 2FA ${data.enabled ? "activée" : "désactivée"}`, "success");
+  } catch (err) {
+    console.error("Erreur toggle2FA:", err);
+    showNotification("❌ Erreur lors de l’activation 2FA", "error");
   }
 }
 
