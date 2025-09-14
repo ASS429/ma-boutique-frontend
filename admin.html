@@ -2238,6 +2238,12 @@ function renderTransactionsList(transactions) {
 /* ====== Chart helpers ====== */
 function renderRevenueBreakdownChart(dataObj) {
   const ctx = document.getElementById('revenueBreakdownChart').getContext('2d');
+
+  // ✅ Forcer la destruction si le canvas est occupé
+  if (Chart.getChart(ctx)) {
+    Chart.getChart(ctx).destroy();
+  }
+
   const labels = [];
   const values = [];
   if ((dataObj.wave || 0) > 0) { labels.push('Wave'); values.push(Number(dataObj.wave || 0)); }
@@ -2245,15 +2251,11 @@ function renderRevenueBreakdownChart(dataObj) {
   if ((dataObj.cash || 0) > 0) { labels.push('Cash'); values.push(Number(dataObj.cash || 0)); }
   if (labels.length === 0) { labels.push('Aucun'); values.push(0); }
 
-  if (revenueBreakdownChart) revenueBreakdownChart.destroy();
   revenueBreakdownChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels,
-      datasets: [{
-        data: values,
-        /* couleurs = Chart.js par défaut (ne pas forcer) */
-      }]
+      datasets: [{ data: values }]
     },
     options: {
       responsive: true,
@@ -2267,11 +2269,15 @@ function renderRevenueBreakdownChart(dataObj) {
 
 function renderGrowthChart(monthlyObj) {
   const ctx = document.getElementById('growthChart').getContext('2d');
-  // monthlyObj = { '2024-02': 1234, '2024-03': 2345, ... } --> on veut les 6 derniers mois
+
+  // ✅ Forcer la destruction si le canvas est occupé
+  if (Chart.getChart(ctx)) {
+    Chart.getChart(ctx).destroy();
+  }
+
   const labels = Object.keys(monthlyObj);
   const values = labels.map(k => Number(monthlyObj[k] || 0));
 
-  if (growthChart) growthChart.destroy();
   growthChart = new Chart(ctx, {
     type: 'line',
     data: {
