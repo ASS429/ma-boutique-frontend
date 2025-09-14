@@ -1694,6 +1694,11 @@ async function viewAccountDetails(account) {
   }
 }
 
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationPanel');
+            panel.classList.toggle('hidden');
+        }
+
         
 
         function showNotification(message, type) {
@@ -2561,56 +2566,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadRevenueChart();
 });
 
-        let alertCount = 0;
-
-async function loadAlerts() {
-  const token = localStorage.getItem("authToken");
-  try {
-    const res = await fetch(`${API_BASE}/alerts`, {
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const alerts = await res.json();
-
-    const panel = document.querySelector("#notificationPanel .max-h-64");
-    panel.innerHTML = ""; // reset
-
-    alerts.forEach(a => {
-      const color = a.type === "late" ? "bg-red-500" : "bg-orange-500";
-
-      const div = document.createElement("div");
-      div.className = "p-3 border-b border-gray-100 hover:bg-gray-50";
-      div.id = a.id;
-      div.innerHTML = `
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <div class="w-2 h-2 ${color} rounded-full"></div>
-            <div class="flex-1">
-              <p class="text-sm font-medium text-gray-800">${a.name}</p>
-              <p class="text-xs text-gray-500">${a.message}</p>
-            </div>
-          </div>
-          <div class="flex space-x-1">
-            <button onclick="ignoreAlert('${a.id}')" class="text-gray-400 hover:text-orange-500 p-1" title="Ignorer">👁️‍🗨️</button>
-            <button onclick="closeAlert('${a.id}')" class="text-gray-400 hover:text-red-500 p-1" title="Fermer">✕</button>
-          </div>
-        </div>
-      `;
-      panel.appendChild(div);
-    });
-
-    alertCount = alerts.length;
-    updateAlertBadge();
-  } catch (err) {
-    console.error("Erreur loadAlerts:", err);
-  }
-}
-        // Ouvrir/fermer panneau
-function toggleNotifications() {
-  document.getElementById("notificationPanel").classList.toggle("hidden");
-}
-        // Charger au démarrage
-window.addEventListener("DOMContentLoaded", loadAlerts);
     </script>
 
 </html>
-
