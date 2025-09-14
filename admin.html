@@ -2354,6 +2354,79 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAnalytics('monthly');
 });
 
+// ✅ Charger les paramètres
+async function loadSettings() {
+  const token = localStorage.getItem("authToken");
+  try {
+    const res = await fetch(`${API_BASE}/admin-settings`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const settings = await res.json();
+
+    // Remplir les inputs
+    document.querySelector("#settings input[type='text']").value = settings.app_name;
+    document.querySelector("#settings input[type='email']").value = settings.contact_email;
+    document.querySelector("#settings select").value = settings.timezone;
+
+    const numberInputs = document.querySelectorAll("#settings input[type='number']");
+    numberInputs[0].value = settings.premium_price;
+    numberInputs[1].value = settings.grace_period;
+
+    const checkboxes = document.querySelectorAll("#settings input[type='checkbox']");
+    checkboxes[0].checked = settings.auto_alerts;
+    checkboxes[1].checked = settings.notify_new_sub;
+    checkboxes[2].checked = settings.notify_late_pay;
+    checkboxes[3].checked = settings.notify_reports;
+    checkboxes[4].checked = settings.allow_multi_sessions;
+  } catch (err) {
+    console.error("Erreur loadSettings:", err);
+  }
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadSettings();
+});
+
+
+// ✅ Sauvegarder les paramètres
+async function saveSettings() {
+  const token = localStorage.getItem("authToken");
+
+  const numberInputs = document.querySelectorAll("#settings input[type='number']");
+  const checkboxes = document.querySelectorAll("#settings input[type='checkbox']");
+
+  const payload = {
+    app_name: document.querySelector("#settings input[type='text']").value,
+    contact_email: document.querySelector("#settings input[type='email']").value,
+    timezone: document.querySelector("#settings select").value,
+    premium_price: parseFloat(numberInputs[0].value),
+    grace_period: parseInt(numberInputs[1].value),
+    auto_alerts: checkboxes[0].checked,
+    notify_new_sub: checkboxes[1].checked,
+    notify_late_pay: checkboxes[2].checked,
+    notify_reports: checkboxes[3].checked,
+    allow_multi_sessions: checkboxes[4].checked,
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/admin-settings`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur API");
+    showNotification("✅ Paramètres sauvegardés", "success");
+  } catch (err) {
+    console.error("Erreur saveSettings:", err);
+    showNotification("❌ Erreur lors de la sauvegarde", "error");
+  }
+}
+
     </script>
 
 </html>
