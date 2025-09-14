@@ -2458,39 +2458,49 @@ async function toggle2FA() {
 }
 
 // Charger la courbe des revenus
-let revenueChartInstance = null;
+let revenueChartInstance = null; // variable globale
 
 async function loadRevenueChart() {
-  const token = localStorage.getItem("authToken");
-  const res = await fetch(`${API_BASE}/admin-stats/revenus/evolution`, {
-    headers: { "Authorization": "Bearer " + token }
-  });
-  const data = await res.json();
+  try {
+    const res = await fetch(API_BASE + "/admin-stats/revenus/evolution", {
+      headers: {
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
+        "Content-Type": "application/json"
+      }
+    });
+    const data = await res.json();
 
-  const labels = data.map(r => r.mois);
-  const values = data.map(r => r.total);
+    const ctx = document.getElementById("revenueChart").getContext("2d");
 
-  const ctx = document.getElementById('revenueChart').getContext('2d');
-
-  // ✅ Détruire le graphique précédent si déjà existant
-  if (revenueChartInstance) {
-    revenueChartInstance.destroy();
-  }
-
-  revenueChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: "Revenus (FCFA)",
-        data: values,
-        fill: true,
-        backgroundColor: "rgba(139,92,246,0.1)",
-        borderColor: "#8b5cf6",
-        tension: 0.3
-      }]
+    // ✅ Détruire l'ancien graphique s'il existe
+    if (revenueChartInstance) {
+      revenueChartInstance.destroy();
     }
-  });
+
+    // ✅ Créer le nouveau graphique
+    revenueChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.map(item => item.mois),
+        datasets: [{
+          label: "Revenus",
+          data: data.map(item => item.total),
+          borderColor: "#8b5cf6",
+          backgroundColor: "rgba(139,92,246,0.1)",
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true }
+        }
+      }
+    });
+  } catch (err) {
+    console.error("❌ Erreur loadRevenueChart:", err);
+  }
 }
 
 
