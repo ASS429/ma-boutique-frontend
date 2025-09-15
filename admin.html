@@ -79,15 +79,16 @@
 <body class="bg-gray-50">
     <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-200 fixed w-full top-0 z-50">
-        <div class="flex items-center justify-between px-6 py-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-sm">B</span>
-                </div>
-                <h1 class="text-xl font-semibold text-gray-800">BOUTIQUE GESTION</h1>
-            </div>
-            <div class="flex items-center space-x-4">
-                <!-- Notification Bell -->
+  <div class="flex flex-wrap items-center justify-between px-4 sm:px-6 py-3">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
+        <span class="text-white font-bold text-sm">B</span>
+      </div>
+      <h1 class="text-lg sm:text-xl font-semibold text-gray-800">BOUTIQUE GESTION</h1>
+    </div>
+
+    <div class="flex items-center space-x-3 sm:space-x-4 mt-2 sm:mt-0">
+      <!-- Notification Bell -->
 <div class="relative">
   <!-- Icône cloche -->
   <button onclick="toggleNotifications()" class="p-2 text-gray-600 hover:text-violet-600 relative">
@@ -97,7 +98,7 @@
 
   <!-- Bouton Rafraîchir -->
   <button onclick="refreshAlerts()" class="text-sm text-violet-600 hover:underline">
-    🔄 Rafraîchir
+    🔄
   </button>
 
   <!-- Panneau des notifications -->
@@ -111,15 +112,18 @@
       <!-- ⚠️ Les alertes sont injectées ici par loadAlerts() -->
     </div>
   </div>
-</div>
+</div>      
+      <!-- Email admin -->
+      <span id="adminEmail" class="text-gray-600 text-sm sm:text-base truncate max-w-[150px] sm:max-w-[250px]"></span>
 
-                <span class="text-gray-600">Arfang</span>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Déconnexion
-                </button>
-            </div>
-        </div>
-    </header>
+      <!-- Déconnexion -->
+      <button onclick="logout()" 
+        class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors">
+        Déconnexion
+      </button>
+    </div>
+  </div>
+</header>
 
     <!-- Dashboard Container -->
     <div id="dashboardContainer">
@@ -2619,11 +2623,29 @@ async function markAsSeen(alertId) {
   }
 }
 
+async function loadAdminInfo() {
+  const token = localStorage.getItem("authToken");
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+
+    if (!res.ok) throw new Error("Erreur API");
+    const data = await res.json();
+
+    // ✅ Injecter l’email dans le span
+    document.getElementById("adminEmail").textContent = data.email || "Admin";
+  } catch (err) {
+    console.error("❌ Erreur loadAdminInfo:", err);
+    document.getElementById("adminEmail").textContent = "Admin";
+  }
+}
+
+// Charger au démarrage
+document.addEventListener("DOMContentLoaded", loadAdminInfo);
+
     </script>
 
 </html>
-
-
-
-
-
