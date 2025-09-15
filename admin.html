@@ -2636,7 +2636,7 @@ async function loadAdminInfo() {
     const data = await res.json();
 
     // ✅ Injecter l’email dans le span
-    document.getElementById("adminEmail").textContent = data.email || "Admin";
+    document.getElementById("adminEmail").textContent = data.username || "Admin";
   } catch (err) {
     console.error("❌ Erreur loadAdminInfo:", err);
     document.getElementById("adminEmail").textContent = "Admin";
@@ -2649,3 +2649,4 @@ document.addEventListener("DOMContentLoaded", loadAdminInfo);
     </script>
 
 </html>
+
