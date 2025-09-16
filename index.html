@@ -204,8 +204,8 @@ function tryRenderSalesHistory(ventesFiltrees) {
   <div class="p-6 space-y-6" id="menuSection">
     <button onclick="logout()" class="bg-red-600 px-3 py-1 rounded text-white text-sm">🔓 Déconnexion</button>
     <button id="installBtn" class="hidden bg-green-600 px-3 py-1 rounded text-white text-sm"> 📲 Installer</button>
-
-   <div id="userGuide" class="bg-violet-100 border border-violet-300 text-violet-800 p-4 rounded-lg mb-4 flex justify-between items-start">
+    
+    <div id="userGuide" class="bg-violet-100 border border-violet-300 text-violet-800 p-4 rounded-lg mb-4 flex justify-between items-start">
   <div>
     <h2 class="font-bold text-lg mb-1">👋 Bienvenue !</h2>
     <p class="text-sm">
@@ -223,7 +223,7 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
   <button onclick="closeGuide()" class="ml-4 text-violet-700 hover:text-violet-900 font-bold">✕</button>
 </div>
-   
+
     <!-- Résumé du jour -->
     <div class="bg-white rounded-3xl p-6 shadow-lg">
       <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
@@ -638,6 +638,30 @@ function tryRenderSalesHistory(ventesFiltrees) {
           <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👜')" type="button">👜</button>
           <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🧴')" type="button">🧴</button>
           <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('✨')" type="button">✨</button>
+          <!-- Nourriture -->
+<button class="emoji-btn ..." onclick="selectEmoji('🍎')">🍎</button>
+<button class="emoji-btn ..." onclick="selectEmoji('🍞')">🍞</button>
+<button class="emoji-btn ..." onclick="selectEmoji('🥩')">🥩</button>
+<button class="emoji-btn ..." onclick="selectEmoji('🥤')">🥤</button>
+
+<!-- Electronique -->
+<button class="emoji-btn ..." onclick="selectEmoji('📱')">📱</button>
+<button class="emoji-btn ..." onclick="selectEmoji('💻')">💻</button>
+<button class="emoji-btn ..." onclick="selectEmoji('🎧')">🎧</button>
+<button class="emoji-btn ..." onclick="selectEmoji('📺')">📺</button>
+
+<!-- Outils -->
+<button class="emoji-btn ..." onclick="selectEmoji('🔧')">🔧</button>
+<button class="emoji-btn ..." onclick="selectEmoji('🪚')">🪚</button>
+<button class="emoji-btn ..." onclick="selectEmoji('⚒️')">⚒️</button>
+<button class="emoji-btn ..." onclick="selectEmoji('🪛')">🪛</button>
+
+<!-- Cosmétiques -->
+<button class="emoji-btn ..." onclick="selectEmoji('💅')">💅</button>
+<button class="emoji-btn ..." onclick="selectEmoji('💇‍♀️')">💇‍♀️</button>
+<button class="emoji-btn ..." onclick="selectEmoji('🧴')">🧴</button>
+<button class="emoji-btn ..." onclick="selectEmoji('👗')">👗</button>
+
         </div>
         <input id="emojiCategorie" type="hidden" value="🏷️"/>
         <div class="flex gap-3">
@@ -931,7 +955,7 @@ async function syncFromServer() {
         return {
           id: parseInt(c.id),
           name: c.name,
-          emoji: c.emoji || style.emoji,
+          emoji: c.emoji || '🏷️',
           couleur: c.couleur || style.couleur
         };
       });
@@ -1425,7 +1449,8 @@ async function ajouterCategorie(){
     hideModal();
     saveAppDataLocal();
 
-    const created = await postCategoryServer({ name: name }); // ✅ envoie "name"
+    const created = await postCategoryServer({ name: name, emoji: emoji });
+
     if (created) {
       const idx = appData.categories.findIndex(c => c.id === newCatLocal.id);
       if (idx >= 0) appData.categories[idx] = created;
@@ -2983,7 +3008,7 @@ function closeGuide() {
       document.getElementById("userGuide").style.display = "none";
     }
   });
-  
+
 </script>
 
 </body>
