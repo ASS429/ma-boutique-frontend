@@ -178,6 +178,35 @@ function tryRenderSalesHistory(ventesFiltrees) {
 .chart-container {
     height: 250px;
 }
+
+.emoji-btn {
+    font-size: 2rem; /* plus grand */
+    padding: 0.8rem;
+    border-radius: 1rem;
+    background: #f9fafb;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .emoji-btn:hover {
+    transform: scale(1.15);
+    background: #ede9fe; /* violet clair */
+    border-color: #a78bfa;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .emoji-btn:active {
+    transform: scale(0.95);
+    background: #ddd6fe;
+  }
+  .emoji-btn.selected {
+    background: #c4b5fd;
+    border-color: #7c3aed;
+    color: white;
+    transform: scale(1.2);
+    box-shadow: 0 6px 12px rgba(124,58,237,0.3);
+  }
+  
 </style>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50">
@@ -624,7 +653,7 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
 </div>
 
-   <!-- Modal Ajout Catégorie -->
+  <!-- Modal Ajout Catégorie -->
 <div id="modalAjoutCategorie" 
      class="hidden fade-in bg-white/95 backdrop-blur-xl rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-gray-200">
   
@@ -643,87 +672,86 @@ function tryRenderSalesHistory(ventesFiltrees) {
            class="w-full p-4 border-2 border-gray-200 rounded-2xl text-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition bg-white/90 shadow-sm"/>
 
     <!-- Palette Emoji -->
-    <div class="grid grid-cols-6 gap-3 max-h-72 overflow-y-auto pr-1">
+    <div class="grid grid-cols-6 gap-4 max-h-72 overflow-y-auto pr-1">
 
       <!-- 👕 Mode -->
-      <button class="emoji-btn ..." onclick="selectEmoji('👕')">👕</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('👖')">👖</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('👗')">👗</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('👔')">👔</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('👟')">👟</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('👠')">👠</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🎩')">🎩</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('👜')">👜</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('💍')">💍</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('⌚')">⌚</button>
+      <button class="emoji-btn" onclick="selectEmoji('👕')">👕</button>
+      <button class="emoji-btn" onclick="selectEmoji('👖')">👖</button>
+      <button class="emoji-btn" onclick="selectEmoji('👗')">👗</button>
+      <button class="emoji-btn" onclick="selectEmoji('👔')">👔</button>
+      <button class="emoji-btn" onclick="selectEmoji('👟')">👟</button>
+      <button class="emoji-btn" onclick="selectEmoji('👠')">👠</button>
+      <button class="emoji-btn" onclick="selectEmoji('🎩')">🎩</button>
+      <button class="emoji-btn" onclick="selectEmoji('👜')">👜</button>
+      <button class="emoji-btn" onclick="selectEmoji('💍')">💍</button>
+      <button class="emoji-btn" onclick="selectEmoji('⌚')">⌚</button>
 
       <!-- 💄 Beauté / Cosmétiques -->
-      <button class="emoji-btn ..." onclick="selectEmoji('💄')">💄</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('💅')">💅</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🧴')">🧴</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('💇‍♀️')">💇‍♀️</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🪞')">🪞</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🧴')">🧴</button>
+      <button class="emoji-btn" onclick="selectEmoji('💄')">💄</button>
+      <button class="emoji-btn" onclick="selectEmoji('💅')">💅</button>
+      <button class="emoji-btn" onclick="selectEmoji('🧴')">🧴</button>
+      <button class="emoji-btn" onclick="selectEmoji('💇‍♀️')">💇‍♀️</button>
+      <button class="emoji-btn" onclick="selectEmoji('🪞')">🪞</button>
 
       <!-- 🍔 Nourriture -->
-      <button class="emoji-btn ..." onclick="selectEmoji('🍎')">🍎</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🍌')">🍌</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🍇')">🍇</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🥦')">🥦</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🍞')">🍞</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🥩')">🥩</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🍔')">🍔</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🍕')">🍕</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🍟')">🍟</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🍩')">🍩</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🥤')">🥤</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🍷')">🍷</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍎')">🍎</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍌')">🍌</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍇')">🍇</button>
+      <button class="emoji-btn" onclick="selectEmoji('🥦')">🥦</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍞')">🍞</button>
+      <button class="emoji-btn" onclick="selectEmoji('🥩')">🥩</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍔')">🍔</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍕')">🍕</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍟')">🍟</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍩')">🍩</button>
+      <button class="emoji-btn" onclick="selectEmoji('🥤')">🥤</button>
+      <button class="emoji-btn" onclick="selectEmoji('🍷')">🍷</button>
 
       <!-- 📱 Électronique -->
-      <button class="emoji-btn ..." onclick="selectEmoji('📱')">📱</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('💻')">💻</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🖥️')">🖥️</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🎧')">🎧</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🎮')">🎮</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('📷')">📷</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('📺')">📺</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('⌨️')">⌨️</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🖱️')">🖱️</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🔋')">🔋</button>
+      <button class="emoji-btn" onclick="selectEmoji('📱')">📱</button>
+      <button class="emoji-btn" onclick="selectEmoji('💻')">💻</button>
+      <button class="emoji-btn" onclick="selectEmoji('🖥️')">🖥️</button>
+      <button class="emoji-btn" onclick="selectEmoji('🎧')">🎧</button>
+      <button class="emoji-btn" onclick="selectEmoji('🎮')">🎮</button>
+      <button class="emoji-btn" onclick="selectEmoji('📷')">📷</button>
+      <button class="emoji-btn" onclick="selectEmoji('📺')">📺</button>
+      <button class="emoji-btn" onclick="selectEmoji('⌨️')">⌨️</button>
+      <button class="emoji-btn" onclick="selectEmoji('🖱️')">🖱️</button>
+      <button class="emoji-btn" onclick="selectEmoji('🔋')">🔋</button>
 
       <!-- 🛋️ Maison -->
-      <button class="emoji-btn ..." onclick="selectEmoji('🛋️')">🛋️</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🛏️')">🛏️</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🚪')">🚪</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🪑')">🪑</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🪟')">🪟</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🪞')">🪞</button>
+      <button class="emoji-btn" onclick="selectEmoji('🛋️')">🛋️</button>
+      <button class="emoji-btn" onclick="selectEmoji('🛏️')">🛏️</button>
+      <button class="emoji-btn" onclick="selectEmoji('🚪')">🚪</button>
+      <button class="emoji-btn" onclick="selectEmoji('🪑')">🪑</button>
+      <button class="emoji-btn" onclick="selectEmoji('🪟')">🪟</button>
+      <button class="emoji-btn" onclick="selectEmoji('🪞')">🪞</button>
 
       <!-- ⚽ Sport -->
-      <button class="emoji-btn ..." onclick="selectEmoji('⚽')">⚽</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🏀')">🏀</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🏈')">🏈</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🎾')">🎾</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🏓')">🏓</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🥊')">🥊</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('⛸️')">⛸️</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🚴‍♂️')">🚴‍♂️</button>
+      <button class="emoji-btn" onclick="selectEmoji('⚽')">⚽</button>
+      <button class="emoji-btn" onclick="selectEmoji('🏀')">🏀</button>
+      <button class="emoji-btn" onclick="selectEmoji('🏈')">🏈</button>
+      <button class="emoji-btn" onclick="selectEmoji('🎾')">🎾</button>
+      <button class="emoji-btn" onclick="selectEmoji('🏓')">🏓</button>
+      <button class="emoji-btn" onclick="selectEmoji('🥊')">🥊</button>
+      <button class="emoji-btn" onclick="selectEmoji('⛸️')">⛸️</button>
+      <button class="emoji-btn" onclick="selectEmoji('🚴‍♂️')">🚴‍♂️</button>
 
       <!-- 🧸 Jouets -->
-      <button class="emoji-btn ..." onclick="selectEmoji('🧸')">🧸</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🚂')">🚂</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🪀')">🪀</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🎲')">🎲</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🎯')">🎯</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🪁')">🪁</button>
+      <button class="emoji-btn" onclick="selectEmoji('🧸')">🧸</button>
+      <button class="emoji-btn" onclick="selectEmoji('🚂')">🚂</button>
+      <button class="emoji-btn" onclick="selectEmoji('🪀')">🪀</button>
+      <button class="emoji-btn" onclick="selectEmoji('🎲')">🎲</button>
+      <button class="emoji-btn" onclick="selectEmoji('🎯')">🎯</button>
+      <button class="emoji-btn" onclick="selectEmoji('🪁')">🪁</button>
 
       <!-- 🔧 Outils -->
-      <button class="emoji-btn ..." onclick="selectEmoji('🔧')">🔧</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🪚')">🪚</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('⚒️')">⚒️</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🔨')">🔨</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🪛')">🪛</button>
-      <button class="emoji-btn ..." onclick="selectEmoji('🧰')">🧰</button>
+      <button class="emoji-btn" onclick="selectEmoji('🔧')">🔧</button>
+      <button class="emoji-btn" onclick="selectEmoji('🪚')">🪚</button>
+      <button class="emoji-btn" onclick="selectEmoji('⚒️')">⚒️</button>
+      <button class="emoji-btn" onclick="selectEmoji('🔨')">🔨</button>
+      <button class="emoji-btn" onclick="selectEmoji('🪛')">🪛</button>
+      <button class="emoji-btn" onclick="selectEmoji('🧰')">🧰</button>
 
     </div>
 
