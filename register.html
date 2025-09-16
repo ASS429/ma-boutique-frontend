@@ -24,7 +24,7 @@
 
     <input type="email" id="email" placeholder="Email" class="w-full p-3 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-green-400 transition">
     <input type="password" id="password" placeholder="Mot de passe" class="w-full p-3 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-green-400 transition">
-    <input type="text" id="companyName" placeholder="Nom de l’entreprise" 
+    <input type="text" id="companyName" placeholder="Nom Complet ou Nom de l’entreprise" 
        class="w-full p-3 border border-gray-200 rounded-lg mb-4 
               focus:outline-none focus:ring-2 focus:ring-green-400 transition">
 
@@ -37,6 +37,22 @@
       <a href="login.html" class="text-purple-600 font-bold hover:underline">Se connecter</a>
     </p>
   </div>
+
+  <div id="registerGuide" class="bg-green-100 border border-green-300 text-green-800 p-4 rounded-lg mb-4 flex justify-between items-start">
+  <div>
+    <h2 class="font-bold text-lg mb-1">📝 Créez votre compte</h2>
+    <p class="text-sm">
+      Remplissez les champs requis puis cliquez sur "Créer un compte".  
+      Un email de confirmation peut vous être demandé. 
+      Si vous disposez d'un ordinateur ou d'un appareil android et que vous souhaitez installer l'application sur votre appareil, veuillez ouvrir cette page avec votre navigateur
+        Chrome après connexion vous verrez le bouton "Installer".
+      Si vous utilisez un appareil Apple (iPhone, iPad), ouvrez cette page dans Safari, puis appuyez sur le bouton "Partager" en bas de l'écran et sélectionnez "Ajouter à l'écran d'accueil".
+      Vous pourrez ensuite vous connecter avec votre email et mot de passe. 
+      Vous pourrez ainsi accéder rapidement à l'application depuis votre écran d'accueil.
+    </p>
+  </div>
+  <button onclick="closeRegisterGuide()" class="ml-4 text-green-700 hover:text-green-900 font-bold">✕</button>
+</div>
 
   <script>
   (() => {
@@ -80,6 +96,18 @@
 });
 
   })();
+
+  function closeRegisterGuide() {
+    document.getElementById("registerGuide").style.display = "none";
+    localStorage.setItem("registerGuideClosed", "true"); // clé différente
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem("registerGuideClosed") === "true") {
+      document.getElementById("registerGuide").style.display = "none";
+    }
+  });
+
   </script>
 </body>
 </html>
