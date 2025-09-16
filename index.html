@@ -200,6 +200,17 @@ function tryRenderSalesHistory(ventesFiltrees) {
     </div>
   </div>
 
+<div id="userGuide" class="bg-violet-100 border border-violet-300 text-violet-800 p-4 rounded-lg mb-4 flex justify-between items-start">
+  <div>
+    <h2 class="font-bold text-lg mb-1">👋 Bienvenue !</h2>
+    <p class="text-sm">
+      Voici un petit guide pour vous aider à utiliser l’application.
+    </p>
+  </div>
+  <button onclick="closeGuide()" class="ml-4 text-violet-700 hover:text-violet-900 font-bold">✕</button>
+</div>
+
+
   <!-- Menu Principal -->
   <div class="p-6 space-y-6" id="menuSection">
     <button onclick="logout()" class="bg-red-600 px-3 py-1 rounded text-white text-sm">🔓 Déconnexion</button>
@@ -2951,6 +2962,19 @@ function showNotification(message, type = "info") {
   }
 }
 
+function closeGuide() {
+    document.getElementById("userGuide").style.display = "none";
+    // ✅ On mémorise la fermeture
+    localStorage.setItem("guideClosed", "true");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // ✅ Vérifie si l’utilisateur a déjà fermé le guide
+    if (localStorage.getItem("guideClosed") === "true") {
+      document.getElementById("userGuide").style.display = "none";
+    }
+  });
+  
 </script>
 
 </body>
