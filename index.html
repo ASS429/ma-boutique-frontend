@@ -624,52 +624,77 @@ function tryRenderSalesHistory(ventesFiltrees) {
   </div>
 </div>
 
-    <!-- Modal Ajout Catégorie -->
-    <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalAjoutCategorie">
-      <h3 class="text-2xl font-bold mb-6 text-center">🏷️ Nouvelle Catégorie</h3>
-      <div class="space-y-4">
-        <input class="w-full p-4 border-2 rounded-2xl text-lg" id="nomCategorie" placeholder="Nom de la catégorie" type="text"/>
-        <div class="grid grid-cols-4 gap-3">
-          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👕')" type="button">👕</button>
-          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💄')" type="button">💄</button>
-          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👠')" type="button">👠</button>
-          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('💍')" type="button">💍</button>
-          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🎒')" type="button">🎒</button>
-          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('👜')" type="button">👜</button>
-          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('🧴')" type="button">🧴</button>
-          <button class="emoji-btn p-3 text-3xl border-2 rounded-2xl hover:bg-blue-100" onclick="selectEmoji('✨')" type="button">✨</button>
-          <!-- Nourriture -->
-<button class="emoji-btn ..." onclick="selectEmoji('🍎')">🍎</button>
-<button class="emoji-btn ..." onclick="selectEmoji('🍞')">🍞</button>
-<button class="emoji-btn ..." onclick="selectEmoji('🥩')">🥩</button>
-<button class="emoji-btn ..." onclick="selectEmoji('🥤')">🥤</button>
+   <!-- Modal Ajout Catégorie -->
+<div id="modalAjoutCategorie" 
+     class="hidden fade-in bg-white/95 backdrop-blur-xl rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-200">
+  
+  <!-- Titre -->
+  <h3 class="text-2xl font-extrabold mb-6 text-center text-purple-700 flex items-center justify-center gap-2">
+    🏷️ Nouvelle Catégorie
+  </h3>
 
-<!-- Electronique -->
-<button class="emoji-btn ..." onclick="selectEmoji('📱')">📱</button>
-<button class="emoji-btn ..." onclick="selectEmoji('💻')">💻</button>
-<button class="emoji-btn ..." onclick="selectEmoji('🎧')">🎧</button>
-<button class="emoji-btn ..." onclick="selectEmoji('📺')">📺</button>
+  <!-- Contenu -->
+  <div class="space-y-5">
+    
+    <!-- Champ de saisie -->
+    <input id="nomCategorie" 
+           type="text" 
+           placeholder="Nom de la catégorie" 
+           class="w-full p-4 border-2 border-gray-200 rounded-2xl text-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition bg-white/90 shadow-sm"/>
 
-<!-- Outils -->
-<button class="emoji-btn ..." onclick="selectEmoji('🔧')">🔧</button>
-<button class="emoji-btn ..." onclick="selectEmoji('🪚')">🪚</button>
-<button class="emoji-btn ..." onclick="selectEmoji('⚒️')">⚒️</button>
-<button class="emoji-btn ..." onclick="selectEmoji('🪛')">🪛</button>
+    <!-- Sélecteur d’emoji -->
+    <div class="grid grid-cols-4 gap-4 max-h-56 overflow-y-auto pr-1">
+      <!-- Vêtements / Mode -->
+      <button type="button" class="emoji-btn p-3 text-3xl border-2 border-gray-200 rounded-2xl hover:bg-purple-100 transition" onclick="selectEmoji('👕')">👕</button>
+      <button type="button" class="emoji-btn p-3 text-3xl border-2 border-gray-200 rounded-2xl hover:bg-purple-100 transition" onclick="selectEmoji('💄')">💄</button>
+      <button type="button" class="emoji-btn p-3 text-3xl border-2 border-gray-200 rounded-2xl hover:bg-purple-100 transition" onclick="selectEmoji('👠')">👠</button>
+      <button type="button" class="emoji-btn p-3 text-3xl border-2 border-gray-200 rounded-2xl hover:bg-purple-100 transition" onclick="selectEmoji('💍')">💍</button>
+      <button type="button" class="emoji-btn p-3 text-3xl border-2 border-gray-200 rounded-2xl hover:bg-purple-100 transition" onclick="selectEmoji('🎒')">🎒</button>
+      <button type="button" class="emoji-btn p-3 text-3xl border-2 border-gray-200 rounded-2xl hover:bg-purple-100 transition" onclick="selectEmoji('👜')">👜</button>
+      <button type="button" class="emoji-btn p-3 text-3xl border-2 border-gray-200 rounded-2xl hover:bg-purple-100 transition" onclick="selectEmoji('🧴')">🧴</button>
+      <button type="button" class="emoji-btn p-3 text-3xl border-2 border-gray-200 rounded-2xl hover:bg-purple-100 transition" onclick="selectEmoji('✨')">✨</button>
 
-<!-- Cosmétiques -->
-<button class="emoji-btn ..." onclick="selectEmoji('💅')">💅</button>
-<button class="emoji-btn ..." onclick="selectEmoji('💇‍♀️')">💇‍♀️</button>
-<button class="emoji-btn ..." onclick="selectEmoji('🧴')">🧴</button>
-<button class="emoji-btn ..." onclick="selectEmoji('👗')">👗</button>
+      <!-- Nourriture -->
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🍎')">🍎</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🍞')">🍞</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🥩')">🥩</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🥤')">🥤</button>
 
-        </div>
-        <input id="emojiCategorie" type="hidden" value="🏷️"/>
-        <div class="flex gap-3">
-          <button class="flex-1 bg-gray-300 text-gray-700 py-4 rounded-2xl font-bold" onclick="hideModal()">Annuler</button>
-          <button class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold" onclick="ajouterCategorie()">Ajouter</button>
-        </div>
-      </div>
+      <!-- Electronique -->
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('📱')">📱</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('💻')">💻</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🎧')">🎧</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('📺')">📺</button>
+
+      <!-- Outils -->
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🔧')">🔧</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🪚')">🪚</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('⚒️')">⚒️</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🪛')">🪛</button>
+
+      <!-- Cosmétiques -->
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('💅')">💅</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('💇‍♀️')">💇‍♀️</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('🧴')">🧴</button>
+      <button type="button" class="emoji-btn ..." onclick="selectEmoji('👗')">👗</button>
     </div>
+
+    <!-- Input caché -->
+    <input id="emojiCategorie" type="hidden" value="🏷️"/>
+
+    <!-- Boutons -->
+    <div class="flex gap-4">
+      <button onclick="hideModal()" 
+              class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-4 rounded-2xl font-semibold shadow-md transition">
+        Annuler
+      </button>
+      <button onclick="ajouterCategorie()" 
+              class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-semibold shadow-md transition">
+        Ajouter
+      </button>
+    </div>
+  </div>
+</div>
 
     <!-- Modal Méthodes de Paiement -->
 <div class="bg-white rounded-3xl p-6 w-full max-w-sm hidden fade-in" id="modalPaiement">
