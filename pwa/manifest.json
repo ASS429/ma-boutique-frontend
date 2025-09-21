@@ -1,6 +1,6 @@
 {
-  "name": "Ma Boutique",
-  "short_name": "Boutique",
+  "name": "Sama Commerce",
+  "short_name": "Commerce",
   "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
