@@ -265,6 +265,72 @@ function tryRenderSalesHistory(ventesFiltrees) {
     to { opacity: 0; transform: translateX(100%); }
   }
 
+/* ✅ Style pour la boîte de confirmation */
+#custom-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.custom-confirm-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 350px;
+  width: 90%;
+  text-align: center;
+  font-family: sans-serif;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  animation: popIn 0.3s ease;
+}
+
+.custom-confirm-box p {
+  margin-bottom: 20px;
+  font-size: 16px;
+  color: #333;
+}
+
+.custom-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.custom-confirm-btn {
+  padding: 10px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.custom-confirm-yes {
+  background: #16a34a;
+  color: #fff;
+}
+.custom-confirm-yes:hover {
+  background: #15803d;
+}
+
+.custom-confirm-no {
+  background: #dc2626;
+  color: #fff;
+}
+.custom-confirm-no:hover {
+  background: #b91c1c;
+}
+
+/* ✅ Animation d’apparition */
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 </style>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50">
@@ -1743,8 +1809,9 @@ function modifierStock(id, delta){
 }
 
 
-function supprimerProduit(id) {
-  if (!confirm("❓ Supprimer ce produit ?")) {
+async function supprimerProduit(id) {
+  const ok = await confirm("❓ Supprimer ce produit ?");
+  if (!ok) {
     showNotification("❌ Suppression annulée", "warning");
     return;
   }
@@ -3195,6 +3262,38 @@ function closeGuide() {
       document.getElementById("userGuide").style.display = "none";
     }
   });
+
+// ✅ Remplace confirm par une version moderne
+function customConfirm(message) {
+  return new Promise((resolve) => {
+    // Créer l’overlay
+    const overlay = document.createElement("div");
+    overlay.id = "custom-confirm-overlay";
+
+    // Contenu
+    overlay.innerHTML = `
+      <div class="custom-confirm-box">
+        <p>${message}</p>
+        <div class="custom-confirm-actions">
+          <button class="custom-confirm-btn custom-confirm-yes">Confirmer</button>
+          <button class="custom-confirm-btn custom-confirm-no">Annuler</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Boutons
+    overlay.querySelector(".custom-confirm-yes").addEventListener("click", () => {
+      resolve(true);
+      overlay.remove();
+    });
+    overlay.querySelector(".custom-confirm-no").addEventListener("click", () => {
+      resolve(false);
+      overlay.remove();
+    });
+  });
+}
 
 </script>
 
