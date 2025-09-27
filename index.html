@@ -3270,7 +3270,7 @@ function customConfirm(message) {
     const overlay = document.createElement("div");
     overlay.id = "custom-confirm-overlay";
 
-    // Contenu
+    // Contenu (avec backticks !)
     overlay.innerHTML = `
       <div class="custom-confirm-box">
         <p>${message}</p>
@@ -3294,6 +3294,11 @@ function customConfirm(message) {
     });
   });
 }
+
+// ✅ Polyfill : remplacer confirm natif
+window.confirm = function (message) {
+  return customConfirm(message);
+};
 
 </script>
 
