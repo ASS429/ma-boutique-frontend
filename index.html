@@ -1808,7 +1808,6 @@ function modifierStock(id, delta){
   }
 }
 
-
 async function supprimerProduit(id) {
   const ok = await confirm("❓ Supprimer ce produit ?");
   if (!ok) {
@@ -1870,8 +1869,13 @@ function afficherCategories(){
   });
 }
 
+// ✅ Supprimer une catégorie
 async function supprimerCategorie(id) {
-  if (!confirm('❓ Supprimer cette catégorie ?')) return;
+  const ok = await confirm('❓ Supprimer cette catégorie ?');
+  if (!ok) {
+    showNotification("❌ Suppression annulée", "warning");
+    return;
+  }
 
   try {
     const res = await authfetch(API_BASE + '/categories/' + id, { method: 'DELETE' });
@@ -2211,8 +2215,13 @@ function filtrerVentesParPeriode(ventes, periode) {
   });
 }
 
+// ✅ Annuler une vente
 async function annulerVente(id) {
-  if (!confirm('❓ Annuler cette vente ?')) return;
+  const ok = await confirm('❓ Annuler cette vente ?');
+  if (!ok) {
+    showNotification("❌ Annulation annulée", "warning");
+    return;
+  }
 
   try {
     const res = await authfetch(API_BASE + '/sales/' + id, { method: 'DELETE' });
@@ -2591,21 +2600,6 @@ function renderCreditsHistory() {
   });
 }
 
-
-// ✅ Marquer un crédit comme payé avec toast
-function marquerCreditPaye(id) {
-  const credit = appData.credits.find(c => c.id == id);
-  if (!credit) {
-    showNotification("❌ Crédit introuvable", "error");
-    return;
-  }
-
-  credit.status = "payé";
-  renderCreditsHistory();
-  showNotification("✅ Crédit marqué comme payé !", "success");
-}
-
-
 function showModalCredit() {
   const modal = document.getElementById("modalCredit");
   if (modal) {
@@ -2900,8 +2894,11 @@ async function finaliserVenteCredit() {
 
 // ✅ Marquer un crédit comme payé
 async function marquerCreditPaye(id) {
-  // 👉 On garde confirm() mais stylé tu pourrais le remplacer plus tard par un vrai modal
-  if (!confirm("❓ Confirmer que ce crédit a été payé ?")) return;
+  const ok = await confirm("❓ Confirmer que ce crédit a été payé ?");
+  if (!ok) {
+    showNotification("❌ Action annulée", "warning");
+    return;
+  }
 
   try {
     const res = await authfetch(`${API_BASE}/sales/${id}`, {
@@ -3297,7 +3294,7 @@ function customConfirm(message) {
 
 // ✅ Polyfill : remplacer confirm natif
 window.confirm = function (message) {
- console.log("⚡ confirm appelé avec :", message);
+  console.log("⚡ confirm appelé avec :", message);
   return customConfirm(message);
 };
 
