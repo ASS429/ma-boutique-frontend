@@ -17,6 +17,44 @@
   .animate-fadeIn {
     animation: fadeIn 0.5s ease-out;
   }
+
+  /* ✅ Zone contenant les toasts */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ✅ Style d’un toast */
+  .toast {
+    min-width: 220px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    animation: slideIn 0.4s ease, fadeOut 0.5s ease 3.5s forwards;
+  }
+
+  /* ✅ Variantes par type */
+  .toast.success { background: #16a34a; }  /* vert */
+  .toast.error { background: #dc2626; }    /* rouge */
+  .toast.warning { background: #f59e0b; }  /* jaune */
+  .toast.info { background: #2563eb; }     /* bleu */
+
+  /* ✅ Animations */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(100%); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; transform: translateX(100%); }
+  }
+
 </style>
 </head>
 <body class="font-sans antialiased">
@@ -126,7 +164,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     const password = document.getElementById('password').value.trim();
 
     if (!username || !password) {
-        alert('Veuillez remplir tous les champs.');
+        showNotification('Veuillez remplir tous les champs.', "warning");
         return;
     }
 
@@ -140,19 +178,19 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         const rawText = await res.text();
 
         if (rawText.trim().startsWith("<")) {
-            alert("❌ Le serveur a renvoyé du HTML au lieu d'un JSON (voir console).");
+            showNotification("❌ Le serveur a renvoyé du HTML au lieu d'un JSON (voir console).", "error");
             return;
         }
 
         const data = JSON.parse(rawText);
 
         if (!res.ok) {
-            alert('❌ Erreur : ' + (data.error || "Identifiants incorrects"));
+            showNotification('❌ Erreur : ' + (data.error || "Identifiants incorrects"), "error");
             return;
         }
 
         if (data.twofa_required) {
-            alert("Un code 2FA vous a été envoyé par email.");
+            showNotification("Un code 2FA vous a été envoyé par email.", "info");
             localStorage.setItem("pendingUserId", data.userId);
             document.getElementById("twofaSection").classList.remove("hidden");
             return;
@@ -163,12 +201,12 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         localStorage.setItem('userRole', userRole);
         localStorage.setItem('userId', data.user?.id);
 
-        alert('✅ Connexion réussie.');
+        showNotification('✅ Connexion réussie.', "success");
         setTimeout(() => redirectAccordingToRole(userRole), 200);
 
     } catch (err) {
         console.error("Erreur lors de la requête :", err);
-        alert("❌ Erreur de connexion au serveur.");
+        showNotification("❌ Erreur de connexion au serveur.", "error");
     }
 });
 
@@ -177,7 +215,7 @@ document.getElementById("verify2faBtn").addEventListener("click", async () => {
   const code = document.getElementById("twofaCode").value.trim();
 
   if (!userId || !code) {
-    alert("Veuillez entrer le code.");
+    showNotification("Veuillez entrer le code.", "warning");
     return;
   }
 
@@ -197,11 +235,11 @@ document.getElementById("verify2faBtn").addEventListener("click", async () => {
     localStorage.setItem("userId", data.user?.id);
     localStorage.removeItem("pendingUserId");
 
-    alert("✅ Connexion réussie avec 2FA.");
+    showNotification("✅ Connexion réussie avec 2FA.", "success");
     redirectAccordingToRole(userRole);
   } catch (err) {
     console.error("Erreur verify2fa:", err);
-    alert("❌ Code invalide ou expiré.");
+    showNotification("❌ Code invalide ou expiré.", "error");
   }
 });
 
@@ -215,6 +253,29 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("loginGuideOverlay").style.display = "none";
     }
 });
+
+function showNotification(message, type = "info") {
+  // Créer le conteneur si non existant
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    document.body.appendChild(container);
+  }
+
+  // Créer le toast
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+
+  // Ajouter le toast au conteneur
+  container.appendChild(toast);
+
+  // Retirer après 4s
+  setTimeout(() => {
+    toast.remove();
+  }, 4000);
+}
 </script>
 </body>
 </html>
