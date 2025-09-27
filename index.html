@@ -228,6 +228,43 @@ function tryRenderSalesHistory(ventesFiltrees) {
     }
   }
 
+  /* ✅ Zone contenant les toasts */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ✅ Style d’un toast */
+  .toast {
+    min-width: 220px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    animation: slideIn 0.4s ease, fadeOut 0.5s ease 3.5s forwards;
+  }
+
+  /* ✅ Variantes par type */
+  .toast.success { background: #16a34a; }  /* vert */
+  .toast.error { background: #dc2626; }    /* rouge */
+  .toast.warning { background: #f59e0b; }  /* jaune */
+  .toast.info { background: #2563eb; }     /* bleu */
+
+  /* ✅ Animations */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(100%); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; transform: translateX(100%); }
+  }
+
 </style>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50">
@@ -1331,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const dueDate = document.getElementById('creditDueDate')?.value;
 
         if (!clientName || !clientPhone || !dueDate) {
-          alert("⚠️ Merci de remplir toutes les informations du crédit.");
+          showNotification("⚠️ Merci de remplir toutes les informations du crédit.", "warning");
           return;
         }
 
@@ -1357,22 +1394,14 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Gestion du message d'expiration de session
   const params = new URLSearchParams(window.location.search);
   if (params.get('expired') === '1') {
-    const msg = document.createElement('div');
-    msg.className = "bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4";
-    msg.innerHTML = "⚠️ Votre session a expiré. Veuillez vous reconnecter.";
-    
-    const bgWhiteElement = document.querySelector('.bg-white');
-    if (bgWhiteElement) {
-      bgWhiteElement.prepend(msg);
-    } else {
-      console.warn("L'élément .bg-white n'a pas été trouvé.");
-    }
+    showNotification("⚠️ Votre session a expiré. Veuillez vous reconnecter.", "warning");
   }
 
   // Initialisation de la page pour les crédits
   remplirProduitsCredit();
   renderCreditsHistory();
 });
+
 
 
 
@@ -1468,7 +1497,7 @@ async function finaliserVente(paymentMethod) {
   }
 
   if (!appData.panier.length) {
-    alert('❌ Panier vide.');
+    showNotification('❌ Panier vide.', "error");
     return;
   }
 
@@ -1481,12 +1510,12 @@ async function finaliserVente(paymentMethod) {
     };
     const created = await postSaleServer(vente);
     if (!created) {
-      alert('❌ Erreur lors de l\'enregistrement de la vente.');
+      showNotification('❌ Erreur lors de l\'enregistrement de la vente.', "error");
       return;
     }
   }
 
-  alert('✅ Vente enregistrée.');
+  showNotification('✅ Vente enregistrée.', "success");
 
   // 🔄 Vider le panier local
   appData.panier = [];
@@ -1508,11 +1537,20 @@ async function finaliserVente(paymentMethod) {
 }
 
 
-
 // ---------- Produits / catégories gestion (avec POST) ----------
-function remplirSelectCategories(){ const select = document.getElementById('categorieProduit'); if(!select) return; select.innerHTML = '<option value="">Choisir catégorie</option>'; appData.categories.forEach(function(categ){ var opt = document.createElement('option'); opt.value = categ.id; opt.textContent = (categ.emoji ? categ.emoji + ' ' : '') + categ.name; select.appendChild(opt); }); }
+function remplirSelectCategories() { 
+  const select = document.getElementById('categorieProduit'); 
+  if (!select) return; 
+  select.innerHTML = '<option value="">Choisir catégorie</option>'; 
+  appData.categories.forEach(function(categ) { 
+    var opt = document.createElement('option'); 
+    opt.value = categ.id; 
+    opt.textContent = (categ.emoji ? categ.emoji + ' ' : '') + categ.name; 
+    select.appendChild(opt); 
+  }); 
+}
 
-async function ajouterProduit(){
+async function ajouterProduit() {
   const name = document.getElementById('nomProduit').value;
   const category_id = parseInt(document.getElementById('categorieProduit').value);
   const scentEl = document.getElementById('parfumProduit');
@@ -1523,7 +1561,7 @@ async function ajouterProduit(){
 
   // Validation
   if (!name || !category_id || isNaN(price) || isNaN(stock) || isNaN(priceAchat)) {
-    alert('❌ Remplissez tous les champs correctement.');
+    showNotification('❌ Remplissez tous les champs correctement.', "error");
     return;
   }
 
@@ -1539,7 +1577,7 @@ async function ajouterProduit(){
 
   const created = await postProductServer(produit);
   if (created) {
-    alert('✅ Produit ajouté (serveur).');
+    showNotification('✅ Produit ajouté (serveur).', "success");
     await syncFromServer();
     updateStats();
     verifierStockFaible();
@@ -1549,15 +1587,12 @@ async function ajouterProduit(){
     afficherRapports();
     afficherInventaire();
     hideModal();
-  }
-  else {
-    alert('❌ Erreur lors de l\'ajout du produit.');
+  } else {
+    showNotification('❌ Erreur lors de l\'ajout du produit.', "error");
   }
 }
 
-
-
-async function ajouterCategorie(){
+async function ajouterCategorie() {
   if (!appData) return;
 
   const name = (document.getElementById('nomCategorie') || {}).value;
@@ -1578,7 +1613,7 @@ async function ajouterCategorie(){
       if (idx >= 0) appData.categories[idx] = created;
       saveAppDataLocal();
       syncFromServer();
-      alert('✅ Catégorie ajoutée (serveur).');
+      showNotification('✅ Catégorie ajoutée (serveur).', "success");
       await syncFromServer();
       afficherCategories();
       afficherCategoriesVente();
@@ -1586,13 +1621,12 @@ async function ajouterCategorie(){
 
     } else {
       enqueueOutbox({ type: 'category', payload: { name: name }, tries: 0, id: Date.now() });
-      alert('✅ Catégorie ajoutée localement et mise en file d\'envoi.');
+      showNotification('✅ Catégorie ajoutée localement et mise en file d\'envoi.', "info");
     }
   } else {
-    alert('❌ Saisir un name');
+    showNotification('❌ Saisir un name', "error");
   }
 }
-
 
 function afficherFiltresCategories(){ const container = document.getElementById('filtreCategories'); if(!container) return; container.innerHTML = ''; var btnAll = document.createElement('button'); btnAll.className = 'filtre-btn bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; btnAll.textContent = 'Tous'; btnAll.addEventListener('click', function(){ filtrerProduits('tous'); }); container.appendChild(btnAll);
   appData.categories.forEach(function(c){ var button = document.createElement('button'); button.className = 'filtre-btn bg-gray-200 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap'; button.textContent = (c.emoji?c.emoji+' ':'') + c.name; button.addEventListener('click', function(){ filtrerProduits(c.id); }); container.appendChild(button); }); }
@@ -1709,7 +1743,27 @@ function modifierStock(id, delta){
 }
 
 
-function supprimerProduit(id){ if(confirm('❓ Supprimer ce produit ?')){ appData.produits = appData.produits.filter(function(p){ return p.id !== id; }); afficherProduits(); updateStats(); saveAppDataLocal(); authfetch(API_BASE + '/products/' + id, { method:'DELETE' }).catch(function(){}); alert('✅ Supprimé'); } }
+function supprimerProduit(id) {
+  if (!confirm("❓ Supprimer ce produit ?")) {
+    showNotification("❌ Suppression annulée", "warning");
+    return;
+  }
+
+  // Suppression locale
+  appData.produits = appData.produits.filter(p => p.id !== id);
+  afficherProduits();
+  updateStats();
+  saveAppDataLocal();
+
+  // Suppression côté backend
+  authfetch(API_BASE + "/products/" + id, { method: "DELETE" })
+    .then(() => {
+      showNotification("✅ Produit supprimé avec succès", "success");
+    })
+    .catch(() => {
+      showNotification("⚠️ Erreur lors de la suppression côté serveur", "error");
+    });
+}
 
 // ---------- Catégories UI ----------
 function selectEmoji(emoji){ var el = document.getElementById('emojiCategorie'); if(el) el.value = emoji; document.querySelectorAll('.emoji-btn').forEach(function(btn){ btn.classList.remove('bg-blue-200','border-blue-400'); }); if(window.event && window.event.target) window.event.target.classList.add('bg-blue-200','border-blue-400'); }
@@ -1754,17 +1808,16 @@ async function supprimerCategorie(id) {
 
   try {
     const res = await authfetch(API_BASE + '/categories/' + id, { method: 'DELETE' });
-
     const data = await res.json();
 
     if (!res.ok) {
       // 🔴 Erreur renvoyée par le backend
-      alert('❌ ' + (data.error || 'Erreur lors de la suppression de la catégorie'));
+      showNotification('❌ ' + (data.error || 'Erreur lors de la suppression de la catégorie'), "error");
       return;
     }
 
     // ✅ Suppression réussie
-    alert('✅ ' + (data.message || 'Catégorie supprimée avec succès'));
+    showNotification('✅ ' + (data.message || 'Catégorie supprimée avec succès'), "success");
 
     // Retirer de la liste locale
     appData.categories = appData.categories.filter(c => c.id !== id);
@@ -1773,7 +1826,7 @@ async function supprimerCategorie(id) {
 
   } catch (err) {
     console.error('Erreur réseau lors de la suppression de catégorie', err);
-    alert('❌ Impossible de contacter le serveur.');
+    showNotification('❌ Impossible de contacter le serveur.', "error");
   }
 }
 
@@ -2039,7 +2092,7 @@ async function mettreAJourProduit() {
   };
 
   if (!produit.name || isNaN(produit.price) || isNaN(produit.price_achat) || isNaN(produit.stock)) {
-    alert('❌ Remplissez tous les champs correctement.');
+    showNotification('❌ Remplissez tous les champs correctement.', 'error');
     return;
   }
 
@@ -2051,11 +2104,11 @@ async function mettreAJourProduit() {
     });
 
     if (!res.ok) {
-      alert('❌ Erreur lors de la mise à jour du produit.');
+      showNotification('❌ Erreur lors de la mise à jour du produit.', 'error');
       return;
     }
 
-    alert('✅ Produit mis à jour.');
+    showNotification('✅ Produit mis à jour.', 'success');
     hideModal();
     await syncFromServer();
     afficherProduits();
@@ -2063,9 +2116,10 @@ async function mettreAJourProduit() {
     updateStats();
   } catch (err) {
     console.error(err);
-    alert('❌ Impossible de contacter le serveur.');
+    showNotification('❌ Impossible de contacter le serveur.', 'error');
   }
 }
+
 
 function filtrerVentesParPeriode(ventes, periode) {
   const now = new Date();
@@ -2096,23 +2150,23 @@ async function annulerVente(id) {
   try {
     const res = await authfetch(API_BASE + '/sales/' + id, { method: 'DELETE' });
     if (!res.ok) {
-      alert('❌ Erreur lors de l\'annulation de la vente.');
+      showNotification('❌ Erreur lors de l\'annulation de la vente.', 'error');
       return;
     }
-    alert('✅ Vente annulée.');
+    showNotification('✅ Vente annulée.', 'success');
     await syncFromServer();
     afficherRapports();
     updateStats();
   } catch (err) {
     console.error(err);
-    alert('❌ Impossible de contacter le serveur.');
+    showNotification('❌ Impossible de contacter le serveur.', 'error');
   }
 }
 
 async function modifierVente(id) {
   const vente = appData.ventes.find(v => Number(v.id) === Number(id));
   if (!vente) {
-    alert("❌ Vente introuvable");
+    showNotification("❌ Vente introuvable", 'error');
     return;
   }
 
@@ -2136,7 +2190,7 @@ async function modifierVente(id) {
   }
 
   if (Object.keys(body).length === 0) {
-    alert("⚠️ Aucun changement effectué.");
+    showNotification("⚠️ Aucun changement effectué.", 'warning');
     return;
   }
 
@@ -2149,12 +2203,12 @@ async function modifierVente(id) {
 
     if (!res.ok) {
       const errData = await res.json();
-      alert("❌ Erreur lors de la modification : " + (errData.error || res.status));
+      showNotification("❌ Erreur lors de la modification : " + (errData.error || res.status), 'error');
       return;
     }
 
     const updated = await res.json();
-    alert("✅ Vente modifiée avec succès !");
+    showNotification("✅ Vente modifiée avec succès !", 'success');
     console.log("Vente mise à jour :", updated);
 
     // Recharge les données depuis le serveur
@@ -2162,10 +2216,9 @@ async function modifierVente(id) {
 
   } catch (e) {
     console.error("Erreur modifierVente:", e);
-    alert("❌ Erreur réseau ou serveur");
+    showNotification("❌ Erreur réseau ou serveur", 'error');
   }
 }
-
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2303,7 +2356,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const payment_method = document.getElementById("ventePaiement")?.value;
 
       if (!id || !quantity || quantity <= 0 || !payment_method) {
-        alert("❌ Champs invalides.");
+        showNotification("❌ Champs invalides.", "error");
         return;
       }
 
@@ -2316,13 +2369,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!res.ok) throw new Error("Erreur lors de la modification");
 
-        alert("✅ Vente modifiée avec succès");
+        showNotification("✅ Vente modifiée avec succès", "success");
         fermerModal();
         syncFromServer(); // recharge les données
 
       } catch (err) {
         console.error("Erreur modifierVente:", err);
-        alert("❌ Erreur lors de la modification de la vente");
+        showNotification("❌ Erreur lors de la modification de la vente", "error");
       }
     });
   }
@@ -2332,7 +2385,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function modifierVente(id) {
   const vente = appData.ventes.find(v => Number(v.id) === Number(id));
   if (!vente) {
-    alert("❌ Vente introuvable");
+    showNotification("❌ Vente introuvable", "error");
     return;
   }
   ouvrirModal(vente);
@@ -2399,14 +2452,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const due_date = document.getElementById("creditDueDate")?.value;
 
       if (!client || !product_id || !quantity || quantity <= 0) {
-        alert("❌ Veuillez remplir tous les champs correctement.");
+        showNotification("❌ Veuillez remplir tous les champs correctement.", "error");
         return;
       }
 
       // Trouver le produit
       const produit = appData.produits.find(p => p.id == product_id);
       if (!produit) {
-        alert("❌ Produit introuvable.");
+        showNotification("❌ Produit introuvable.", "error");
         return;
       }
 
@@ -2428,7 +2481,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       renderCreditsHistory();
       creditForm.reset();
-      alert("✅ Vente à crédit enregistrée !");
+      showNotification("✅ Vente à crédit enregistrée !", "success");
     });
   }
 });
@@ -2472,16 +2525,17 @@ function renderCreditsHistory() {
 }
 
 
-// Marquer un crédit comme payé
+// ✅ Marquer un crédit comme payé avec toast
 function marquerCreditPaye(id) {
   const credit = appData.credits.find(c => c.id == id);
   if (!credit) {
-    alert("❌ Crédit introuvable.");
+    showNotification("❌ Crédit introuvable", "error");
     return;
   }
+
   credit.status = "payé";
   renderCreditsHistory();
-  alert("✅ Crédit marqué comme payé !");
+  showNotification("✅ Crédit marqué comme payé !", "success");
 }
 
 
@@ -2519,14 +2573,16 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       if (!creditData.client_name || !creditData.client_phone) {
-        alert("❌ Veuillez renseigner le nom et le téléphone du client.");
+        showNotification("❌ Veuillez renseigner le nom et le téléphone du client.", "error");
         return;
       }
 
       await finaliserVente("credit", creditData);
+      showNotification("✅ Crédit enregistré avec succès !", "success");
     });
   }
 });
+
 
 let chartCredits; // global
 
@@ -2713,23 +2769,23 @@ function afficherCredits() {
 
 
 
+// ✅ Finaliser une vente à crédit
 async function finaliserVenteCredit() {
   if (!appData.panier.length) {
-    alert('❌ Panier vide.');
+    showNotification("❌ Panier vide.", "error");
     return;
   }
 
   // Récupérer les infos du formulaire crédit
-  const clientName = document.getElementById('creditClientName')?.value.trim();
-  const clientPhone = document.getElementById('creditClientPhone')?.value.trim();
-  const dueDateInput = document.getElementById('creditDueDate');
+  const clientName = document.getElementById("creditClientName")?.value.trim();
+  const clientPhone = document.getElementById("creditClientPhone")?.value.trim();
+  const dueDateInput = document.getElementById("creditDueDate");
   const dueDate = dueDateInput?.value || null;
 
-  // 🔍 Debug
   console.log("Infos crédit saisies :", { clientName, clientPhone, dueDate });
 
   if (!clientName || !clientPhone || !dueDate) {
-    alert('⚠️ Merci de remplir toutes les informations du crédit.');
+    showNotification("⚠️ Merci de remplir toutes les informations du crédit.", "warning");
     return;
   }
 
@@ -2738,7 +2794,7 @@ async function finaliserVenteCredit() {
     const venteCredit = {
       product_id: item.id,
       quantity: item.quantite,
-      payment_method: "credit", // ✅ On marque comme crédit
+      payment_method: "credit", // ✅ Marqué comme crédit
       client_name: clientName,
       client_phone: clientPhone,
       due_date: dueDate,
@@ -2747,12 +2803,12 @@ async function finaliserVenteCredit() {
 
     const created = await postSaleServer(venteCredit);
     if (!created) {
-      alert('❌ Erreur lors de l\'enregistrement de la vente à crédit.');
+      showNotification("❌ Erreur lors de l'enregistrement de la vente à crédit.", "error");
       return;
     }
   }
 
-  alert('✅ Vente à crédit enregistrée.');
+  showNotification("✅ Vente à crédit enregistrée.", "success");
 
   // Vider le panier local
   appData.panier = [];
@@ -2775,10 +2831,10 @@ async function finaliserVenteCredit() {
   hideModalCredit();
 }
 
-
-// 👉 Ouvrir le modal pour un crédit donné
+// ✅ Marquer un crédit comme payé
 async function marquerCreditPaye(id) {
-  if (!confirm("Confirmer que ce crédit a été payé ?")) return;
+  // 👉 On garde confirm() mais stylé tu pourrais le remplacer plus tard par un vrai modal
+  if (!confirm("❓ Confirmer que ce crédit a été payé ?")) return;
 
   try {
     const res = await authfetch(`${API_BASE}/sales/${id}`, {
@@ -2789,17 +2845,17 @@ async function marquerCreditPaye(id) {
 
     if (!res.ok) {
       const errMsg = await res.text();
-      alert("❌ Erreur lors de la mise à jour du crédit : " + errMsg);
+      showNotification("❌ Erreur lors de la mise à jour du crédit : " + errMsg, "error");
       return;
     }
 
-    alert("✅ Crédit marqué comme payé.");
-    await syncFromServer();   // recharge les ventes + crédits
-    afficherStatsCredits();   // rafraîchit uniquement le tableau crédits
+    showNotification("✅ Crédit marqué comme payé.", "success");
+    await syncFromServer();
+    afficherStatsCredits(); // rafraîchit uniquement le tableau crédits
 
   } catch (e) {
     console.error("Erreur réseau marquerCreditPaye:", e);
-    alert("❌ Impossible de contacter le serveur.");
+    showNotification("❌ Impossible de contacter le serveur.", "error");
   }
 }
 
@@ -2841,11 +2897,11 @@ async function confirmerRemboursement(method) {
     if (!res.ok) {
       const errorMsg = await res.text();
       console.error("Erreur remboursement:", errorMsg);
-      alert("❌ Erreur lors du remboursement");
+      showNotification("❌ Erreur lors du remboursement", "error");
       return;
     }
 
-    alert("✅ Crédit remboursé avec succès !");
+    showNotification("✅ Crédit remboursé avec succès !", "success");
     hideModalRemboursement();
 
     // 🔄 Recharger les données à jour
@@ -2855,9 +2911,10 @@ async function confirmerRemboursement(method) {
 
   } catch (err) {
     console.error("Erreur confirmerRemboursement:", err);
-    alert("❌ Erreur réseau lors du remboursement");
+    showNotification("❌ Erreur réseau lors du remboursement", "error");
   }
 }
+
 window.confirmerRemboursement = confirmerRemboursement; // ✅ rendre global
 
 
@@ -2970,13 +3027,13 @@ async function handleAddProductClick() {
   try {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      showNotification("Vous devez être connecté pour ajouter un produit", "error");
+      showNotification("❌ Vous devez être connecté pour ajouter un produit", "error");
       return;
     }
 
     const userId = getCurrentUserId();
     if (!userId) {
-      showNotification("Utilisateur introuvable", "error");
+      showNotification("❌ Utilisateur introuvable", "error");
       return;
     }
 
@@ -2991,13 +3048,13 @@ async function handleAddProductClick() {
     const currentUser = users.find(u => u.id === userId);
 
     if (!currentUser) {
-      showNotification("Utilisateur introuvable", "error");
+      showNotification("❌ Utilisateur introuvable", "error");
       return;
     }
 
     // 🚫 Cas 1 : Upgrade en attente = blocage total
     if (currentUser.upgrade_status === "en attente") {
-      alert("⏳ Votre demande Premium est en attente de validation.\nVous ne pouvez pas ajouter de produit pour le moment.");
+      showNotification("⏳ Votre demande Premium est en attente de validation. Vous ne pouvez pas ajouter de produit pour le moment.", "warning");
       return;
     }
 
@@ -3032,7 +3089,7 @@ async function handleAddProductClick() {
 
   } catch (err) {
     console.error("Erreur handleAddProductClick:", err);
-    showNotification("Impossible d’ajouter le produit", "error");
+    showNotification("❌ Impossible d’ajouter le produit", "error");
   }
 }
 
@@ -3056,7 +3113,7 @@ document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
   const expiration = document.getElementById("expiration").value;
 
   if (!phone || !payment_method || !amount || !expiration) {
-    alert("❌ Tous les champs sont requis.");
+    showNotification("❌ Tous les champs sont requis.", "error");
     return;
   }
 
@@ -3086,36 +3143,44 @@ document.getElementById("upgradeForm").addEventListener("submit", async (e) => {
       } catch (err) {
         errorMsg = await res.text();
       }
-      alert("❌ Erreur : " + errorMsg);
+      showNotification("❌ Erreur : " + errorMsg, "error");
       return;
     }
 
     const data = await res.json();
 
-    alert("✅ Votre demande Premium est envoyée et en attente de validation par un administrateur !");
+    showNotification("✅ Votre demande Premium est envoyée et en attente de validation par un administrateur !", "success");
     closeContactModal();
     updateHeader?.();
     window.location.reload();
 
   } catch (err) {
     console.error("❌ Erreur upgrade:", err);
-    alert("❌ Erreur réseau. Veuillez réessayer.");
+    showNotification("❌ Erreur réseau. Veuillez réessayer.", "error");
   }
 });
 
-
 function showNotification(message, type = "info") {
-  // Pour l’instant, on fait simple : un alert
-  // Tu pourras améliorer avec un petit toast stylé comme en admin
-  if (type === "error") {
-    alert("❌ " + message);
-  } else if (type === "success") {
-    alert("✅ " + message);
-  } else if (type === "warning") {
-    alert("⚠️ " + message);
-  } else {
-    alert(message);
+  // Créer le conteneur si non existant
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    document.body.appendChild(container);
   }
+
+  // Créer le toast
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+
+  // Ajouter le toast au conteneur
+  container.appendChild(toast);
+
+  // Retirer après 4s
+  setTimeout(() => {
+    toast.remove();
+  }, 4000);
 }
 
 function closeGuide() {
